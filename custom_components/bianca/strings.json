@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Подключение к Bianca",
+        "title": "Bianca",
         "description": "Введите IP-адрес стиральной машины",
         "data": {
           "ip_address": "IP-адрес"
@@ -10,7 +10,7 @@
       }
     },
     "error": {
-      "cannot_connect": "Не удалось подключиться"
+      "cannot_connect": "Не удалось подключиться. Проверьте IP-адрес."
     }
   }
 }
