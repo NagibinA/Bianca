@@ -1,0 +1,8 @@
+{
+  "name": "Bianca",
+  "domains": ["bianca"],
+  "country": "RU",
+  "homeassistant": "2024.1.0",
+  "render_readme": true,
+  "zip_release": false
+}
