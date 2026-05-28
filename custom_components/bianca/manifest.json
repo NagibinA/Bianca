@@ -1,0 +1,13 @@
+{
+  "domain": "bianca",
+  "name": "Bianca",
+  "codeowners": ["@NagibinA"],
+  "config_flow": true,
+  "dependencies": [],
+  "iot_class": "local_polling",
+  "requirements": [
+    "backoff~=2.0",
+    "aiolimiter~=1.0"
+  ],
+  "version": "1.0.0"
+}
