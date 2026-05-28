@@ -1,15 +1,16 @@
 """The Bianca integration."""
 from __future__ import annotations
 
+import json
 import logging
 from datetime import timedelta
 
+import async_timeout
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import async_timeout
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import DOMAIN, API_ENDPOINT, DEFAULT_SCAN_INTERVAL
 
@@ -59,8 +60,13 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
             async with async_timeout.timeout(10):
                 async with session.get(self._url) as response:
                     if response.status == 200:
-                        data = await response.json()
-                        return data.get("statusLavatrice", {})
+                        text = await response.text()
+                        try:
+                            data = json.loads(text)
+                            return data.get("statusLavatrice", {})
+                        except json.JSONDecodeError as e:
+                            _LOGGER.error("JSON decode error: %s", e)
+                            raise UpdateFailed(f"JSON decode error: {e}")
                     else:
                         raise UpdateFailed(f"HTTP error {response.status}")
         except Exception as err:
