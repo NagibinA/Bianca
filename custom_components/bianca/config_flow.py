@@ -37,7 +37,7 @@ async def test_connection(hass, ip_address: str) -> bool:
         return False
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class BiancaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Bianca."""
 
     VERSION = 1
@@ -49,19 +49,20 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=STEP_DATA_SCHEMA)
 
-        config_data = {
-            CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS]
-        }
-
         errors = {}
         
         connected = await test_connection(self.hass, user_input[CONF_IP_ADDRESS])
         
         if connected:
-            return self.async_create_entry(title=CONF_INTEGRATION_TITLE, data=config_data)
+            return self.async_create_entry(
+                title=CONF_INTEGRATION_TITLE, 
+                data={CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS]}
+            )
         else:
             errors["base"] = "cannot_connect"
 
         return self.async_show_form(
-            step_id="user", data_schema=STEP_DATA_SCHEMA, errors=errors
+            step_id="user", 
+            data_schema=STEP_DATA_SCHEMA, 
+            errors=errors
         )
