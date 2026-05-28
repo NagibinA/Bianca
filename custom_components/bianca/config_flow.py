@@ -1,14 +1,11 @@
 """Config flow for Bianca integration."""
 
 import logging
-import socket
 
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_IP_ADDRESS
-from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import aiohttp_client
 
 from .const import DOMAIN, API_ENDPOINT
@@ -17,35 +14,26 @@ _LOGGER = logging.getLogger(__name__)
 
 DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_IP_ADDRESS, default="192.168.1."): str,
+        vol.Required(CONF_IP_ADDRESS): str,
     }
 )
 
 
-async def validate_ip_address(hass: HomeAssistant, ip_address: str) -> tuple[bool, str]:
-    """Validate the IP address by making a request to the device."""
+async def validate_ip_address(hass, ip_address):
+    """Validate the IP address."""
     url = API_ENDPOINT.format(ip_address)
     session = aiohttp_client.async_get_clientsession(hass)
     
     try:
-        _LOGGER.debug("Testing connection to %s", url)
         async with session.get(url, timeout=10) as response:
             if response.status == 200:
                 data = await response.json()
-                _LOGGER.debug("Response: %s", data)
                 if "statusLavatrice" in data:
-                    return True, "Connected successfully"
-                else:
-                    return False, "Invalid response format"
-            else:
-                return False, f"HTTP error {response.status}"
-    except TimeoutError:
-        return False, "Connection timeout"
-    except socket.gaierror:
-        return False, "Invalid IP address"
+                    return True
+            return False
     except Exception as e:
-        _LOGGER.error("Connection error: %s", e)
-        return False, str(e)
+        _LOGGER.error("Validation error: %s", e)
+        return False
 
 
 class BiancaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -53,19 +41,16 @@ class BiancaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(
-        self, user_input: dict | None = None
-    ) -> FlowResult:
+    async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         errors = {}
 
         if user_input is not None:
             ip_address = user_input[CONF_IP_ADDRESS]
             
-            # Check if already configured
             self._async_abort_entries_match({CONF_IP_ADDRESS: ip_address})
             
-            valid, message = await validate_ip_address(self.hass, ip_address)
+            valid = await validate_ip_address(self.hass, ip_address)
             
             if valid:
                 return self.async_create_entry(
@@ -74,7 +59,6 @@ class BiancaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
             else:
                 errors["base"] = "cannot_connect"
-                _LOGGER.error("Connection failed: %s", message)
 
         return self.async_show_form(
             step_id="user",
