@@ -1,6 +1,7 @@
 """Sensor platform for Bianca integration."""
 from __future__ import annotations
 
+import logging
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -9,6 +10,7 @@ from homeassistant.components.sensor import (
 from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
+    CONF_IP_ADDRESS,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -17,6 +19,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from . import BiancaDataUpdateCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 # Mapping tables
 MACHMD_MAP = {
@@ -123,12 +127,20 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._key = key
+        self._entry = entry
         self._attr_name = f"{entry.title} {name}"
         self._attr_unique_id = f"{entry.entry_id}_{key}"
         self._attr_icon = icon
         self._attr_device_class = device_class
         self._attr_state_class = state_class
         self._attr_native_unit_of_measurement = unit
+
+    @property
+    def device_info(self):
+        """Return device info."""
+        return {
+            "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
+        }
 
     @property
     def native_value(self):
@@ -218,16 +230,31 @@ class BiancaSoilLevelSensor(BiancaBaseSensor):
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
         super().__init__(
             coordinator, entry, "SLevel", "Уровень загрязнения", "mdi:water-percent",
-            state_class=SensorStateClass.MEASUREMENT
         )
 
     @property
     def native_value(self):
-        value = super().native_value
+        """Return the soil level as text."""
+        if self.coordinator.data is None:
+            return None
+        
+        value = self.coordinator.data.get("SLevel")
+        
         if value is None:
             return None
-        levels = {"1": "Низкий", "2": "Средний", "3": "Высокий"}
-        return levels.get(value, value)
+        
+        str_value = str(value)
+        
+        if str_value == "0":
+            return None
+        elif str_value == "1":
+            return "Низкий"
+        elif str_value == "2":
+            return "Средний"
+        elif str_value == "3":
+            return "Высокий"
+        else:
+            return str_value
 
 
 class BiancaTemperatureSensor(BiancaBaseSensor):
