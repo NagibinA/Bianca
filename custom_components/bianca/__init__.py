@@ -1,39 +1,68 @@
 """The Bianca integration."""
+from __future__ import annotations
 
-from dataclasses import dataclass
+import logging
+from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, PLATFORMS
-from .coordinator import BiancaDataUpdateCoordinator
+from .const import DOMAIN, API_ENDPOINT, DEFAULT_SCAN_INTERVAL
+from .sensor import async_setup_entry as async_setup_sensors
 
+_LOGGER = logging.getLogger(__name__)
 
-@dataclass
-class RuntimeData:
-    """Runtime data for the integration."""
-    coordinator: BiancaDataUpdateCoordinator
-
-
-type BiancaConfigEntry = ConfigEntry[RuntimeData]
+PLATFORMS = ["sensor"]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: BiancaConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Bianca from a config entry."""
     ip_address = entry.data[CONF_IP_ADDRESS]
     
     coordinator = BiancaDataUpdateCoordinator(hass, ip_address)
-    
     await coordinator.async_config_entry_first_refresh()
     
-    entry.runtime_data = RuntimeData(coordinator=coordinator)
+    entry.runtime_data = coordinator
     
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: BiancaConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
+    """Class to manage fetching data from the device."""
+
+    def __init__(self, hass: HomeAssistant, ip_address: str) -> None:
+        """Initialize."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+        )
+        self.ip_address = ip_address
+        self._url = API_ENDPOINT.format(ip_address)
+
+    async def _async_update_data(self) -> dict:
+        """Fetch data from device."""
+        session = async_get_clientsession(self.hass)
+        
+        try:
+            async with async_timeout.timeout(10):
+                async with session.get(self._url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return data.get("statusLavatrice", {})
+                    else:
+                        raise UpdateFailed(f"HTTP error {response.status}")
+        except Exception as err:
+            _LOGGER.error("Error fetching data: %s", err)
+            raise UpdateFailed(f"Error fetching data: {err}")
