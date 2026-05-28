@@ -9,7 +9,6 @@ from homeassistant.components.sensor import (
 from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
-    UnitOfFrequency,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -249,9 +248,8 @@ class BiancaSpinSpeedSensor(BiancaBaseSensor):
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
         super().__init__(
             coordinator, entry, "SpinSp", "Скорость отжима", "mdi:sync",
-            device_class=SensorDeviceClass.FREQUENCY,
             state_class=SensorStateClass.MEASUREMENT,
-            unit=UnitOfFrequency.REVOLUTIONS_PER_MINUTE
+            unit=None
         )
 
     @property
