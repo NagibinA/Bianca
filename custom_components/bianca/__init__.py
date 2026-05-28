@@ -11,12 +11,12 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.device_registry import async_get as async_get_device_registry
+from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN, API_ENDPOINT, DEFAULT_SCAN_INTERVAL
+from .const import DOMAIN, API_ENDPOINT, DEFAULT_SCAN_INTERVAL, PLATFORMS
 
 _LOGGER = logging.getLogger(__name__)
-
-PLATFORMS = ["sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -25,6 +25,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     coordinator = BiancaDataUpdateCoordinator(hass, ip_address)
     await coordinator.async_config_entry_first_refresh()
+    
+    # Создаём устройство
+    device_registry = async_get_device_registry(hass)
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, ip_address)},
+        name=f"Bianca ({ip_address})",
+        manufacturer="Candy",
+        model="Bianca",
+        sw_version="1.0",
+        configuration_url=f"http://{ip_address}",
+    )
     
     entry.runtime_data = coordinator
     
