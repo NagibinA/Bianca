@@ -1,6 +1,7 @@
 """Config flow for Bianca integration."""
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
@@ -29,8 +30,13 @@ async def test_connection(hass, ip_address: str) -> bool:
         async with async_timeout.timeout(10):
             async with session.get(url) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    return "statusLavatrice" in data
+                    text = await response.text()
+                    try:
+                        data = json.loads(text)
+                        return "statusLavatrice" in data
+                    except json.JSONDecodeError:
+                        _LOGGER.error("Invalid JSON response: %s", text[:200])
+                        return False
                 return False
     except Exception as e:
         _LOGGER.error("Connection test failed: %s", e)
