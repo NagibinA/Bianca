@@ -4,6 +4,8 @@ DOMAIN = "bianca"
 DEFAULT_NAME = "Bianca"
 DEFAULT_SCAN_INTERVAL = 25  # seconds (between 20-30 as requested)
 
+PLATFORMS = ["sensor", "binary_sensor"]
+
 CONF_IP_ADDRESS = "ip_address"
 
 # API endpoint
