@@ -1,6 +1,5 @@
 """The Bianca integration."""
 
-import logging
 from dataclasses import dataclass
 
 from homeassistant.config_entries import ConfigEntry
@@ -9,8 +8,6 @@ from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, PLATFORMS
 from .coordinator import BiancaDataUpdateCoordinator
-
-_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -28,19 +25,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: BiancaConfigEntry) -> bo
     
     coordinator = BiancaDataUpdateCoordinator(hass, ip_address)
     
-    # Fetch initial data
     await coordinator.async_config_entry_first_refresh()
     
     entry.runtime_data = RuntimeData(coordinator=coordinator)
     
-    # Set up platforms
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "binary_sensor"])
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: BiancaConfigEntry) -> bool:
     """Unload a config entry."""
-    return await hass.config_entries.async_unload_platforms(
-        entry, ["sensor", "binary_sensor"]
-    )
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
