@@ -9,9 +9,9 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+import async_timeout
 
 from .const import DOMAIN, API_ENDPOINT, DEFAULT_SCAN_INTERVAL
-from .sensor import async_setup_entry as async_setup_sensors
 
 _LOGGER = logging.getLogger(__name__)
 
