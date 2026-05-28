@@ -1,7 +1,6 @@
 """Sensor platform for Bianca integration."""
 from __future__ import annotations
 
-import logging
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -17,62 +16,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    MACHMD_MAP,
+    PR_MAP,
+    PRPH_MAP,
+    ERR_MAP,
+    LANG_MAP,
+    SOIL_LEVEL_MAP,
+)
 from . import BiancaDataUpdateCoordinator
-
-_LOGGER = logging.getLogger(__name__)
-
-# Mapping tables
-MACHMD_MAP = {
-    "1": "Бездействие",
-    "2": "Работает",
-    "3": "Пауза",
-    "4": "Выбор отложенного запуска",
-    "5": "Задан отложенный запуск",
-    "6": "Ошибка",
-    "7": "Завершено",
-    "8": "Завершено",
-}
-
-PR_MAP = {
-    "0": "Выключено",
-    "1": "Хлопок: Интенсивная стирка",
-    "2": "Хлопок",
-    "3": "Синтетика и цветные ткани",
-    "4": "Шерсть",
-    "5": "Деликатная",
-    "6": "Perfect 20°C",
-    "7": "Полоскание",
-    "8": "Слив + Отжим",
-    "13": "Сохранить свежесть",
-    "15": "Perfect rapid 59 минут",
-    "16": "Быстрая",
-}
-
-PRPH_MAP = {
-    "0": "Остановлено",
-    "1": "Предварительная стирка",
-    "2": "Стирка",
-    "3": "Полоскание",
-    "4": "Последнее полоскание",
-    "5": "Конец",
-    "7": "Ошибка",
-    "8": "Пар",
-    "9": "Ночной отжим",
-    "10": "Отжим",
-}
-
-ERR_MAP = {
-    "0": "Нет ошибок",
-    "2": "Машина не может набрать воду",
-    "3": "Стиральная машина не сливает воду",
-    "4": "Слишком много пены и/или воды",
-    "7": "Проблема с дверцей",
-}
-
-LANG_MAP = {
-    "7": "Русский",
-}
 
 
 async def async_setup_entry(
@@ -128,7 +81,7 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._key = key
         self._entry = entry
-        self._attr_name = f"{entry.title} {name}"
+        self._attr_name = name
         self._attr_unique_id = f"{entry.entry_id}_{key}"
         self._attr_icon = icon
         self._attr_device_class = device_class
@@ -247,14 +200,8 @@ class BiancaSoilLevelSensor(BiancaBaseSensor):
         
         if str_value == "0":
             return None
-        elif str_value == "1":
-            return "Низкий"
-        elif str_value == "2":
-            return "Средний"
-        elif str_value == "3":
-            return "Высокий"
-        else:
-            return str_value
+        
+        return SOIL_LEVEL_MAP.get(str_value, str_value)
 
 
 class BiancaTemperatureSensor(BiancaBaseSensor):
@@ -296,10 +243,27 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
         super().__init__(
             coordinator, entry, "RemTime", "Оставшееся время", "mdi:timer-outline",
-            device_class=SensorDeviceClass.DURATION,
-            state_class=SensorStateClass.MEASUREMENT,
-            unit=UnitOfTime.SECONDS
+            unit=None
         )
+
+    @property
+    def native_value(self):
+        """Return remaining time as HH:MM."""
+        value = super().native_value
+        if value is None:
+            return None
+        
+        try:
+            seconds = int(value)
+            if seconds <= 0:
+                return "00:00"
+            
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            
+            return f"{hours:02d}:{minutes:02d}"
+        except (ValueError, TypeError):
+            return value
 
 
 class BiancaDelayStartSensor(BiancaBaseSensor):
