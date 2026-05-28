@@ -18,6 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 
 STEP_DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_IP_ADDRESS): str,
+    vol.Optional("device_name", default="Bianca"): str,
 })
 
 
@@ -61,8 +62,11 @@ class BiancaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         
         if connected:
             return self.async_create_entry(
-                title=CONF_INTEGRATION_TITLE, 
-                data={CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS]}
+                title=user_input.get("device_name", CONF_INTEGRATION_TITLE),
+                data={
+                    CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS],
+                    "device_name": user_input.get("device_name", CONF_INTEGRATION_TITLE),
+                }
             )
         else:
             errors["base"] = "cannot_connect"
