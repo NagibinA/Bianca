@@ -3,9 +3,14 @@
     "step": {
       "user": {
         "title": "Bianca",
-        "description": "Введите IP-адрес стиральной машины",
+        "description": "Настройка стиральной машины Bianca",
         "data": {
-          "ip_address": "IP-адрес"
+          "ip_address": "IP-адрес",
+          "device_name": "Название устройства"
+        },
+        "data_description": {
+          "ip_address": "Например: 192.168.1.31",
+          "device_name": "Как будет называться устройство в Home Assistant"
         }
       }
     },
