@@ -1,6 +1,5 @@
 """Data coordinator for Bianca integration."""
 
-import asyncio
 import logging
 from datetime import timedelta
 
@@ -26,31 +25,20 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         )
         self.ip_address = ip_address
         self._url = API_ENDPOINT.format(ip_address)
-        self._session = None
-
-    @property
-    def session(self):
-        """Get the client session."""
-        if self._session is None:
-            self._session = aiohttp_client.async_get_clientsession(self.hass)
-        return self._session
 
     async def _async_update_data(self) -> dict:
         """Fetch data from the device."""
+        session = aiohttp_client.async_get_clientsession(self.hass)
+        
         try:
-            async with asyncio.timeout(10):
-                _LOGGER.debug("Fetching data from %s", self._url)
-                async with self.session.get(self._url) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        _LOGGER.debug("Received data: %s", data)
-                        return data.get("statusLavatrice", {})
-                    else:
-                        _LOGGER.warning("HTTP error %s from %s", response.status, self._url)
-                        raise UpdateFailed(f"HTTP error {response.status}")
-        except TimeoutError:
-            _LOGGER.warning("Timeout connecting to %s", self._url)
-            raise UpdateFailed("Timeout connecting to device")
+            _LOGGER.debug("Fetching data from %s", self._url)
+            async with session.get(self._url, timeout=10) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    _LOGGER.debug("Received data: %s", data)
+                    return data.get("statusLavatrice", {})
+                else:
+                    raise UpdateFailed(f"HTTP error {response.status}")
         except Exception as err:
-            _LOGGER.warning("Error connecting to %s: %s", self._url, err)
-            raise UpdateFailed(f"Connection error: {err}")
+            _LOGGER.error("Error fetching data: %s", err)
+            raise UpdateFailed(f"Error fetching data: {err}")
