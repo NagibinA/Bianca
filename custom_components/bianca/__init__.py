@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
+from .const import DOMAIN, PLATFORMS
 from .coordinator import BiancaDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
