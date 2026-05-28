@@ -104,18 +104,18 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
 
 
 class BiancaWiFiStatusSensor(BiancaBaseSensor):
-    """WiFi status sensor."""
+    """Remote control status sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "WiFiStatus", "WiFi статус", "mdi:wifi")
+        super().__init__(coordinator, entry, "WiFiStatus", "Удаленное управление", "mdi:wifi")
 
     @property
     def native_value(self):
         value = super().native_value
         if value == "1":
-            return "Управление разрешено"
+            return "Вкл"
         elif value == "0":
-            return "Управление запрещено"
+            return "Выкл"
         return value
 
 
