@@ -63,9 +63,9 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
         _LOGGER.warning("Icon file not found: %s", icons_path)
         return
     
-    # Путь в www/community/
-    www_dir = hass.config.path("www/community")
-    www_icons_path = hass.config.path("www/community/bianca-icons.js")
+    # Путь в www/community/bianca/
+    www_dir = hass.config.path("www/community/bianca")
+    www_icons_path = hass.config.path("www/community/bianca/bianca-icons.js")
     
     # Копируем файл, если его нет
     if not os.path.exists(www_icons_path):
@@ -78,7 +78,7 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
             return
     
     # Регистрируем URL иконок
-    add_extra_js_url(hass, "/local/community/bianca-icons.js")
+    add_extra_js_url(hass, "/local/community/bianca/bianca-icons.js")
     
     hass.data["bianca_icons_registered"] = True
     _LOGGER.info("Registered custom icons for Bianca")
