@@ -1,7 +1,6 @@
 """Binary sensor for Bianca device availability."""
 from __future__ import annotations
 
-import asyncio
 import logging
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
@@ -12,7 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import BiancaDataUpdateCoordinator
+from . import BiancaDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
