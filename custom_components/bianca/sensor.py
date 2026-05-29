@@ -396,7 +396,7 @@ class BiancaRinseSensor(BiancaBaseSensor):
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
         super().__init__(
-            coordinator, entry, None, "Полоскание", "bianca:rinse-1",
+            coordinator, entry, None, "Полоскание", "mdi:water-off",
         )
 
     @property
@@ -412,6 +412,20 @@ class BiancaRinseSensor(BiancaBaseSensor):
         elif self.coordinator.data.get("Opt7") == "1":
             return "Три"
         return ""
+
+    @property
+    def icon(self):
+        """Return icon based on active rinse."""
+        if self.coordinator.data is None:
+            return "mdi:water-off"
+        
+        if self.coordinator.data.get("Opt5") == "1":
+            return "bianca:rinse-1"
+        elif self.coordinator.data.get("Opt6") == "1":
+            return "bianca:rinse-2"
+        elif self.coordinator.data.get("Opt7") == "1":
+            return "bianca:rinse-3"
+        return "mdi:water-off"
 
 
 class BiancaAquaPlusSensor(BiancaBaseSensor):
