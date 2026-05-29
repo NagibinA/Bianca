@@ -34,8 +34,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         name=device_name,
         manufacturer="Candy",
         model="Bianca",
-        sw_version="1.0",
-        configuration_url=f"http://{ip_address}",
+        configuration_url=f"http://{ip_address}/http-read.json?encrypted=0",
     )
     
     entry.runtime_data = coordinator
