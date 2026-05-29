@@ -26,13 +26,6 @@ async def async_setup_entry(
     ip_address = entry.data[CONF_IP_ADDRESS]
     sensor = BiancaPingBinarySensor(entry, ip_address)
     async_add_entities([sensor], True)
-    
-    # Запускаем периодическую проверку ping
-    async def async_update_ping(now=None):
-        await sensor.async_update()
-    
-    # Обновляем каждые 30 секунд
-    async_track_time_interval(hass, async_update_ping, timedelta(seconds=30))
 
 
 class BiancaPingBinarySensor(BinarySensorEntity):
@@ -44,9 +37,8 @@ class BiancaPingBinarySensor(BinarySensorEntity):
         self._ip_address = ip_address
         self._attr_name = f"{entry.title} Доступность"
         self._attr_unique_id = f"{entry.entry_id}_ping"
-        self._attr_icon = "mdi:network"
-        self._attr_device_class = "connectivity"
-        self._available = False
+        self._state = None
+        self._unsub_update = None
 
     @property
     def device_info(self):
@@ -56,21 +48,41 @@ class BiancaPingBinarySensor(BinarySensorEntity):
         }
 
     @property
-    def is_on(self) -> bool:
+    def is_on(self) -> bool | None:
         """Return true if device is online."""
-        return self._available
+        return self._state
 
-    async def async_update(self) -> None:
+    @property
+    def icon(self):
+        """Return icon based on state."""
+        if self._state is True:
+            return "mdi:network"
+        return "mdi:network-off"
+
+    async def async_update_ping(self, now=None) -> None:
         """Ping the device."""
         try:
-            # Асинхронный ping через subprocess
             process = await asyncio.create_subprocess_exec(
                 "ping", "-c", "1", "-W", "2", self._ip_address,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
             await process.communicate()
-            self._available = process.returncode == 0
+            self._state = process.returncode == 0
         except Exception as e:
             _LOGGER.error("Ping failed for %s: %s", self._ip_address, e)
-            self._available = False
+            self._state = False
+        
+        self.async_write_ha_state()
+
+    async def async_added_to_hass(self) -> None:
+        """Start polling when entity is added."""
+        await self.async_update_ping()
+        self._unsub_update = async_track_time_interval(
+            self.hass, self.async_update_ping, timedelta(seconds=30)
+        )
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Stop polling when entity is removed."""
+        if self._unsub_update:
+            self._unsub_update()
