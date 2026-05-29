@@ -248,10 +248,22 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        """Return remaining time as HH:MM."""
-        value = super().native_value
-        if value is None:
+        """Return remaining time as HH:MM only if machine is running or paused."""
+        if self.coordinator.data is None:
             return None
+        
+        # Проверяем состояние машины
+        machine_state = self.coordinator.data.get("MachMd")
+        
+        # Показываем время только если машина работает (2) или на паузе (3)
+        if machine_state not in ["2", "3"]:
+            return "00:00"
+        
+        # Получаем оставшееся время
+        value = self.coordinator.data.get("RemTime")
+        
+        if value is None:
+            return "00:00"
         
         try:
             seconds = int(value)
@@ -263,7 +275,7 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
             
             return f"{hours:02d}:{minutes:02d}"
         except (ValueError, TypeError):
-            return value
+            return "00:00"
 
 
 class BiancaDelayStartSensor(BiancaBaseSensor):
