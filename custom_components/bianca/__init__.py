@@ -26,11 +26,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ip_address = entry.data[CONF_IP_ADDRESS]
     device_name = entry.data.get("device_name", "Bianca")
     
+    # Регистрируем кастомные иконки
     await async_register_custom_icons(hass)
     
     coordinator = BiancaDataUpdateCoordinator(hass, ip_address)
     await coordinator.async_config_entry_first_refresh()
     
+    # Создаём устройство
     device_registry = async_get_device_registry(hass)
     device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
@@ -50,18 +52,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_register_custom_icons(hass: HomeAssistant) -> None:
     """Register custom icons from integration folder."""
+    # Проверяем, зарегистрированы ли уже иконки
     if hasattr(hass.data, "bianca_icons_registered"):
         return
     
+    # Путь к файлу иконок внутри интеграции
     icons_path = hass.config.path("custom_components/bianca/bianca-icons.js")
     
     if not os.path.exists(icons_path):
         _LOGGER.warning("Icon file not found: %s", icons_path)
         return
     
-    www_dir = hass.config.path("www/community/bianca")
-    www_icons_path = hass.config.path("www/community/bianca/bianca-icons.js")
+    # Путь в www/community/
+    www_dir = hass.config.path("www/community")
+    www_icons_path = hass.config.path("www/community/bianca-icons.js")
     
+    # Копируем файл, если его нет
     if not os.path.exists(www_icons_path):
         try:
             os.makedirs(www_dir, exist_ok=True)
@@ -71,7 +77,8 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
             _LOGGER.error("Failed to copy icons: %s", e)
             return
     
-    add_extra_js_url(hass, "/local/community/bianca/bianca-icons.js")
+    # Регистрируем URL иконок
+    add_extra_js_url(hass, "/local/community/bianca-icons.js")
     
     hass.data["bianca_icons_registered"] = True
     _LOGGER.info("Registered custom icons for Bianca")
