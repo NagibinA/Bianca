@@ -131,7 +131,6 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
         _LOGGER.debug("Icons are up to date, skipping copy")
     
     # Регистрируем URL иконок (только один раз)
-    # Проверяем, не зарегистрирован ли уже этот URL
     if "bianca_icons_registered" not in hass.data:
         try:
             add_extra_js_url(hass, "/local/community/bianca/bianca-icons.js")
