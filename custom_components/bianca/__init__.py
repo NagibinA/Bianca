@@ -71,19 +71,59 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     # Путь в www/community/bianca/
     www_dir = hass.config.path("www/community/bianca")
     www_icons_path = hass.config.path("www/community/bianca/bianca-icons.js")
-    _LOGGER.debug("Target path: %s", www_icons_path)
+    version_file_path = hass.config.path("www/community/bianca/version.txt")
     
-    # Всегда копируем (перезаписываем) файл иконок
+    # Текущая версия интеграции из manifest.json
+    manifest_path = hass.config.path("custom_components/bianca/manifest.json")
+    current_version = "1.0.0"
     try:
-        os.makedirs(www_dir, exist_ok=True)
-        _LOGGER.debug("Created directory: %s", www_dir)
-        
-        # Выполняем копирование в потоке (не блокируем event loop)
-        await asyncio.to_thread(shutil.copy2, icons_path, www_icons_path)
-        _LOGGER.info("Copied/overwrote icons to %s", www_icons_path)
+        with open(manifest_path, "r") as f:
+            manifest = json.load(f)
+            current_version = manifest.get("version", "1.0.0")
     except Exception as e:
-        _LOGGER.error("Failed to copy icons: %s", e)
-        return
+        _LOGGER.warning("Failed to read manifest: %s", e)
+    
+    # Проверяем, нужно ли обновлять иконки
+    need_copy = False
+    if not os.path.exists(www_icons_path):
+        need_copy = True
+        _LOGGER.debug("Icon file doesn't exist, will copy")
+    elif os.path.exists(version_file_path):
+        try:
+            with open(version_file_path, "r") as f:
+                saved_version = f.read().strip()
+            if saved_version != current_version:
+                need_copy = True
+                _LOGGER.debug("Version mismatch: %s vs %s, will update", saved_version, current_version)
+            else:
+                _LOGGER.debug("Version match: %s, no update needed", current_version)
+        except Exception as e:
+            _LOGGER.warning("Failed to read version file: %s", e)
+            need_copy = True
+    else:
+        need_copy = True
+        _LOGGER.debug("Version file doesn't exist, will copy")
+    
+    # Копируем если нужно
+    if need_copy:
+        try:
+            os.makedirs(www_dir, exist_ok=True)
+            _LOGGER.debug("Created directory: %s", www_dir)
+            
+            # Выполняем копирование в потоке
+            await asyncio.to_thread(shutil.copy2, icons_path, www_icons_path)
+            _LOGGER.info("Copied icons to %s", www_icons_path)
+            
+            # Сохраняем версию
+            version_file_path = hass.config.path("www/community/bianca/version.txt")
+            with open(version_file_path, "w") as f:
+                f.write(current_version)
+            _LOGGER.debug("Saved version: %s", current_version)
+        except Exception as e:
+            _LOGGER.error("Failed to copy icons: %s", e)
+            return
+    else:
+        _LOGGER.debug("Icons are up to date, skipping copy")
     
     # Регистрируем URL иконок
     try:
