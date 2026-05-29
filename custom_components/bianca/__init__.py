@@ -31,9 +31,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_register_custom_icons(hass)
     
     coordinator = BiancaDataUpdateCoordinator(hass, ip_address)
-    await coordinator.async_config_entry_first_refresh()
     
-    # Создаём устройство
+    # Пытаемся получить данные, но не блокируем загрузку интеграции при ошибке
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except Exception as e:
+        _LOGGER.warning(f"Initial connection to {ip_address} failed: {e}. Integration will load anyway.")
+    
+    # Создаём устройство (всегда, даже если нет связи)
     device_registry = async_get_device_registry(hass)
     device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
