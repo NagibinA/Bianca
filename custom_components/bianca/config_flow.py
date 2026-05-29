@@ -58,21 +58,17 @@ class BiancaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         errors = {}
         
+        # Проверяем соединение, но не блокируем создание интеграции при ошибке
         connected = await test_connection(self.hass, user_input[CONF_IP_ADDRESS])
         
-        if connected:
-            return self.async_create_entry(
-                title=user_input.get("device_name", CONF_INTEGRATION_TITLE),
-                data={
-                    CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS],
-                    "device_name": user_input.get("device_name", CONF_INTEGRATION_TITLE),
-                }
-            )
-        else:
-            errors["base"] = "cannot_connect"
-
-        return self.async_show_form(
-            step_id="user", 
-            data_schema=STEP_DATA_SCHEMA, 
-            errors=errors
+        if not connected:
+            _LOGGER.warning(f"Cannot connect to {user_input[CONF_IP_ADDRESS]}, but creating integration anyway")
+            # Не показываем ошибку, просто предупреждаем в логе
+        
+        return self.async_create_entry(
+            title=user_input.get("device_name", CONF_INTEGRATION_TITLE),
+            data={
+                CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS],
+                "device_name": user_input.get("device_name", CONF_INTEGRATION_TITLE),
+            }
         )
