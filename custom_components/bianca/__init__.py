@@ -73,7 +73,7 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     www_icons_path = hass.config.path("www/community/bianca/bianca-icons.js")
     version_file_path = hass.config.path("www/community/bianca/version.txt")
     
-    # Текущая версия интеграции из manifest.json (читаем в потоке)
+    # Текущая версия интеграции из manifest.json
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
     current_version = "1.0.0"
     try:
