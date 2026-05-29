@@ -73,7 +73,7 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     www_icons_path = hass.config.path("www/community/bianca/bianca-icons.js")
     version_file_path = hass.config.path("www/community/bianca/version.txt")
     
-    # Текущая версия интеграции из manifest.json
+    # Текущая версия интеграции из manifest.json (читаем в потоке)
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
     current_version = "1.0.0"
     try:
@@ -118,7 +118,7 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
             await asyncio.to_thread(shutil.copy2, icons_path, www_icons_path)
             _LOGGER.info("Copied icons to %s", www_icons_path)
             
-            # Сохраняем версию
+            # Сохраняем версию в потоке
             def write_version():
                 with open(version_file_path, "w") as f:
                     f.write(current_version)
@@ -130,13 +130,15 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     else:
         _LOGGER.debug("Icons are up to date, skipping copy")
     
-    # Регистрируем URL иконок
-    try:
-        add_extra_js_url(hass, "/local/community/bianca/bianca-icons.js")
-        _LOGGER.info("Registered extra JS URL: /local/community/bianca/bianca-icons.js")
-    except Exception as e:
-        _LOGGER.error("Failed to register extra JS URL: %s", e)
-        return
+    # Регистрируем URL иконок (только один раз)
+    # Проверяем, не зарегистрирован ли уже этот URL
+    if "bianca_icons_registered" not in hass.data:
+        try:
+            add_extra_js_url(hass, "/local/community/bianca/bianca-icons.js")
+            _LOGGER.info("Registered extra JS URL: /local/community/bianca/bianca-icons.js")
+        except Exception as e:
+            _LOGGER.error("Failed to register extra JS URL: %s", e)
+            return
     
     hass.data["bianca_icons_registered"] = True
     _LOGGER.info("Registered custom icons for Bianca")
