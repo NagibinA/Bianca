@@ -53,9 +53,7 @@ async def async_setup_entry(
         BiancaHygienicSensor(coordinator, entry),
         BiancaAntiCreaseSensor(coordinator, entry),
         BiancaNightSpinSensor(coordinator, entry),
-        BiancaRinse1Sensor(coordinator, entry),
-        BiancaRinse2Sensor(coordinator, entry),
-        BiancaRinse3Sensor(coordinator, entry),
+        BiancaRinseSensor(coordinator, entry),
         BiancaAquaPlusSensor(coordinator, entry),
         BiancaZoomSensor(coordinator, entry),
     ]
@@ -70,7 +68,7 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         self, 
         coordinator: BiancaDataUpdateCoordinator, 
         entry: ConfigEntry,
-        key: str,
+        key: str | None,
         name: str,
         icon: str,
         device_class: SensorDeviceClass | None = None,
@@ -82,7 +80,7 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         self._key = key
         self._entry = entry
         self._attr_name = name
-        self._attr_unique_id = f"{entry.entry_id}_{key}"
+        self._attr_unique_id = f"{entry.entry_id}_{name}"
         self._attr_icon = icon
         self._attr_device_class = device_class
         self._attr_state_class = state_class
@@ -99,6 +97,8 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         if self.coordinator.data is None:
+            return None
+        if self._key is None:
             return None
         return self.coordinator.data.get(self._key)
 
@@ -391,40 +391,27 @@ class BiancaNightSpinSensor(BiancaBaseSensor):
         return "Включен" if value == "1" else "Выключен"
 
 
-class BiancaRinse1Sensor(BiancaBaseSensor):
-    """Rinse 1 option sensor."""
+class BiancaRinseSensor(BiancaBaseSensor):
+    """Rinse sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt5", "Полоскание 1", "bianca:rinse-1")
+        super().__init__(
+            coordinator, entry, None, "Полоскание", "bianca:rinse-1",
+        )
 
     @property
     def native_value(self):
-        value = super().native_value
-        return "Включен" if value == "1" else "Выключен"
-
-
-class BiancaRinse2Sensor(BiancaBaseSensor):
-    """Rinse 2 option sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt6", "Полоскание 2", "bianca:rinse-2")
-
-    @property
-    def native_value(self):
-        value = super().native_value
-        return "Включен" if value == "1" else "Выключен"
-
-
-class BiancaRinse3Sensor(BiancaBaseSensor):
-    """Rinse 3 option sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt7", "Полоскание 3", "bianca:rinse-3")
-
-    @property
-    def native_value(self):
-        value = super().native_value
-        return "Включен" if value == "1" else "Выключен"
+        """Return which rinse is active or empty string."""
+        if self.coordinator.data is None:
+            return ""
+        
+        if self.coordinator.data.get("Opt5") == "1":
+            return "Одно"
+        elif self.coordinator.data.get("Opt6") == "1":
+            return "Два"
+        elif self.coordinator.data.get("Opt7") == "1":
+            return "Три"
+        return ""
 
 
 class BiancaAquaPlusSensor(BiancaBaseSensor):
