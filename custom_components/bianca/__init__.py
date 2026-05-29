@@ -5,8 +5,8 @@ import json
 import logging
 import os
 import shutil
-from datetime import timedelta
 import asyncio
+from datetime import timedelta
 
 import async_timeout
 from homeassistant.config_entries import ConfigEntry
@@ -73,20 +73,17 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     www_icons_path = hass.config.path("www/community/bianca/bianca-icons.js")
     _LOGGER.debug("Target path: %s", www_icons_path)
     
-    # Копируем файл в отдельном потоке (не блокируем event loop)
-    if not os.path.exists(www_icons_path):
-        try:
-            os.makedirs(www_dir, exist_ok=True)
-            _LOGGER.debug("Created directory: %s", www_dir)
-            
-            # Выполняем копирование в потоке
-            await asyncio.to_thread(shutil.copy2, icons_path, www_icons_path)
-            _LOGGER.info("Copied icons to %s", www_icons_path)
-        except Exception as e:
-            _LOGGER.error("Failed to copy icons: %s", e)
-            return
-    else:
-        _LOGGER.debug("Icons already exist at: %s", www_icons_path)
+    # Всегда копируем (перезаписываем) файл иконок
+    try:
+        os.makedirs(www_dir, exist_ok=True)
+        _LOGGER.debug("Created directory: %s", www_dir)
+        
+        # Выполняем копирование в потоке (не блокируем event loop)
+        await asyncio.to_thread(shutil.copy2, icons_path, www_icons_path)
+        _LOGGER.info("Copied/overwrote icons to %s", www_icons_path)
+    except Exception as e:
+        _LOGGER.error("Failed to copy icons: %s", e)
+        return
     
     # Регистрируем URL иконок
     try:
