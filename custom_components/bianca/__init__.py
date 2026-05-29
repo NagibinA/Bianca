@@ -73,13 +73,15 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     www_icons_path = hass.config.path("www/community/bianca/bianca-icons.js")
     version_file_path = hass.config.path("www/community/bianca/version.txt")
     
-    # Текущая версия интеграции из manifest.json
+    # Текущая версия интеграции из manifest.json (читаем в потоке)
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
     current_version = "1.0.0"
     try:
-        with open(manifest_path, "r") as f:
-            manifest = json.load(f)
-            current_version = manifest.get("version", "1.0.0")
+        def read_manifest():
+            with open(manifest_path, "r") as f:
+                return json.load(f)
+        manifest = await asyncio.to_thread(read_manifest)
+        current_version = manifest.get("version", "1.0.0")
     except Exception as e:
         _LOGGER.warning("Failed to read manifest: %s", e)
     
@@ -90,8 +92,10 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
         _LOGGER.debug("Icon file doesn't exist, will copy")
     elif os.path.exists(version_file_path):
         try:
-            with open(version_file_path, "r") as f:
-                saved_version = f.read().strip()
+            def read_version():
+                with open(version_file_path, "r") as f:
+                    return f.read().strip()
+            saved_version = await asyncio.to_thread(read_version)
             if saved_version != current_version:
                 need_copy = True
                 _LOGGER.debug("Version mismatch: %s vs %s, will update", saved_version, current_version)
@@ -115,9 +119,10 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
             _LOGGER.info("Copied icons to %s", www_icons_path)
             
             # Сохраняем версию
-            version_file_path = hass.config.path("www/community/bianca/version.txt")
-            with open(version_file_path, "w") as f:
-                f.write(current_version)
+            def write_version():
+                with open(version_file_path, "w") as f:
+                    f.write(current_version)
+            await asyncio.to_thread(write_version)
             _LOGGER.debug("Saved version: %s", current_version)
         except Exception as e:
             _LOGGER.error("Failed to copy icons: %s", e)
