@@ -6,6 +6,7 @@ import logging
 import os
 import shutil
 from datetime import timedelta
+import asyncio
 
 import async_timeout
 from homeassistant.config_entries import ConfigEntry
@@ -54,31 +55,46 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     """Register custom icons from integration folder."""
     # Проверяем, зарегистрированы ли уже иконки
     if hasattr(hass.data, "bianca_icons_registered"):
+        _LOGGER.debug("Icons already registered")
         return
     
     # Путь к файлу иконок внутри интеграции
     icons_path = hass.config.path("custom_components/bianca/bianca-icons.js")
+    _LOGGER.debug("Looking for icons at: %s", icons_path)
     
     if not os.path.exists(icons_path):
         _LOGGER.warning("Icon file not found: %s", icons_path)
         return
     
+    _LOGGER.info("Found icons file at: %s", icons_path)
+    
     # Путь в www/community/bianca/
     www_dir = hass.config.path("www/community/bianca")
     www_icons_path = hass.config.path("www/community/bianca/bianca-icons.js")
+    _LOGGER.debug("Target path: %s", www_icons_path)
     
-    # Копируем файл, если его нет
+    # Копируем файл в отдельном потоке (не блокируем event loop)
     if not os.path.exists(www_icons_path):
         try:
             os.makedirs(www_dir, exist_ok=True)
-            shutil.copy2(icons_path, www_icons_path)
+            _LOGGER.debug("Created directory: %s", www_dir)
+            
+            # Выполняем копирование в потоке
+            await asyncio.to_thread(shutil.copy2, icons_path, www_icons_path)
             _LOGGER.info("Copied icons to %s", www_icons_path)
         except Exception as e:
             _LOGGER.error("Failed to copy icons: %s", e)
             return
+    else:
+        _LOGGER.debug("Icons already exist at: %s", www_icons_path)
     
     # Регистрируем URL иконок
-    add_extra_js_url(hass, "/local/community/bianca/bianca-icons.js")
+    try:
+        add_extra_js_url(hass, "/local/community/bianca/bianca-icons.js")
+        _LOGGER.info("Registered extra JS URL: /local/community/bianca/bianca-icons.js")
+    except Exception as e:
+        _LOGGER.error("Failed to register extra JS URL: %s", e)
+        return
     
     hass.data["bianca_icons_registered"] = True
     _LOGGER.info("Registered custom icons for Bianca")
