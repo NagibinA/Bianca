@@ -104,7 +104,7 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
 
 
 class BiancaWiFiStatusSensor(BiancaBaseSensor):
-    """Remote control status sensor."""
+    """WiFi status sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
         super().__init__(coordinator, entry, "WiFiStatus", "Удаленное управление", "mdi:wifi")
@@ -221,7 +221,7 @@ class BiancaSpinSpeedSensor(BiancaBaseSensor):
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
         super().__init__(
-            coordinator, entry, "SpinSp", "Скорость отжима", "mdi:sync",
+            coordinator, entry, "SpinSp", "Скорость отжима", "bianca:spin",
             state_class=SensorStateClass.MEASUREMENT,
             unit=None
         )
@@ -283,7 +283,7 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
         super().__init__(
-            coordinator, entry, "DelVal", "Отложенный старт", "mdi:calendar-clock",
+            coordinator, entry, "DelVal", "Отложенный старт", "bianca:delay",
             device_class=SensorDeviceClass.DURATION,
             state_class=SensorStateClass.MEASUREMENT,
             unit=UnitOfTime.SECONDS
@@ -308,7 +308,7 @@ class BiancaSteamSensor(BiancaBaseSensor):
     """Steam sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Steam", "Пар", "mdi:water-vapor")
+        super().__init__(coordinator, entry, "Steam", "Пар", "bianca:steam")
 
     @property
     def native_value(self):
@@ -320,7 +320,7 @@ class BiancaPreWashSensor(BiancaBaseSensor):
     """Pre-wash option sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt1", "Предварительная стирка", "mdi:tshirt-crew")
+        super().__init__(coordinator, entry, "Opt1", "Предварительная стирка", "bianca:pre-wash")
 
     @property
     def native_value(self):
@@ -332,7 +332,7 @@ class BiancaHygienicSensor(BiancaBaseSensor):
     """Hygienic wash option sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt2", "Гигиеническая стирка", "mdi:disinfectant")
+        super().__init__(coordinator, entry, "Opt2", "Гигиеническая стирка", "bianca:hygiene-wash")
 
     @property
     def native_value(self):
@@ -344,7 +344,7 @@ class BiancaAntiCreaseSensor(BiancaBaseSensor):
     """Anti-crease option sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt3", "Анти сминание", "mdi:iron")
+        super().__init__(coordinator, entry, "Opt3", "Анти сминание", "bianca:anti-crease")
 
     @property
     def native_value(self):
@@ -356,7 +356,7 @@ class BiancaNightSpinSensor(BiancaBaseSensor):
     """Night spin option sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt4", "Ночной отжим", "mdi:weather-night")
+        super().__init__(coordinator, entry, "Opt4", "Ночной отжим", "bianca:night-spin")
 
     @property
     def native_value(self):
@@ -368,7 +368,7 @@ class BiancaRinse1Sensor(BiancaBaseSensor):
     """Rinse 1 option sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt5", "Полоскание 1", "mdi:water")
+        super().__init__(coordinator, entry, "Opt5", "Полоскание 1", "bianca:rinse-1")
 
     @property
     def native_value(self):
@@ -380,7 +380,7 @@ class BiancaRinse2Sensor(BiancaBaseSensor):
     """Rinse 2 option sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt6", "Полоскание 2", "mdi:water")
+        super().__init__(coordinator, entry, "Opt6", "Полоскание 2", "bianca:rinse-2")
 
     @property
     def native_value(self):
@@ -392,7 +392,7 @@ class BiancaRinse3Sensor(BiancaBaseSensor):
     """Rinse 3 option sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt7", "Полоскание 3", "mdi:water")
+        super().__init__(coordinator, entry, "Opt7", "Полоскание 3", "bianca:rinse-3")
 
     @property
     def native_value(self):
@@ -404,7 +404,7 @@ class BiancaAquaPlusSensor(BiancaBaseSensor):
     """Aqua plus option sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt8", "Акваплюс", "mdi:water-plus")
+        super().__init__(coordinator, entry, "Opt8", "Акваплюс", "bianca:extra-water")
 
     @property
     def native_value(self):
@@ -416,7 +416,7 @@ class BiancaZoomSensor(BiancaBaseSensor):
     """ZOOM mode sensor."""
 
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt9", "Режим ZOOM", "mdi:magnify")
+        super().__init__(coordinator, entry, "Opt9", "Режим ZOOM", "bianca:zoom")
 
     @property
     def native_value(self):
