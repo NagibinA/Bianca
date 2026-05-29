@@ -11,6 +11,7 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import DOMAIN
 
@@ -28,7 +29,7 @@ async def async_setup_entry(
     async_add_entities([sensor], True)
 
 
-class BiancaPingBinarySensor(BinarySensorEntity):
+class BiancaPingBinarySensor(RestoreEntity, BinarySensorEntity):
     """Binary sensor for device availability via ping."""
 
     def __init__(self, entry: ConfigEntry, ip_address: str) -> None:
@@ -77,7 +78,15 @@ class BiancaPingBinarySensor(BinarySensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """Start polling when entity is added."""
+        # Восстанавливаем предыдущее состояние
+        old_state = await self.async_get_last_state()
+        if old_state is not None:
+            self._state = old_state.state == "on"
+        
+        # Запускаем первый ping
         await self.async_update_ping()
+        
+        # Настраиваем периодическое обновление
         self._unsub_update = async_track_time_interval(
             self.hass, self.async_update_ping, timedelta(seconds=30)
         )
