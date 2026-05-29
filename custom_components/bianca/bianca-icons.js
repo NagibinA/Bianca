@@ -29,17 +29,8 @@ const BIANCA_ICONS = {
 };
 
 async function getIcon(name) {
-  return { path: BIANCA_ICONS[name.replace(/_/g,'-')] };
+  return { path: BIANCA_ICONS[name] };
 }
 
-async function getIconList() {
-  return Object.keys(BIANCA_ICONS).map(icon => ({name: icon}));
-}
-
-if (!window.frontendVersion || window.frontendVersion <= 20211027.0){
-  window.customIconsets = window.customIconsets || {};
-  window.customIconsets["bianca"] = getIcon;
-}else{
-  window.customIcons = window.customIcons || {};
-  window.customIcons["bianca"] = { getIcon, getIconList };
-}
+window.customIconsets = window.customIconsets || {};
+window.customIconsets["bianca"] = getIcon;
