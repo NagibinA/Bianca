@@ -284,10 +284,37 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
     def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
         super().__init__(
             coordinator, entry, "DelVal", "Отложенный старт", "bianca:delay",
-            device_class=SensorDeviceClass.DURATION,
-            state_class=SensorStateClass.MEASUREMENT,
-            unit=UnitOfTime.SECONDS
+            unit=None
         )
+
+    @property
+    def native_value(self):
+        """Return delay start time as HH:MM or empty string."""
+        if self.coordinator.data is None:
+            return ""
+        
+        machine_state = self.coordinator.data.get("MachMd")
+        
+        # Показываем время только если состояние 4 (Выбор отложенного запуска)
+        if machine_state != "4":
+            return ""
+        
+        value = self.coordinator.data.get("DelVal")
+        
+        if value is None:
+            return ""
+        
+        try:
+            seconds = int(value)
+            if seconds <= 0:
+                return ""
+            
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            
+            return f"{hours:02d}:{minutes:02d}"
+        except (ValueError, TypeError):
+            return ""
 
 
 class BiancaLanguageSensor(BiancaBaseSensor):
