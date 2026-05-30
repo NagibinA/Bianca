@@ -126,7 +126,7 @@ async def async_register_assets(hass: HomeAssistant) -> None:
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "1.0.16")
+        current_version = manifest.get("version", "1.0.17")
     except Exception as e:
         _LOGGER.warning("Failed to read manifest: %s", e)
     
