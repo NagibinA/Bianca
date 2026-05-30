@@ -27,10 +27,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ip_address = entry.data[CONF_IP_ADDRESS]
     device_name = entry.data.get("device_name", "Bianca")
     
+    # Инициализируем хранилище статуса доступности
+    if DOMAIN not in hass.data:
+        hass.data[DOMAIN] = {}
+    if entry.entry_id not in hass.data[DOMAIN]:
+        hass.data[DOMAIN][entry.entry_id] = {}
+    hass.data[DOMAIN][entry.entry_id]["available"] = False
+    
     # Регистрируем кастомные иконки
     await async_register_custom_icons(hass)
     
-    coordinator = BiancaDataUpdateCoordinator(hass, ip_address)
+    coordinator = BiancaDataUpdateCoordinator(hass, ip_address, entry.entry_id)
+    
+    # Сохраняем ссылку на координатор в глобальном хранилище
+    hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
     
     # Пытаемся получить данные, но не блокируем загрузку интеграции при ошибке
     try:
@@ -80,13 +90,13 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     
     # Текущая версия интеграции из manifest.json (читаем в потоке)
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
-    current_version = "1.0.0"
+    current_version = "1.0.14"
     try:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "1.0.0")
+        current_version = manifest.get("version", "1.0.14")
     except Exception as e:
         _LOGGER.warning("Failed to read manifest: %s", e)
     
@@ -150,13 +160,17 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    # Очищаем хранилище статуса доступности
+    if DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
+        del hass.data[DOMAIN][entry.entry_id]
+    
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
 class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the device."""
 
-    def __init__(self, hass: HomeAssistant, ip_address: str) -> None:
+    def __init__(self, hass: HomeAssistant, ip_address: str, entry_id: str) -> None:
         """Initialize."""
         super().__init__(
             hass,
@@ -167,20 +181,22 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         self.ip_address = ip_address
         self._url = API_ENDPOINT.format(ip_address)
         self._last_valid_data = None
-        self._last_raw_response = None
-        self.is_available = True
+        self._entry_id = entry_id
 
-    def set_availability(self, is_available: bool) -> None:
-        """Set device availability."""
-        self.is_available = is_available
-        self.async_update_listeners()
-
-    def get_last_raw_response(self) -> str | None:
-        """Return last raw response from device."""
-        return self._last_raw_response
+    @property
+    def device_available(self) -> bool:
+        """Return device availability status from global storage."""
+        return self.hass.data.get(DOMAIN, {}).get(self._entry_id, {}).get("available", False)
 
     async def _async_update_data(self) -> dict:
         """Fetch data from device."""
+        # Если устройство недоступно, не пытаемся опрашивать
+        if not self.device_available:
+            _LOGGER.debug("Device not available, skipping data update")
+            if self._last_valid_data is not None:
+                return self._last_valid_data
+            return {}
+        
         session = async_get_clientsession(self.hass)
         
         try:
@@ -188,13 +204,15 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                 async with session.get(self._url) as response:
                     if response.status == 200:
                         text = await response.text()
-                        self._last_raw_response = text
                         try:
                             data = json.loads(text)
+                            # Проверяем наличие statusLavatrice
                             if "statusLavatrice" in data:
                                 self._last_valid_data = data.get("statusLavatrice", {})
                                 return self._last_valid_data
                             else:
+                                # BAD REQUEST или другой невалидный ответ
+                                _LOGGER.debug("Invalid response (no statusLavatrice): %s", text[:200])
                                 if self._last_valid_data is not None:
                                     return self._last_valid_data
                                 raise UpdateFailed("Invalid response from device")
@@ -204,19 +222,12 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                                 return self._last_valid_data
                             raise UpdateFailed(f"JSON decode error: {e}")
                     else:
-                        self._last_raw_response = f"HTTP {response.status}"
+                        # HTTP ошибка
                         if self._last_valid_data is not None:
                             return self._last_valid_data
                         raise UpdateFailed(f"HTTP error {response.status}")
-        except asyncio.TimeoutError:
-            _LOGGER.error("Timeout connecting to %s", self._url)
-            self._last_raw_response = "Нет ответа"
-            if self._last_valid_data is not None:
-                return self._last_valid_data
-            raise UpdateFailed("Timeout connecting to device")
         except Exception as err:
             _LOGGER.error("Error fetching data: %s", err)
-            self._last_raw_response = "Нет ответа"
             if self._last_valid_data is not None:
                 return self._last_valid_data
             raise UpdateFailed(f"Error fetching data: {err}")
