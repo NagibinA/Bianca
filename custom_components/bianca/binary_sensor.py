@@ -23,9 +23,8 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Bianca binary sensor."""
-    coordinator = entry.runtime_data
     ip_address = entry.data[CONF_IP_ADDRESS]
-    sensor = BiancaPingBinarySensor(coordinator, entry, ip_address)
+    sensor = BiancaPingBinarySensor(hass, entry, ip_address)
     async_add_entities([sensor])
 
 
@@ -46,9 +45,9 @@ async def async_ping(ip_address: str) -> bool:
 class BiancaPingBinarySensor(BinarySensorEntity):
     """Binary sensor for device availability via ping."""
 
-    def __init__(self, coordinator, entry: ConfigEntry, ip_address: str) -> None:
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, ip_address: str) -> None:
         """Initialize the sensor."""
-        self._coordinator = coordinator
+        self._hass = hass
         self._entry = entry
         self._ip_address = ip_address
         self._attr_name = f"{entry.title} Доступность"
@@ -76,11 +75,21 @@ class BiancaPingBinarySensor(BinarySensorEntity):
         return "mdi:network" if self._state else "mdi:network-off"
 
     async def async_update_ping(self, now=None) -> None:
-        """Update ping state."""
+        """Update ping state and store in global storage."""
         self._state = await async_ping(self._ip_address)
-        # Обновляем состояние доступности в координаторе
-        self._coordinator.set_availability(self._state)
+        
+        # Обновляем глобальное хранилище статуса доступности
+        if DOMAIN in self._hass.data:
+            if self._entry.entry_id in self._hass.data[DOMAIN]:
+                self._hass.data[DOMAIN][self._entry.entry_id]["available"] = self._state
+        
         self.async_write_ha_state()
+        
+        # Принудительно обновляем координатор при изменении доступности
+        if self._state and DOMAIN in self._hass.data and self._entry.entry_id in self._hass.data[DOMAIN]:
+            coordinator = self._hass.data[DOMAIN].get(self._entry.entry_id, {}).get("coordinator")
+            if coordinator:
+                await coordinator.async_refresh()
 
     async def async_added_to_hass(self) -> None:
         """Start polling when entity is added."""
