@@ -79,14 +79,12 @@ class BiancaAvailableBinarySensor(BinarySensorEntity):
         """Update ping state and store in global storage."""
         self._state = await async_ping(self._ip_address)
         
-        # Обновляем глобальное хранилище статуса доступности
         if DOMAIN in self._hass.data:
             if self._entry.entry_id in self._hass.data[DOMAIN]:
                 self._hass.data[DOMAIN][self._entry.entry_id]["available"] = self._state
         
         self.async_write_ha_state()
         
-        # Принудительно обновляем координатор при изменении доступности
         if self._state and DOMAIN in self._hass.data and self._entry.entry_id in self._hass.data[DOMAIN]:
             coordinator = self._hass.data[DOMAIN].get(self._entry.entry_id, {}).get("coordinator")
             if coordinator:
