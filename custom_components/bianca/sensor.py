@@ -41,6 +41,7 @@ async def async_setup_entry(
         hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
     
     entities = [
+        BiancaApiResponseSensor(coordinator, entry, hass),
         BiancaWiFiStatusSensor(coordinator, entry, hass),
         BiancaErrorSensor(coordinator, entry, hass),
         BiancaMachineModeSensor(coordinator, entry, hass),
@@ -126,6 +127,54 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         if self._key is None:
             return None
         return self.coordinator.data.get(self._key)
+
+
+class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
+    """Sensor for API response status."""
+
+    def __init__(
+        self, 
+        coordinator: BiancaDataUpdateCoordinator, 
+        entry: ConfigEntry,
+        hass: HomeAssistant,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._entry = entry
+        self._hass = hass
+        self._attr_name = f"{entry.title} Статус API"
+        self._attr_unique_id = f"{entry.entry_id}_api_response"
+        self._attr_icon = "mdi:api"
+
+    @property
+    def device_info(self):
+        """Return device info."""
+        return {
+            "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
+        }
+    
+    @property
+    def _device_available(self) -> bool:
+        """Check if device is available via ping."""
+        if DOMAIN not in self._hass.data:
+            return False
+        if self._entry.entry_id not in self._hass.data[DOMAIN]:
+            return False
+        return self._hass.data[DOMAIN][self._entry.entry_id].get("available", False)
+
+    @property
+    def available(self) -> bool:
+        """Return if sensor is available."""
+        # API статус доступен всегда, даже при недоступности ping,
+        # так как последний статус хранится в координаторе
+        return True
+
+    @property
+    def native_value(self) -> str:
+        """Return the API response status."""
+        if not self._device_available:
+            return "NO RESPONSE"
+        return self.coordinator.api_response_status
 
 
 class BiancaWiFiStatusSensor(BiancaBaseSensor):
