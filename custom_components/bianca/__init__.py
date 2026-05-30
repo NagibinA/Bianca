@@ -90,13 +90,13 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     
     # Текущая версия интеграции из manifest.json (читаем в потоке)
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
-    current_version = "1.0.14"
+    current_version = "1.0.15"
     try:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "1.0.14")
+        current_version = manifest.get("version", "1.0.15")
     except Exception as e:
         _LOGGER.warning("Failed to read manifest: %s", e)
     
@@ -182,11 +182,17 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         self._url = API_ENDPOINT.format(ip_address)
         self._last_valid_data = None
         self._entry_id = entry_id
+        self._api_response_status = "NO RESPONSE"
 
     @property
     def device_available(self) -> bool:
         """Return device availability status from global storage."""
         return self.hass.data.get(DOMAIN, {}).get(self._entry_id, {}).get("available", False)
+    
+    @property
+    def api_response_status(self) -> str:
+        """Return the last API response status."""
+        return self._api_response_status
 
     async def _async_update_data(self) -> dict:
         """Fetch data from device."""
@@ -206,23 +212,39 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                         text = await response.text()
                         try:
                             data = json.loads(text)
-                            # Проверяем наличие statusLavatrice
+                            
+                            # Проверяем наличие поля response (BAD REQUEST, ERROR и т.д.)
+                            if "response" in data:
+                                self._api_response_status = data["response"]
+                                _LOGGER.debug("API response status: %s", self._api_response_status)
+                                # Если это ответ с ошибкой, не обновляем данные
+                                if self._last_valid_data is not None:
+                                    return self._last_valid_data
+                                raise UpdateFailed(f"API error: {self._api_response_status}")
+                            
+                            # Проверяем наличие statusLavatrice (нормальный ответ)
                             if "statusLavatrice" in data:
+                                self._api_response_status = "OK"
                                 self._last_valid_data = data.get("statusLavatrice", {})
                                 return self._last_valid_data
                             else:
-                                # BAD REQUEST или другой невалидный ответ
-                                _LOGGER.debug("Invalid response (no statusLavatrice): %s", text[:200])
+                                # Неожиданный формат ответа
+                                self._api_response_status = "UNKNOWN FORMAT"
+                                _LOGGER.debug("Unknown response format: %s", text[:200])
                                 if self._last_valid_data is not None:
                                     return self._last_valid_data
-                                raise UpdateFailed("Invalid response from device")
+                                raise UpdateFailed("Unknown response format from device")
+                                
                         except json.JSONDecodeError as e:
+                            self._api_response_status = "PARSE ERROR"
                             _LOGGER.error("JSON decode error: %s", e)
                             if self._last_valid_data is not None:
                                 return self._last_valid_data
                             raise UpdateFailed(f"JSON decode error: {e}")
                     else:
                         # HTTP ошибка
+                        self._api_response_status = f"HTTP {response.status}"
+                        _LOGGER.error("HTTP error: %s", response.status)
                         if self._last_valid_data is not None:
                             return self._last_valid_data
                         raise UpdateFailed(f"HTTP error {response.status}")
