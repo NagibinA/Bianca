@@ -8,7 +8,7 @@ CONF_IP_ADDRESS = "ip_address"
 
 API_ENDPOINT = "http://{}/http-read.json?encrypted=0"
 
-PLATFORMS = ["sensor", "binary_sensor"]
+PLATFORMS = ["sensor", "binary_sensor", "select"]
 
 # MachMd (machine mode) mapping
 MACHMD_MAP = {
@@ -68,7 +68,7 @@ LANG_MAP = {
 
 # Soil level mapping
 SOIL_LEVEL_MAP = {
-    "1": "Низкий",
-    "2": "Средний",
-    "3": "Высокий",
+    "1": "Мало",
+    "2": "Нормально",
+    "3": "Очень",
 }
