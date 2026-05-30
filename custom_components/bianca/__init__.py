@@ -120,13 +120,13 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     
     # Текущая версия интеграции из manifest.json
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
-    current_version = "1.0.16"
+    current_version = "1.0.18"
     try:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "1.0.17")
+        current_version = manifest.get("version", "1.0.18")
     except Exception as e:
         _LOGGER.warning("Failed to read manifest: %s", e)
     
