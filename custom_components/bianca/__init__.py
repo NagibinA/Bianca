@@ -179,19 +179,28 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                         text = await response.text()
                         try:
                             data = json.loads(text)
-                            self._last_valid_data = data.get("statusLavatrice", {})
-                            return self._last_valid_data
+                            # Проверяем наличие statusLavatrice
+                            if "statusLavatrice" in data:
+                                self._last_valid_data = data.get("statusLavatrice", {})
+                                return self._last_valid_data
+                            else:
+                                # BAD REQUEST или другой невалидный ответ
+                                _LOGGER.debug("Invalid response (no statusLavatrice): %s", text[:200])
+                                if self._last_valid_data is not None:
+                                    return self._last_valid_data
+                                raise UpdateFailed("Invalid response from device")
                         except json.JSONDecodeError as e:
                             _LOGGER.error("JSON decode error: %s", e)
+                            if self._last_valid_data is not None:
+                                return self._last_valid_data
                             raise UpdateFailed(f"JSON decode error: {e}")
                     else:
+                        # HTTP ошибка
+                        if self._last_valid_data is not None:
+                            return self._last_valid_data
                         raise UpdateFailed(f"HTTP error {response.status}")
         except Exception as err:
             _LOGGER.error("Error fetching data: %s", err)
+            if self._last_valid_data is not None:
+                return self._last_valid_data
             raise UpdateFailed(f"Error fetching data: {err}")
-
-    def get_data(self, availability_sensor_state: bool = True) -> dict | None:
-        """Return data if device is available, otherwise return last valid data."""
-        if availability_sensor_state:
-            return self._last_valid_data if self._last_valid_data is not None else self.data
-        return None
