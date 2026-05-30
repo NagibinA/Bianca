@@ -56,6 +56,7 @@ async def async_setup_entry(
         BiancaRinseSensor(coordinator, entry),
         BiancaAquaPlusSensor(coordinator, entry),
         BiancaZoomSensor(coordinator, entry),
+        BiancaRawResponseSensor(coordinator, entry),
     ]
     
     async_add_entities(entities)
@@ -466,3 +467,29 @@ class BiancaZoomSensor(BiancaBaseSensor):
     def native_value(self):
         value = super().native_value
         return "Включен" if value == "1" else "Выключен"
+
+
+class BiancaRawResponseSensor(BiancaBaseSensor):
+    """Raw response sensor for debugging."""
+
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
+        super().__init__(
+            coordinator, entry, None, "Сырой ответ", "mdi:code-json",
+        )
+
+    @property
+    def native_value(self):
+        """Return raw response value without key."""
+        if self.coordinator.data is None:
+            return "Нет данных"
+        
+        # Если есть statusLavatrice, значит ответ нормальный
+        if "statusLavatrice" in self.coordinator.data:
+            return "OK"
+        
+        # Если есть ключ "response", возвращаем только его значение
+        if "response" in self.coordinator.data:
+            return self.coordinator.data.get("response")
+        
+        # Иначе возвращаем строковое представление всего ответа
+        return str(self.coordinator.data)
