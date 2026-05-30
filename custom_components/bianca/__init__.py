@@ -166,6 +166,7 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         )
         self.ip_address = ip_address
         self._url = API_ENDPOINT.format(ip_address)
+        self._last_valid_data = None
 
     async def _async_update_data(self) -> dict:
         """Fetch data from device."""
@@ -178,7 +179,8 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                         text = await response.text()
                         try:
                             data = json.loads(text)
-                            return data.get("statusLavatrice", {})
+                            self._last_valid_data = data.get("statusLavatrice", {})
+                            return self._last_valid_data
                         except json.JSONDecodeError as e:
                             _LOGGER.error("JSON decode error: %s", e)
                             raise UpdateFailed(f"JSON decode error: {e}")
@@ -187,3 +189,9 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         except Exception as err:
             _LOGGER.error("Error fetching data: %s", err)
             raise UpdateFailed(f"Error fetching data: {err}")
+
+    def get_data(self, availability_sensor_state: bool = True) -> dict | None:
+        """Return data if device is available, otherwise return last valid data."""
+        if availability_sensor_state:
+            return self._last_valid_data if self._last_valid_data is not None else self.data
+        return None
