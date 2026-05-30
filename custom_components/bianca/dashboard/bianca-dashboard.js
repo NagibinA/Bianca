@@ -37,8 +37,8 @@ class BiancaDashboardStrategy extends HTMLElement {
                                             style: { left: "20%", top: "50%", "--mdc-icon-size": "49px" },
                                             tap_action: {
                                                 action: "perform-action",
-                                                perform_action: "input_select.select_next",
-                                                target: { entity_id: "input_select.bianca_temperature" },
+                                                perform_action: "select.select_next",
+                                                target: { entity_id: "select.bianca_temperature" },
                                                 data: { cycle: true }
                                             },
                                             card_mod: {
@@ -83,8 +83,8 @@ class BiancaDashboardStrategy extends HTMLElement {
                                             style: { left: "11.5%", top: "40.5%", "--mdc-icon-size": "49px" },
                                             tap_action: {
                                                 action: "perform-action",
-                                                perform_action: "input_select.select_next",
-                                                target: { entity_id: "input_select.bianca_spin" },
+                                                perform_action: "select.select_next",
+                                                target: { entity_id: "select.bianca_spin" },
                                                 data: { cycle: true }
                                             },
                                             card_mod: {
@@ -129,8 +129,8 @@ class BiancaDashboardStrategy extends HTMLElement {
                                             style: { left: "11%", top: "30%", "--mdc-icon-size": "49px" },
                                             tap_action: {
                                                 action: "perform-action",
-                                                perform_action: "input_select.select_next",
-                                                target: { entity_id: "input_select.bianca_delay_start" },
+                                                perform_action: "select.select_next",
+                                                target: { entity_id: "select.bianca_delay_start" },
                                                 data: { cycle: true }
                                             },
                                             card_mod: {
@@ -266,19 +266,19 @@ class BiancaDashboardStrategy extends HTMLElement {
                                     type: "entities",
                                     title: "Параметры",
                                     entities: [
-                                        "input_select.bianca_program",
-                                        "input_select.bianca_temperature",
-                                        "input_select.bianca_spin",
-                                        "input_select.bianca_delay_start",
-                                        "input_select.bianca_soil",
-                                        "input_select.bianca_steam",
-                                        "input_select.bianca_pre_wash",
-                                        "input_select.bianca_hygiene",
-                                        "input_select.bianca_anti_crease",
-                                        "input_select.bianca_night_spin",
-                                        "input_select.bianca_extra_rinse",
-                                        "input_select.bianca_aqua_plus",
-                                        "input_select.bianca_zoom"
+                                        "select.bianca_program",
+                                        "select.bianca_temperature",
+                                        "select.bianca_spin",
+                                        "select.bianca_delay_start",
+                                        "select.bianca_soil",
+                                        "select.bianca_steam",
+                                        "select.bianca_pre_wash",
+                                        "select.bianca_hygiene",
+                                        "select.bianca_anti_crease",
+                                        "select.bianca_night_spin",
+                                        "select.bianca_extra_rinse",
+                                        "select.bianca_aqua_plus",
+                                        "select.bianca_zoom"
                                     ]
                                 }
                             ]
@@ -290,10 +290,8 @@ class BiancaDashboardStrategy extends HTMLElement {
     }
 }
 
-// Регистрация custom element
 customElements.define('ll-strategy-dashboard-bianca', BiancaDashboardStrategy);
 
-// Регистрация в window.customStrategies для отображения в списке
 window.customStrategies = window.customStrategies || [];
 window.customStrategies.push({
     type: "bianca",
