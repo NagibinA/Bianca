@@ -167,12 +167,17 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         self.ip_address = ip_address
         self._url = API_ENDPOINT.format(ip_address)
         self._last_valid_data = None
-        self.is_available = True  # По умолчанию считаем доступным
+        self._last_raw_response = None
+        self.is_available = True
 
     def set_availability(self, is_available: bool) -> None:
         """Set device availability."""
         self.is_available = is_available
         self.async_update_listeners()
+
+    def get_last_raw_response(self) -> str | None:
+        """Return last raw response from device."""
+        return self._last_raw_response
 
     async def _async_update_data(self) -> dict:
         """Fetch data from device."""
@@ -183,15 +188,13 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                 async with session.get(self._url) as response:
                     if response.status == 200:
                         text = await response.text()
+                        self._last_raw_response = text
                         try:
                             data = json.loads(text)
-                            # Проверяем наличие statusLavatrice
                             if "statusLavatrice" in data:
                                 self._last_valid_data = data.get("statusLavatrice", {})
                                 return self._last_valid_data
                             else:
-                                # BAD REQUEST или другой невалидный ответ
-                                _LOGGER.debug("Invalid response (no statusLavatrice): %s", text[:200])
                                 if self._last_valid_data is not None:
                                     return self._last_valid_data
                                 raise UpdateFailed("Invalid response from device")
@@ -201,12 +204,19 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                                 return self._last_valid_data
                             raise UpdateFailed(f"JSON decode error: {e}")
                     else:
-                        # HTTP ошибка
+                        self._last_raw_response = f"HTTP {response.status}"
                         if self._last_valid_data is not None:
                             return self._last_valid_data
                         raise UpdateFailed(f"HTTP error {response.status}")
+        except asyncio.TimeoutError:
+            _LOGGER.error("Timeout connecting to %s", self._url)
+            self._last_raw_response = "Нет ответа"
+            if self._last_valid_data is not None:
+                return self._last_valid_data
+            raise UpdateFailed("Timeout connecting to device")
         except Exception as err:
             _LOGGER.error("Error fetching data: %s", err)
+            self._last_raw_response = "Нет ответа"
             if self._last_valid_data is not None:
                 return self._last_valid_data
             raise UpdateFailed(f"Error fetching data: {err}")
