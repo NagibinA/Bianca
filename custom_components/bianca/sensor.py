@@ -513,17 +513,8 @@ class BiancaRawResponseSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        """Return raw response value without key."""
-        if self.coordinator.data is None:
+        """Return raw response from device."""
+        raw_response = self.coordinator.get_last_raw_response()
+        if raw_response is None:
             return "Нет данных"
-        
-        # Если есть statusLavatrice, значит ответ нормальный
-        if "statusLavatrice" in self.coordinator.data:
-            return "OK"
-        
-        # Если есть ключ "response", возвращаем только его значение
-        if "response" in self.coordinator.data:
-            return self.coordinator.data.get("response")
-        
-        # Иначе возвращаем строковое представление всего ответа
-        return str(self.coordinator.data)
+        return raw_response
