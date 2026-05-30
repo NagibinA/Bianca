@@ -36,7 +36,6 @@ async def async_setup_entry(
     """Set up Bianca sensors."""
     coordinator: BiancaDataUpdateCoordinator = entry.runtime_data
     
-    # Сохраняем ссылку на координатор в глобальном хранилище
     if DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
         hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
     
@@ -242,6 +241,13 @@ class BiancaProgramSensor(BiancaBaseSensor):
         if value is None:
             return None
         return PR_MAP.get(value, value)
+
+    @property
+    def extra_state_attributes(self):
+        """Return program number attribute."""
+        if not self._device_available or self.coordinator.data is None:
+            return {}
+        return {"program_number": self.coordinator.data.get("Pr")}
 
 
 class BiancaProgramPhaseSensor(BiancaBaseSensor):
