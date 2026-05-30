@@ -24,7 +24,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Bianca binary sensor."""
     ip_address = entry.data[CONF_IP_ADDRESS]
-    sensor = BiancaPingBinarySensor(hass, entry, ip_address)
+    sensor = BiancaAvailableBinarySensor(hass, entry, ip_address)
     async_add_entities([sensor])
 
 
@@ -42,7 +42,7 @@ async def async_ping(ip_address: str) -> bool:
         return False
 
 
-class BiancaPingBinarySensor(BinarySensorEntity):
+class BiancaAvailableBinarySensor(BinarySensorEntity):
     """Binary sensor for device availability via ping."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, ip_address: str) -> None:
@@ -50,8 +50,9 @@ class BiancaPingBinarySensor(BinarySensorEntity):
         self._hass = hass
         self._entry = entry
         self._ip_address = ip_address
-        self._attr_name = f"{entry.title} Доступность"
-        self._attr_unique_id = f"{entry.entry_id}_ping"
+        self.entity_id = "binary_sensor.bianca_available"
+        self._attr_name = "Bianca Available"
+        self._attr_unique_id = f"{entry.entry_id}_available"
         self._attr_icon = "mdi:network"
         self._attr_should_poll = False
         self._state = False
