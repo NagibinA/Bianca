@@ -290,4 +290,4 @@ class BiancaDashboardStrategy extends HTMLElement {
     }
 }
 
-customElements.define('ll-strategy-bianca', BiancaDashboardStrategy);
+customElements.define('ll-strategy-dashboard-bianca', BiancaDashboardStrategy);
