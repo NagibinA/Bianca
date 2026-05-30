@@ -167,6 +167,12 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         self.ip_address = ip_address
         self._url = API_ENDPOINT.format(ip_address)
         self._last_valid_data = None
+        self.is_available = True  # По умолчанию считаем доступным
+
+    def set_availability(self, is_available: bool) -> None:
+        """Set device availability."""
+        self.is_available = is_available
+        self.async_update_listeners()
 
     async def _async_update_data(self) -> dict:
         """Fetch data from device."""
