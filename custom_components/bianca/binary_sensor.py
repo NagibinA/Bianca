@@ -23,8 +23,9 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Bianca binary sensor."""
+    coordinator = entry.runtime_data
     ip_address = entry.data[CONF_IP_ADDRESS]
-    sensor = BiancaPingBinarySensor(entry, ip_address)
+    sensor = BiancaPingBinarySensor(coordinator, entry, ip_address)
     async_add_entities([sensor])
 
 
@@ -45,8 +46,9 @@ async def async_ping(ip_address: str) -> bool:
 class BiancaPingBinarySensor(BinarySensorEntity):
     """Binary sensor for device availability via ping."""
 
-    def __init__(self, entry: ConfigEntry, ip_address: str) -> None:
+    def __init__(self, coordinator, entry: ConfigEntry, ip_address: str) -> None:
         """Initialize the sensor."""
+        self._coordinator = coordinator
         self._entry = entry
         self._ip_address = ip_address
         self._attr_name = f"{entry.title} Доступность"
@@ -76,6 +78,8 @@ class BiancaPingBinarySensor(BinarySensorEntity):
     async def async_update_ping(self, now=None) -> None:
         """Update ping state."""
         self._state = await async_ping(self._ip_address)
+        # Обновляем состояние доступности в координаторе
+        self._coordinator.set_availability(self._state)
         self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:
