@@ -95,8 +95,15 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         }
 
     @property
+    def available(self) -> bool:
+        """Return if device is available."""
+        return self.coordinator.is_available
+
+    @property
     def native_value(self):
         """Return the state of the sensor."""
+        if not self.coordinator.is_available:
+            return None
         if self.coordinator.data is None:
             return None
         if self._key is None:
@@ -189,6 +196,8 @@ class BiancaSoilLevelSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         """Return the soil level as text."""
+        if not self.coordinator.is_available:
+            return None
         if self.coordinator.data is None:
             return None
         
@@ -266,6 +275,8 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         """Return remaining time as HH:MM only if machine is running or paused."""
+        if not self.coordinator.is_available:
+            return None
         if self.coordinator.data is None:
             return None
         
@@ -307,8 +318,10 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         """Return delay start time as HH:MM or empty string."""
+        if not self.coordinator.is_available:
+            return None
         if self.coordinator.data is None:
-            return ""
+            return None
         
         machine_state = self.coordinator.data.get("MachMd")
         
@@ -357,6 +370,8 @@ class BiancaSteamSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         value = super().native_value
+        if value is None:
+            return None
         return "Включен" if value == "1" else "Выключен"
 
 
@@ -369,6 +384,8 @@ class BiancaPreWashSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         value = super().native_value
+        if value is None:
+            return None
         return "Включен" if value == "1" else "Выключен"
 
 
@@ -381,6 +398,8 @@ class BiancaHygienicSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         value = super().native_value
+        if value is None:
+            return None
         return "Включен" if value == "1" else "Выключен"
 
 
@@ -393,6 +412,8 @@ class BiancaAntiCreaseSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         value = super().native_value
+        if value is None:
+            return None
         return "Включен" if value == "1" else "Выключен"
 
 
@@ -405,6 +426,8 @@ class BiancaNightSpinSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         value = super().native_value
+        if value is None:
+            return None
         return "Включен" if value == "1" else "Выключен"
 
 
@@ -419,8 +442,10 @@ class BiancaRinseSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         """Return which rinse is active or empty string."""
+        if not self.coordinator.is_available:
+            return None
         if self.coordinator.data is None:
-            return ""
+            return None
         
         if self.coordinator.data.get("Opt5") == "1":
             return "Одно"
@@ -454,6 +479,8 @@ class BiancaAquaPlusSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         value = super().native_value
+        if value is None:
+            return None
         return "Включен" if value == "1" else "Выключен"
 
 
@@ -466,6 +493,8 @@ class BiancaZoomSensor(BiancaBaseSensor):
     @property
     def native_value(self):
         value = super().native_value
+        if value is None:
+            return None
         return "Включен" if value == "1" else "Выключен"
 
 
@@ -476,6 +505,11 @@ class BiancaRawResponseSensor(BiancaBaseSensor):
         super().__init__(
             coordinator, entry, None, "Сырой ответ", "mdi:code-json",
         )
+
+    @property
+    def available(self) -> bool:
+        """Always available for debugging."""
+        return True
 
     @property
     def native_value(self):
