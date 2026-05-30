@@ -203,6 +203,22 @@ class BiancaSoilLevelSensor(BiancaBaseSensor):
         
         return SOIL_LEVEL_MAP.get(str_value, str_value)
 
+    @property
+    def icon(self):
+        """Return icon based on soil level."""
+        if self.coordinator.data is None:
+            return "mdi:help-circle-outline"
+        
+        value = self.coordinator.data.get("SLevel")
+        
+        if value == "1":
+            return "phu:duco-1"
+        elif value == "2":
+            return "phu:duco-2"
+        elif value == "3":
+            return "phu:duco-3"
+        return "mdi:help-circle-outline"
+
 
 class BiancaTemperatureSensor(BiancaBaseSensor):
     """Temperature sensor."""
