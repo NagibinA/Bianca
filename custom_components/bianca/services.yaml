@@ -1,0 +1,9 @@
+start_washing:
+  name: Запуск стирки
+  description: Запускает стирку с выбранными параметрами
+  fields: {}
+
+stop_washing:
+  name: Остановка стирки
+  description: Останавливает текущую стирку
+  fields: {}
