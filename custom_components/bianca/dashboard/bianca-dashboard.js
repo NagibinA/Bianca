@@ -290,10 +290,10 @@ class BiancaDashboardStrategy extends HTMLElement {
     }
 }
 
-// Регистрация custom element (СТАРОЕ ИМЯ)
-customElements.define('ll-strategy-bianca', BiancaDashboardStrategy);
+// Регистрация custom element (ТО ИМЯ, КОТОРОЕ ОЖИДАЕТ ПАНЕЛЬ)
+customElements.define('ll-strategy-dashboard-bianca', BiancaDashboardStrategy);
 
-// Регистрация в window.customStrategies для отображения в диалоге
+// Регистрация в window.customStrategies для отображения в списке
 window.customStrategies = window.customStrategies || [];
 window.customStrategies.push({
     type: "bianca",
