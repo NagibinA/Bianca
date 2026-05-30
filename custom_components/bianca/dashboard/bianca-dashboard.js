@@ -290,13 +290,13 @@ class BiancaDashboardStrategy extends HTMLElement {
     }
 }
 
-// Регистрация custom element
-customElements.define('ll-strategy-dashboard-bianca', BiancaDashboardStrategy);
+// Регистрация custom element (СТАРОЕ ИМЯ)
+customElements.define('ll-strategy-bianca', BiancaDashboardStrategy);
 
-// Регистрация в window.customStrategies для отображения в диалоге создания
+// Регистрация в window.customStrategies для отображения в диалоге
 window.customStrategies = window.customStrategies || [];
 window.customStrategies.push({
-    type: "dashboard-bianca",
+    type: "bianca",
     strategyType: "dashboard",
     name: "Bianca",
     description: "Управление стиральной машиной Bianca"
