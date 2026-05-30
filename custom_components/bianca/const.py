@@ -8,7 +8,7 @@ CONF_IP_ADDRESS = "ip_address"
 
 API_ENDPOINT = "http://{}/http-read.json?encrypted=0"
 
-PLATFORMS = ["sensor", "binary_sensor", "select"]
+PLATFORMS = ["sensor", "binary_sensor", "input_select"]
 
 # MachMd (machine mode) mapping
 MACHMD_MAP = {
