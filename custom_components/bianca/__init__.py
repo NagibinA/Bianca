@@ -64,6 +64,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     
+    # Регистрация сервисов
+    async def handle_start_washing(call):
+        """Handle start washing service."""
+        _LOGGER.info("Start washing called")
+        # TODO: Реализовать отправку команды на машину
+        url = f"http://{ip_address}/http-write.json?encrypted=0&Write=1&StSt=1"
+        session = async_get_clientsession(hass)
+        try:
+            async with async_timeout.timeout(10):
+                async with session.get(url) as response:
+                    _LOGGER.info(f"Start washing response: {response.status}")
+        except Exception as e:
+            _LOGGER.error(f"Error starting washing: {e}")
+    
+    async def handle_stop_washing(call):
+        """Handle stop washing service."""
+        _LOGGER.info("Stop washing called")
+        url = f"http://{ip_address}/http-write.json?encrypted=0&Write=1&StSt=0"
+        session = async_get_clientsession(hass)
+        try:
+            async with async_timeout.timeout(10):
+                async with session.get(url) as response:
+                    _LOGGER.info(f"Stop washing response: {response.status}")
+        except Exception as e:
+            _LOGGER.error(f"Error stopping washing: {e}")
+    
+    hass.services.async_register(DOMAIN, "start_washing", handle_start_washing)
+    hass.services.async_register(DOMAIN, "stop_washing", handle_stop_washing)
+    
     return True
 
 
@@ -191,6 +220,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
         del hass.data[DOMAIN][entry.entry_id]
     
+    # Удаляем сервисы
+    hass.services.async_remove(DOMAIN, "start_washing")
+    hass.services.async_remove(DOMAIN, "stop_washing")
+    
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
@@ -223,7 +256,6 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict:
         """Fetch data from device."""
-        # Если устройство недоступно, не пытаемся опрашивать
         if not self.device_available:
             _LOGGER.debug("Device not available, skipping data update")
             if self._last_valid_data is not None:
@@ -240,22 +272,18 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                         try:
                             data = json.loads(text)
                             
-                            # Проверяем наличие поля response (BAD REQUEST, ERROR и т.д.)
                             if "response" in data:
                                 self._api_response_status = data["response"]
                                 _LOGGER.debug("API response status: %s", self._api_response_status)
-                                # Если это ответ с ошибкой, не обновляем данные
                                 if self._last_valid_data is not None:
                                     return self._last_valid_data
                                 raise UpdateFailed(f"API error: {self._api_response_status}")
                             
-                            # Проверяем наличие statusLavatrice (нормальный ответ)
                             if "statusLavatrice" in data:
                                 self._api_response_status = "OK"
                                 self._last_valid_data = data.get("statusLavatrice", {})
                                 return self._last_valid_data
                             else:
-                                # Неожиданный формат ответа
                                 self._api_response_status = "UNKNOWN FORMAT"
                                 _LOGGER.debug("Unknown response format: %s", text[:200])
                                 if self._last_valid_data is not None:
@@ -269,7 +297,6 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                                 return self._last_valid_data
                             raise UpdateFailed(f"JSON decode error: {e}")
                     else:
-                        # HTTP ошибка
                         self._api_response_status = f"HTTP {response.status}"
                         _LOGGER.error("HTTP error: %s", response.status)
                         if self._last_valid_data is not None:
