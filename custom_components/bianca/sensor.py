@@ -36,27 +36,30 @@ async def async_setup_entry(
     """Set up Bianca sensors."""
     coordinator: BiancaDataUpdateCoordinator = entry.runtime_data
     
+    # Сохраняем ссылку на координатор в глобальном хранилище
+    if DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
+        hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
+    
     entities = [
-        BiancaWiFiStatusSensor(coordinator, entry),
-        BiancaErrorSensor(coordinator, entry),
-        BiancaMachineModeSensor(coordinator, entry),
-        BiancaProgramSensor(coordinator, entry),
-        BiancaProgramPhaseSensor(coordinator, entry),
-        BiancaSoilLevelSensor(coordinator, entry),
-        BiancaTemperatureSensor(coordinator, entry),
-        BiancaSpinSpeedSensor(coordinator, entry),
-        BiancaRemainingTimeSensor(coordinator, entry),
-        BiancaDelayStartSensor(coordinator, entry),
-        BiancaLanguageSensor(coordinator, entry),
-        BiancaSteamSensor(coordinator, entry),
-        BiancaPreWashSensor(coordinator, entry),
-        BiancaHygienicSensor(coordinator, entry),
-        BiancaAntiCreaseSensor(coordinator, entry),
-        BiancaNightSpinSensor(coordinator, entry),
-        BiancaRinseSensor(coordinator, entry),
-        BiancaAquaPlusSensor(coordinator, entry),
-        BiancaZoomSensor(coordinator, entry),
-        BiancaRawResponseSensor(coordinator, entry),
+        BiancaWiFiStatusSensor(coordinator, entry, hass),
+        BiancaErrorSensor(coordinator, entry, hass),
+        BiancaMachineModeSensor(coordinator, entry, hass),
+        BiancaProgramSensor(coordinator, entry, hass),
+        BiancaProgramPhaseSensor(coordinator, entry, hass),
+        BiancaSoilLevelSensor(coordinator, entry, hass),
+        BiancaTemperatureSensor(coordinator, entry, hass),
+        BiancaSpinSpeedSensor(coordinator, entry, hass),
+        BiancaRemainingTimeSensor(coordinator, entry, hass),
+        BiancaDelayStartSensor(coordinator, entry, hass),
+        BiancaLanguageSensor(coordinator, entry, hass),
+        BiancaSteamSensor(coordinator, entry, hass),
+        BiancaPreWashSensor(coordinator, entry, hass),
+        BiancaHygienicSensor(coordinator, entry, hass),
+        BiancaAntiCreaseSensor(coordinator, entry, hass),
+        BiancaNightSpinSensor(coordinator, entry, hass),
+        BiancaRinseSensor(coordinator, entry, hass),
+        BiancaAquaPlusSensor(coordinator, entry, hass),
+        BiancaZoomSensor(coordinator, entry, hass),
     ]
     
     async_add_entities(entities)
@@ -69,6 +72,7 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         self, 
         coordinator: BiancaDataUpdateCoordinator, 
         entry: ConfigEntry,
+        hass: HomeAssistant,
         key: str | None,
         name: str,
         icon: str,
@@ -80,6 +84,7 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._key = key
         self._entry = entry
+        self._hass = hass
         self._attr_name = name
         self._attr_unique_id = f"{entry.entry_id}_{name}"
         self._attr_icon = icon
@@ -93,17 +98,29 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         return {
             "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
         }
+    
+    @property
+    def _device_available(self) -> bool:
+        """Check if device is available via ping."""
+        if DOMAIN not in self._hass.data:
+            return False
+        if self._entry.entry_id not in self._hass.data[DOMAIN]:
+            return False
+        return self._hass.data[DOMAIN][self._entry.entry_id].get("available", False)
 
     @property
     def available(self) -> bool:
-        """Return if device is available."""
-        return self.coordinator.is_available
+        """Return if sensor is available."""
+        # Сенсор доступен только если устройство отвечает на ping
+        return self._device_available and super().available
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        if not self.coordinator.is_available:
+        # Если устройство недоступно, возвращаем None (HA покажет "недоступно")
+        if not self._device_available:
             return None
+        
         if self.coordinator.data is None:
             return None
         if self._key is None:
@@ -114,11 +131,13 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
 class BiancaWiFiStatusSensor(BiancaBaseSensor):
     """WiFi status sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "WiFiStatus", "Удаленное управление", "mdi:wifi")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "WiFiStatus", "Удаленное управление", "mdi:wifi")
 
     @property
     def native_value(self):
+        if not self._device_available:
+            return None
         value = super().native_value
         if value == "1":
             return "Вкл"
@@ -130,11 +149,13 @@ class BiancaWiFiStatusSensor(BiancaBaseSensor):
 class BiancaErrorSensor(BiancaBaseSensor):
     """Error sensor with text description."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Err", "Ошибка", "mdi:alert-circle")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "Err", "Ошибка", "mdi:alert-circle")
 
     @property
     def native_value(self):
+        if not self._device_available:
+            return None
         value = super().native_value
         if value is None:
             return None
@@ -146,11 +167,13 @@ class BiancaErrorSensor(BiancaBaseSensor):
 class BiancaMachineModeSensor(BiancaBaseSensor):
     """Machine mode sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "MachMd", "Состояние машины", "mdi:washing-machine")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "MachMd", "Состояние машины", "mdi:washing-machine")
 
     @property
     def native_value(self):
+        if not self._device_available:
+            return None
         value = super().native_value
         if value is None:
             return None
@@ -160,11 +183,13 @@ class BiancaMachineModeSensor(BiancaBaseSensor):
 class BiancaProgramSensor(BiancaBaseSensor):
     """Program sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Pr", "Программа стирки", "mdi:format-list-bulleted")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "Pr", "Программа стирки", "mdi:format-list-bulleted")
 
     @property
     def native_value(self):
+        if not self._device_available:
+            return None
         value = super().native_value
         if value is None:
             return None
@@ -174,11 +199,13 @@ class BiancaProgramSensor(BiancaBaseSensor):
 class BiancaProgramPhaseSensor(BiancaBaseSensor):
     """Program phase sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "PrPh", "Фаза программы", "mdi:progress-clock")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "PrPh", "Фаза программы", "mdi:progress-clock")
 
     @property
     def native_value(self):
+        if not self._device_available:
+            return None
         value = super().native_value
         if value is None:
             return None
@@ -188,16 +215,17 @@ class BiancaProgramPhaseSensor(BiancaBaseSensor):
 class BiancaSoilLevelSensor(BiancaBaseSensor):
     """Soil level sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
         super().__init__(
-            coordinator, entry, "SLevel", "Уровень загрязнения", "mdi:water-percent",
+            coordinator, entry, hass, "SLevel", "Уровень загрязнения", "mdi:water-percent",
         )
 
     @property
     def native_value(self):
         """Return the soil level as text."""
-        if not self.coordinator.is_available:
+        if not self._device_available:
             return None
+        
         if self.coordinator.data is None:
             return None
         
@@ -216,6 +244,9 @@ class BiancaSoilLevelSensor(BiancaBaseSensor):
     @property
     def icon(self):
         """Return icon based on soil level."""
+        if not self._device_available:
+            return "mdi:help-circle-outline"
+        
         if self.coordinator.data is None:
             return "mdi:help-circle-outline"
         
@@ -233,9 +264,9 @@ class BiancaSoilLevelSensor(BiancaBaseSensor):
 class BiancaTemperatureSensor(BiancaBaseSensor):
     """Temperature sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
         super().__init__(
-            coordinator, entry, "Temp", "Температура стирки", "mdi:thermometer",
+            coordinator, entry, hass, "Temp", "Температура стирки", "mdi:thermometer",
             device_class=SensorDeviceClass.TEMPERATURE,
             state_class=SensorStateClass.MEASUREMENT,
             unit=UnitOfTemperature.CELSIUS
@@ -245,15 +276,17 @@ class BiancaTemperatureSensor(BiancaBaseSensor):
 class BiancaSpinSpeedSensor(BiancaBaseSensor):
     """Spin speed sensor (value × 100 = RPM)."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
         super().__init__(
-            coordinator, entry, "SpinSp", "Скорость отжима", "bianca:spin",
+            coordinator, entry, hass, "SpinSp", "Скорость отжима", "bianca:spin",
             state_class=SensorStateClass.MEASUREMENT,
             unit=None
         )
 
     @property
     def native_value(self):
+        if not self._device_available:
+            return None
         value = super().native_value
         if value is None:
             return None
@@ -266,17 +299,18 @@ class BiancaSpinSpeedSensor(BiancaBaseSensor):
 class BiancaRemainingTimeSensor(BiancaBaseSensor):
     """Remaining time sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
         super().__init__(
-            coordinator, entry, "RemTime", "Оставшееся время", "mdi:timer-outline",
+            coordinator, entry, hass, "RemTime", "Оставшееся время", "mdi:timer-outline",
             unit=None
         )
 
     @property
     def native_value(self):
         """Return remaining time as HH:MM only if machine is running or paused."""
-        if not self.coordinator.is_available:
+        if not self._device_available:
             return None
+        
         if self.coordinator.data is None:
             return None
         
@@ -309,19 +343,20 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
 class BiancaDelayStartSensor(BiancaBaseSensor):
     """Delay start sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
         super().__init__(
-            coordinator, entry, "DelVal", "Отложенный старт", "bianca:delay",
+            coordinator, entry, hass, "DelVal", "Отложенный старт", "bianca:delay",
             unit=None
         )
 
     @property
     def native_value(self):
         """Return delay start time as HH:MM or empty string."""
-        if not self.coordinator.is_available:
+        if not self._device_available:
             return None
+        
         if self.coordinator.data is None:
-            return None
+            return ""
         
         machine_state = self.coordinator.data.get("MachMd")
         
@@ -350,11 +385,13 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
 class BiancaLanguageSensor(BiancaBaseSensor):
     """Language sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Lang", "Язык дисплея", "mdi:translate")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "Lang", "Язык дисплея", "mdi:translate")
 
     @property
     def native_value(self):
+        if not self._device_available:
+            return None
         value = super().native_value
         if value is None:
             return None
@@ -364,88 +401,89 @@ class BiancaLanguageSensor(BiancaBaseSensor):
 class BiancaSteamSensor(BiancaBaseSensor):
     """Steam sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Steam", "Пар", "bianca:steam")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "Steam", "Пар", "bianca:steam")
 
     @property
     def native_value(self):
-        value = super().native_value
-        if value is None:
+        if not self._device_available:
             return None
+        value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
 
 class BiancaPreWashSensor(BiancaBaseSensor):
     """Pre-wash option sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt1", "Предварительная стирка", "bianca:pre-wash")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "Opt1", "Предварительная стирка", "bianca:pre-wash")
 
     @property
     def native_value(self):
-        value = super().native_value
-        if value is None:
+        if not self._device_available:
             return None
+        value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
 
 class BiancaHygienicSensor(BiancaBaseSensor):
     """Hygienic wash option sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt2", "Гигиеническая стирка", "bianca:hygiene-wash")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "Opt2", "Гигиеническая стирка", "bianca:hygiene-wash")
 
     @property
     def native_value(self):
-        value = super().native_value
-        if value is None:
+        if not self._device_available:
             return None
+        value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
 
 class BiancaAntiCreaseSensor(BiancaBaseSensor):
     """Anti-crease option sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt3", "Анти сминание", "bianca:anti-crease")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "Opt3", "Анти сминание", "bianca:anti-crease")
 
     @property
     def native_value(self):
-        value = super().native_value
-        if value is None:
+        if not self._device_available:
             return None
+        value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
 
 class BiancaNightSpinSensor(BiancaBaseSensor):
     """Night spin option sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt4", "Ночной отжим", "bianca:night-spin")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "Opt4", "Ночной отжим", "bianca:night-spin")
 
     @property
     def native_value(self):
-        value = super().native_value
-        if value is None:
+        if not self._device_available:
             return None
+        value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
 
 class BiancaRinseSensor(BiancaBaseSensor):
     """Rinse sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
         super().__init__(
-            coordinator, entry, None, "Полоскание", "mdi:water-off",
+            coordinator, entry, hass, None, "Полоскание", "mdi:water-off",
         )
 
     @property
     def native_value(self):
         """Return which rinse is active or empty string."""
-        if not self.coordinator.is_available:
+        if not self._device_available:
             return None
+        
         if self.coordinator.data is None:
-            return None
+            return ""
         
         if self.coordinator.data.get("Opt5") == "1":
             return "Одно"
@@ -458,6 +496,9 @@ class BiancaRinseSensor(BiancaBaseSensor):
     @property
     def icon(self):
         """Return icon based on active rinse."""
+        if not self._device_available:
+            return "mdi:water-off"
+        
         if self.coordinator.data is None:
             return "mdi:water-off"
         
@@ -473,48 +514,26 @@ class BiancaRinseSensor(BiancaBaseSensor):
 class BiancaAquaPlusSensor(BiancaBaseSensor):
     """Aqua plus option sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt8", "Акваплюс", "bianca:extra-water")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "Opt8", "Акваплюс", "bianca:extra-water")
 
     @property
     def native_value(self):
-        value = super().native_value
-        if value is None:
+        if not self._device_available:
             return None
+        value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
 
 class BiancaZoomSensor(BiancaBaseSensor):
     """ZOOM mode sensor."""
 
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(coordinator, entry, "Opt9", "Режим ZOOM", "bianca:zoom")
+    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+        super().__init__(coordinator, entry, hass, "Opt9", "Режим ZOOM", "bianca:zoom")
 
     @property
     def native_value(self):
-        value = super().native_value
-        if value is None:
+        if not self._device_available:
             return None
+        value = super().native_value
         return "Включен" if value == "1" else "Выключен"
-
-
-class BiancaRawResponseSensor(BiancaBaseSensor):
-    """Raw response sensor for debugging."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry):
-        super().__init__(
-            coordinator, entry, None, "Сырой ответ", "mdi:code-json",
-        )
-
-    @property
-    def available(self) -> bool:
-        """Always available for debugging."""
-        return True
-
-    @property
-    def native_value(self):
-        """Return raw response from device."""
-        raw_response = self.coordinator.get_last_raw_response()
-        if raw_response is None:
-            return "Нет данных"
-        return raw_response
