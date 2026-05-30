@@ -34,13 +34,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN][entry.entry_id] = {}
     hass.data[DOMAIN][entry.entry_id]["available"] = False
     
-    # Регистрируем кастомные иконки
-    await async_register_custom_icons(hass)
+    # Регистрируем кастомные иконки и дашборд
+    await async_register_assets(hass)
     
     coordinator = BiancaDataUpdateCoordinator(hass, ip_address, entry.entry_id)
     
     # Сохраняем ссылку на координатор в глобальном хранилище
     hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
+    hass.data[DOMAIN][entry.entry_id]["ip_address"] = ip_address
     
     # Пытаемся получить данные, но не блокируем загрузку интеграции при ошибке
     try:
@@ -66,11 +67,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_register_custom_icons(hass: HomeAssistant) -> None:
-    """Register custom icons from integration folder."""
-    # Проверяем, зарегистрированы ли уже иконки
-    if hasattr(hass.data, "bianca_icons_registered"):
-        _LOGGER.debug("Icons already registered")
+async def async_register_assets(hass: HomeAssistant) -> None:
+    """Register custom icons and dashboard strategy."""
+    # Проверяем, зарегистрированы ли уже ассеты
+    if hasattr(hass.data, "bianca_assets_registered"):
+        _LOGGER.debug("Assets already registered")
         return
     
     # Путь к файлу иконок внутри интеграции
@@ -88,19 +89,19 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     www_icons_path = hass.config.path("www/community/bianca/bianca-icons.js")
     version_file_path = hass.config.path("www/community/bianca/version.txt")
     
-    # Текущая версия интеграции из manifest.json (читаем в потоке)
+    # Текущая версия интеграции из manifest.json
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
-    current_version = "1.0.15"
+    current_version = "1.0.16"
     try:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "1.0.15")
+        current_version = manifest.get("version", "1.0.16")
     except Exception as e:
         _LOGGER.warning("Failed to read manifest: %s", e)
     
-    # Проверяем, нужно ли обновлять иконки
+    # Проверяем, нужно ли обновлять файлы
     need_copy = False
     if not os.path.exists(www_icons_path):
         need_copy = True
@@ -123,7 +124,7 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
         need_copy = True
         _LOGGER.debug("Version file doesn't exist, will copy")
     
-    # Копируем если нужно
+    # Копируем иконки если нужно
     if need_copy:
         try:
             os.makedirs(www_dir, exist_ok=True)
@@ -145,17 +146,43 @@ async def async_register_custom_icons(hass: HomeAssistant) -> None:
     else:
         _LOGGER.debug("Icons are up to date, skipping copy")
     
-    # Регистрируем URL иконок (только один раз)
-    if "bianca_icons_registered" not in hass.data:
+    # Копируем изображение стиральной машины
+    machine_image_src = hass.config.path("custom_components/bianca/brand/original.png")
+    machine_image_dest = hass.config.path("www/community/bianca/original.png")
+    
+    if os.path.exists(machine_image_src):
+        try:
+            if need_copy or not os.path.exists(machine_image_dest):
+                await asyncio.to_thread(shutil.copy2, machine_image_src, machine_image_dest)
+                _LOGGER.info("Copied machine image to %s", machine_image_dest)
+        except Exception as e:
+            _LOGGER.error("Failed to copy machine image: %s", e)
+    
+    # Копируем JS файл дашборда
+    dashboard_js_src = hass.config.path("custom_components/bianca/dashboard/bianca-dashboard.js")
+    dashboard_js_dest = hass.config.path("www/community/bianca/bianca-dashboard.js")
+    
+    if os.path.exists(dashboard_js_src):
+        try:
+            if need_copy or not os.path.exists(dashboard_js_dest):
+                os.makedirs(www_dir, exist_ok=True)
+                await asyncio.to_thread(shutil.copy2, dashboard_js_src, dashboard_js_dest)
+                _LOGGER.info("Copied dashboard JS to %s", dashboard_js_dest)
+        except Exception as e:
+            _LOGGER.error("Failed to copy dashboard JS: %s", e)
+    
+    # Регистрируем URL иконок и дашборда
+    if "bianca_assets_registered" not in hass.data:
         try:
             add_extra_js_url(hass, "/local/community/bianca/bianca-icons.js")
-            _LOGGER.info("Registered extra JS URL: /local/community/bianca/bianca-icons.js")
+            add_extra_js_url(hass, "/local/community/bianca/bianca-dashboard.js")
+            _LOGGER.info("Registered extra JS URLs for Bianca")
         except Exception as e:
-            _LOGGER.error("Failed to register extra JS URL: %s", e)
+            _LOGGER.error("Failed to register extra JS URLs: %s", e)
             return
     
-    hass.data["bianca_icons_registered"] = True
-    _LOGGER.info("Registered custom icons for Bianca")
+    hass.data["bianca_assets_registered"] = True
+    _LOGGER.info("Registered custom assets for Bianca")
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
