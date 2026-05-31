@@ -35,9 +35,6 @@ async def async_setup_entry(
     """Set up Bianca sensors."""
     coordinator: BiancaDataUpdateCoordinator = entry.runtime_data
     
-    if DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
-        hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
-    
     entities = [
         BiancaApiResponseSensor(coordinator, entry, hass),
         BiancaRemoteControlSensor(coordinator, entry, hass),
@@ -85,6 +82,7 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         self._key = key
         self._entry = entry
         self._hass = hass
+        self.entity_id = f"sensor.bianca_{entity_id_key}"
         self._attr_unique_id = f"{entry.entry_id}_{entity_id_key}"
         self._attr_name = f"Bianca {display_name}"
         self._attr_icon = icon
@@ -98,27 +96,15 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         return {
             "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
         }
-    
-    @property
-    def _device_available(self) -> bool:
-        """Check if device is available via ping."""
-        if DOMAIN not in self._hass.data:
-            return False
-        if self._entry.entry_id not in self._hass.data[DOMAIN]:
-            return False
-        return self._hass.data[DOMAIN][self._entry.entry_id].get("available", False)
 
     @property
     def available(self) -> bool:
         """Return if sensor is available."""
-        return self._device_available and super().available
+        return True
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        if not self._device_available:
-            return None
-        
         if self.coordinator.data is None:
             return None
         if self._key is None:
@@ -139,6 +125,7 @@ class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._entry = entry
         self._hass = hass
+        self.entity_id = "sensor.bianca_api_response"
         self._attr_unique_id = f"{entry.entry_id}_api_response"
         self._attr_name = "Bianca Статус API"
         self._attr_icon = "mdi:api"
@@ -149,14 +136,6 @@ class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
         return {
             "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
         }
-    
-    @property
-    def _device_available(self) -> bool:
-        if DOMAIN not in self._hass.data:
-            return False
-        if self._entry.entry_id not in self._hass.data[DOMAIN]:
-            return False
-        return self._hass.data[DOMAIN][self._entry.entry_id].get("available", False)
 
     @property
     def available(self) -> bool:
@@ -164,8 +143,6 @@ class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self) -> str:
-        if not self._device_available:
-            return "NO RESPONSE"
         return self.coordinator.api_response_status
 
 
@@ -175,8 +152,6 @@ class BiancaRemoteControlSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         if value == "1":
             return "Вкл"
@@ -191,8 +166,6 @@ class BiancaErrorSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         if value is None:
             return None
@@ -207,8 +180,6 @@ class BiancaMachineStateSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         if value is None:
             return None
@@ -221,8 +192,6 @@ class BiancaProgramSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         if value is None:
             return None
@@ -230,7 +199,7 @@ class BiancaProgramSensor(BiancaBaseSensor):
 
     @property
     def extra_state_attributes(self):
-        if not self._device_available or self.coordinator.data is None:
+        if self.coordinator.data is None:
             return {}
         return {"program_number": self.coordinator.data.get("Pr")}
 
@@ -241,8 +210,6 @@ class BiancaProgramPhaseSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         if value is None:
             return None
@@ -255,8 +222,6 @@ class BiancaSoilLevelSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         if self.coordinator.data is None:
             return None
         value = self.coordinator.data.get("SLevel")
@@ -269,8 +234,6 @@ class BiancaSoilLevelSensor(BiancaBaseSensor):
 
     @property
     def icon(self):
-        if not self._device_available:
-            return "mdi:help-circle-outline"
         if self.coordinator.data is None:
             return "mdi:help-circle-outline"
         value = self.coordinator.data.get("SLevel")
@@ -303,8 +266,6 @@ class BiancaSpinSpeedSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         if value is None:
             return None
@@ -323,8 +284,6 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         if self.coordinator.data is None:
             return None
         machine_state = self.coordinator.data.get("MachMd")
@@ -353,8 +312,6 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         if self.coordinator.data is None:
             return ""
         machine_state = self.coordinator.data.get("MachMd")
@@ -380,8 +337,6 @@ class BiancaLanguageSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         if value is None:
             return None
@@ -394,8 +349,6 @@ class BiancaSteamSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
@@ -406,8 +359,6 @@ class BiancaPreWashSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
@@ -418,8 +369,6 @@ class BiancaHygienicSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
@@ -430,8 +379,6 @@ class BiancaAntiCreaseSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
@@ -442,8 +389,6 @@ class BiancaNightSpinSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
@@ -454,8 +399,6 @@ class BiancaRinseSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         if self.coordinator.data is None:
             return ""
         if self.coordinator.data.get("Opt5") == "1":
@@ -468,8 +411,6 @@ class BiancaRinseSensor(BiancaBaseSensor):
 
     @property
     def icon(self):
-        if not self._device_available:
-            return "mdi:water-off"
         if self.coordinator.data is None:
             return "mdi:water-off"
         if self.coordinator.data.get("Opt5") == "1":
@@ -487,8 +428,6 @@ class BiancaAquaPlusSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         return "Включен" if value == "1" else "Выключен"
 
@@ -499,7 +438,5 @@ class BiancaZoomSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self._device_available:
-            return None
         value = super().native_value
         return "Включен" if value == "1" else "Выключен"
