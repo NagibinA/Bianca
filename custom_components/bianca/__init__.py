@@ -84,14 +84,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         aquaplus_select = hass.states.get("select.bianca_aqua_plus")
         zoom_select = hass.states.get("select.bianca_zoom")
         
-        # ========== StSt (Start Status) ==========
+        # StSt (Start Status)
         StSt = 1
         
-        # ========== DelVl (Delay Value) ==========
+        # DelVl (Delay Value)
         delay_str = delay_select.state if delay_select else "Нет"
         DelVl = {
-            "Нет": 0,
-            "30 мин": 1, "1 час": 2, "1 час 30 мин": 3, "2 часа": 4, "2 часа 30 мин": 5,
+            "Нет": 0, "30 мин": 1, "1 час": 2, "1 час 30 мин": 3, "2 часа": 4, "2 часа 30 мин": 5,
             "3 часа": 6, "3 часа 30 мин": 7, "4 часа": 8, "4 час 30 мин": 9, "5 часов": 10,
             "5 часов 30 мин": 11, "6 часов": 12, "6 часов 30 мин": 13, "7 часов": 14,
             "7 часов 30 мин": 15, "8 часов": 16, "8 часов 30 мин": 17, "9 часов": 18,
@@ -105,54 +104,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "23 часа 30 мин": 47, "24 часа": 48
         }.get(delay_str, 0)
         
-        # ========== PrNm (Program Number) ==========
+        # PrNm (Program Number)
         program_str = program_select.state if program_select else "Хлопок: Интенсивная стирка"
         PrNm = {
-            "Хлопок: Интенсивная стирка": 1,
-            "Хлопок": 2,
-            "Синтетика и цветные ткани": 3,
-            "Шерсть": 4,
-            "Деликатная": 5,
-            "Perfect 20°C": 6,
-            "Полоскание": 7,
-            "Слив + Отжим": 8,
-            "Сохранить свежесть": 13,
-            "Perfect rapid 59 минут": 15,
+            "Хлопок: Интенсивная стирка": 1, "Хлопок": 2, "Синтетика и цветные ткани": 3,
+            "Шерсть": 4, "Деликатная": 5, "Perfect 20°C": 6, "Полоскание": 7,
+            "Слив + Отжим": 8, "Сохранить свежесть": 13, "Perfect rapid 59 минут": 15,
             "Быстрая": 16
         }.get(program_str, 0)
         
-        # ========== PrCode (Program Code) ==========
+        # PrCode (Program Code)
         PrCode = {
-            "Хлопок: Интенсивная стирка": 65,
-            "Хлопок": 2,
-            "Синтетика и цветные ткани": 3,
-            "Шерсть": 5,
-            "Деликатная": 4,
-            "Perfect 20°C": 11,
-            "Полоскание": 35,
-            "Слив + Отжим": 129,
-            "Сохранить свежесть": 41,
-            "Perfect rapid 59 минут": 8,
+            "Хлопок: Интенсивная стирка": 65, "Хлопок": 2, "Синтетика и цветные ткани": 3,
+            "Шерсть": 5, "Деликатная": 4, "Perfect 20°C": 11, "Полоскание": 35,
+            "Слив + Отжим": 129, "Сохранить свежесть": 41, "Perfect rapid 59 минут": 8,
             "Быстрая": 7
         }.get(program_str, 0)
         
-        # ========== PrStr (Program String) ==========
+        # PrStr (Program String)
         PrStr = "test"
         
-        # ========== TmpTgt (Temperature Target) ==========
+        # TmpTgt (Temperature Target)
         temp_str = temperature_select.state if temperature_select else "60°C"
         TmpTgt = temp_str.replace("°C", "")
         
-        # ========== SLevTgt (Soil Level Target) ==========
+        # SLevTgt (Soil Level Target)
         soil_str = soil_select.state if soil_select else "Нет"
-        SLevTgt = {
-            "Нет": 0,
-            "Мало": 1,
-            "Нормально": 2,
-            "Очень": 3
-        }.get(soil_str, 0)
+        SLevTgt = {"Нет": 0, "Мало": 1, "Нормально": 2, "Очень": 3}.get(soil_str, 0)
         
-        # ========== SpdTgt (Speed Target) ==========
+        # SpdTgt (Speed Target)
         spin_str = spin_select.state if spin_select else "1000 об/мин"
         SpdTgt = {
             "0 об/мин": 0, "400 об/мин": 4, "500 об/мин": 5, "600 об/мин": 6,
@@ -160,11 +140,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "1100 об/мин": 11, "1200 об/мин": 12, "1300 об/мин": 13, "1400 об/мин": 14
         }.get(spin_str, 10)
         
-        # ========== Stm (Steam) ==========
+        # Stm (Steam)
         steam_str = steam_select.state if steam_select else "Без пара"
         Stm = 5 if steam_str == "С паром" else 0
         
-        # ========== OptMsk1 (Options Mask 1) ==========
+        # OptMsk1 (Options Mask 1)
         OptMsk1 = 0
         if prewash_select and prewash_select.state == "Есть":
             OptMsk1 += 1
@@ -185,31 +165,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if aquaplus_select and aquaplus_select.state == "Есть":
             OptMsk1 += 128
         
-        # ========== OptMsk2 (Options Mask 2) ==========
+        # OptMsk2 (Options Mask 2)
         OptMsk2 = 1 if (zoom_select and zoom_select.state == "Есть") else 0
         
-        # ========== FORMAT URL ==========
+        # Формируем URL
         url = (
             f"http://{ip_address}/http-write.json?encrypted=0&Write=1"
-            f"&StSt={StSt}"
-            f"&DelVl={DelVl}"
-            f"&PrNm={PrNm}"
-            f"&PrCode={PrCode}"
-            f"&PrStr={PrStr}"
-            f"&TmpTgt={TmpTgt}"
-            f"&SLevTgt={SLevTgt}"
-            f"&SpdTgt={SpdTgt}"
-            f"&OptMsk1={OptMsk1}"
-            f"&OptMsk2={OptMsk2}"
-            f"&Lang=7"
-            f"&Stm={Stm}"
-            f"&Dry=0"
-            f"&RecipeId=0"
-            f"&StartCheckUp=0"
-            f"&DispTestOn=0"
+            f"&StSt={StSt}&DelVl={DelVl}&PrNm={PrNm}&PrCode={PrCode}&PrStr={PrStr}"
+            f"&TmpTgt={TmpTgt}&SLevTgt={SLevTgt}&SpdTgt={SpdTgt}"
+            f"&OptMsk1={OptMsk1}&OptMsk2={OptMsk2}&Lang=7&Stm={Stm}"
+            f"&Dry=0&RecipeId=0&StartCheckUp=0&DispTestOn=0"
         )
         
-        # ========== SEND GET REQUEST ==========
+        # Отправляем запрос
         session = async_get_clientsession(hass)
         try:
             async with async_timeout.timeout(10):
@@ -248,13 +216,13 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     version_file_path = hass.config.path("www/community/bianca/version.txt")
     
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
-    current_version = "1.0.20"
+    current_version = "1.0.21"
     try:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "1.0.20")
+        current_version = manifest.get("version", "1.0.21")
     except Exception:
         pass
     
