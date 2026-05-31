@@ -216,13 +216,13 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     version_file_path = hass.config.path("www/community/bianca/version.txt")
     
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
-    current_version = "1.0.21"
+    current_version = "1.0.22"
     try:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "1.0.21")
+        current_version = manifest.get("version", "1.0.22")
     except Exception:
         pass
     
