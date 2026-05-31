@@ -238,7 +238,7 @@ async def recreate_all_selects(hass: HomeAssistant, entry: ConfigEntry, program:
     
     # Температура
     temp_options, default_temp = get_temp_options(program)
-    temp_entity = await recreate_select(
+    await recreate_select(
         hass, entry, "temperature",
         lambda eid: BiancaTemperatureSelect(entry, hass, temp_options, default_temp, eid)
     )
@@ -312,15 +312,6 @@ async def recreate_all_selects(hass: HomeAssistant, entry: ConfigEntry, program:
         hass, entry, "zoom",
         lambda eid: BiancaZoomSelect(entry, hass, zoom_options, default_zoom, eid)
     )
-    
-    # Обновляем ссылки на selects в хранилище
-    selects = hass.data[DOMAIN][entry.entry_id].get("selects", [])
-    new_selects = []
-    for entity in selects:
-        if entity.entity_id not in [e.entity_id for e in new_selects]:
-            new_selects.append(entity)
-    new_selects.append(temp_entity)
-    hass.data[DOMAIN][entry.entry_id]["selects"] = new_selects
 
 
 # ========== БАЗОВЫЙ КЛАСС ==========
@@ -363,6 +354,15 @@ class BiancaBaseSelect(SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Update the current selected option."""
         self._attr_current_option = option
+        self.async_write_ha_state()
+    
+    async def async_update_options(self, options: list[str], current_option: str = None) -> None:
+        """Update available options dynamically."""
+        self._attr_options = options
+        if current_option and current_option in options:
+            self._attr_current_option = current_option
+        elif self._attr_current_option not in options:
+            self._attr_current_option = options[0]
         self.async_write_ha_state()
 
 
@@ -435,14 +435,6 @@ class BiancaTemperatureSelect(BiancaBaseSelect):
         add_callback = self._hass.data[DOMAIN][self._entry.entry_id]["async_add_entities"]
         if add_callback:
             add_callback([new_entity])
-        
-        # Обновляем ссылки в хранилище
-        selects = self._hass.data[DOMAIN][self._entry.entry_id].get("selects", [])
-        for i, entity in enumerate(selects):
-            if entity.entity_id == old_entity_id or (old_entity_id is None and entity.unique_id.endswith("hygiene")):
-                selects[i] = new_entity
-                break
-        self._hass.data[DOMAIN][self._entry.entry_id]["selects"] = selects
 
 
 class BiancaSpinSelect(BiancaBaseSelect):
