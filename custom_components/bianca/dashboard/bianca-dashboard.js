@@ -1,18 +1,7 @@
 /**
  * BIANCA DASHBOARD STRATEGY
- * Version: 1.0.20 - Revision 9
+ * Version: 1.0.21 - Revision 1
  * Date: 2026-05-31
- * 
- * Changes in Revision 9:
- * - Fixed soil level icon logic:
- *   - Perfect 20°C: shows phu:duco-2 (cyan, inactive)
- *   - Programs without soil selection: shows phu:duco-1 (grey, inactive)
- *   - Regular programs: shows active icon with color based on selected value
- * - Fixed font-weight: "font-weight": "bold" (with hyphen)
- * - Removed font-weight from program name
- * - Power icon changed to bianca:power
- * - Icon sizes: 24px for visual indicators, 49px for controls
- * - Added transform: translate(0%, 0%) for all icons
  */
 
 class BiancaDashboardStrategy extends HTMLElement {
@@ -149,7 +138,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ХЛОПОК 1 ==========
+                                        // ========== ИКОНКИ ПРОГРАММ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:cotton-1",
@@ -174,7 +163,6 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ХЛОПОК 2 ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:cotton-2",
@@ -199,7 +187,6 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА СИНТЕТИКА ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:synthetics",
@@ -224,7 +211,6 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ШЕРСТЬ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:wool",
@@ -249,7 +235,6 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ДЕЛИКАТНАЯ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:delicate",
@@ -274,7 +259,6 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА PERFECT 20°C ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:perfect20",
@@ -299,7 +283,6 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ПОЛОСКАНИЕ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:rinsing",
@@ -324,7 +307,6 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА СЛИВ + ОТЖИМ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:draining",
@@ -349,14 +331,14 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== РАБОЧАЯ ТЕМПЕРАТУРА ==========
+                                        // ========== ТЕМПЕРАТУРА (РАБОЧАЯ) ==========
                                         {
                                             type: "state-label",
                                             entity: "sensor.bianca_temperature",
                                             style: { 
-                                                left: "27%", 
-                                                top: "51%", 
-                                                fontSize: "18px", 
+                                                left: "66.5%", 
+                                                top: "37.5%", 
+                                                "font-size": "18px", 
                                                 "font-weight": "bold", 
                                                 color: "cyan",
                                                 "transform": "translate(0%, 0%)"
@@ -377,14 +359,14 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ВЫБРАННАЯ ТЕМПЕРАТУРА ==========
+                                        // ========== ТЕМПЕРАТУРА (ВЫБРАННАЯ) ==========
                                         {
                                             type: "state-label",
                                             entity: "select.bianca_temperature",
                                             style: { 
                                                 left: "62%", 
                                                 top: "38%", 
-                                                fontSize: "18px", 
+                                                "font-size": "18px", 
                                                 "font-weight": "bold", 
                                                 color: "cyan",
                                                 "transform": "translate(0%, 0%)"
@@ -439,14 +421,14 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== РАБОЧИЙ ОТЖИМ ==========
+                                        // ========== ОТЖИМ (РАБОЧИЙ) ==========
                                         {
                                             type: "state-label",
                                             entity: "sensor.bianca_spin_speed",
                                             style: { 
                                                 left: "20%", 
                                                 top: "41%", 
-                                                fontSize: "18px", 
+                                                "font-size": "18px", 
                                                 "font-weight": "bold", 
                                                 color: "cyan",
                                                 "transform": "translate(0%, 0%)"
@@ -467,14 +449,14 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ВЫБРАННЫЙ ОТЖИМ ==========
+                                        // ========== ОТЖИМ (ВЫБРАННЫЙ) ==========
                                         {
                                             type: "state-label",
                                             entity: "select.bianca_spin",
                                             style: { 
                                                 left: "48%", 
                                                 top: "33%", 
-                                                fontSize: "18px", 
+                                                "font-size": "18px", 
                                                 "font-weight": "bold", 
                                                 color: "cyan",
                                                 "transform": "translate(0%, 0%)"
@@ -536,7 +518,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                             style: { 
                                                 left: "32%", 
                                                 top: "33%", 
-                                                fontSize: "18px", 
+                                                "font-size": "18px", 
                                                 "font-weight": "bold", 
                                                 color: "cyan",
                                                 "transform": "translate(0%, 0%)"
@@ -557,14 +539,14 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ВЫБРАННАЯ ЗАДЕРЖКА ==========
+                                        // ========== ЗАДЕРЖКА (ВЫБРАННАЯ) ==========
                                         {
                                             type: "state-label",
                                             entity: "select.bianca_delay_start",
                                             style: { 
                                                 left: "25%", 
                                                 top: "38%", 
-                                                fontSize: "18px", 
+                                                "font-size": "18px", 
                                                 "font-weight": "bold", 
                                                 color: "cyan",
                                                 "transform": "translate(0%, 0%)"
@@ -626,7 +608,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                             style: { 
                                                 left: "27%", 
                                                 top: "37.5%", 
-                                                fontSize: "16px", 
+                                                "font-size": "18px", 
                                                 "font-weight": "bold", 
                                                 color: "cyan",
                                                 "transform": "translate(0%, 0%)"
@@ -708,19 +690,16 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                         {% set soil_val = states('select.bianca_soil') %}
                                                         {% set program = states('select.bianca_program') %}
                                                         
-                                                        {# Perfect 20°C - только Нормально, иконка phu:duco-2 #}
                                                         {% if program == 'Perfect 20°C' %}
                                                         --card-mod-icon: phu:duco-2;
                                                         --card-mod-icon-color: cyan;
                                                         pointer-events: none;
                                                         
-                                                        {# Программы без выбора загрязнения - только Нет, иконка серая #}
                                                         {% elif program in ['Шерсть', 'Деликатная', 'Полоскание', 'Слив + Отжим', 'Сохранить свежесть', 'Perfect rapid 59 минут'] %}
                                                         --card-mod-icon: phu:duco-1;
                                                         --card-mod-icon-color: grey;
                                                         pointer-events: none;
                                                         
-                                                        {# Остальные программы - можно выбирать #}
                                                         {% else %}
                                                             {% if machine_ready %}
                                                             pointer-events: auto;
@@ -1108,20 +1087,216 @@ class BiancaDashboardStrategy extends HTMLElement {
                                 {
                                     type: "entities",
                                     title: "Параметры",
+                                    state_color: true,
                                     entities: [
-                                        "select.bianca_program",
-                                        "select.bianca_temperature",
-                                        "select.bianca_spin",
-                                        "select.bianca_delay_start",
-                                        "select.bianca_soil",
-                                        "select.bianca_steam",
-                                        "select.bianca_pre_wash",
-                                        "select.bianca_hygiene",
-                                        "select.bianca_anti_crease",
-                                        "select.bianca_night_spin",
-                                        "select.bianca_extra_rinse",
-                                        "select.bianca_aqua_plus",
-                                        "select.bianca_zoom"
+                                        {
+                                            entity: "select.bianca_program",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_temperature",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_spin",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_delay_start",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_soil",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_steam",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_pre_wash",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_hygiene",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_anti_crease",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_night_spin",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_extra_rinse",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_aqua_plus",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        {
+                                            entity: "select.bianca_zoom",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                               and is_state('binary_sensor.bianca_available', 'on')
+                                                               and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                        {% if not machine_ready %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
                                     ]
                                 }
                             ]
