@@ -36,11 +36,9 @@ async def test_connection(hass, ip_address: str) -> bool:
                         data = json.loads(text)
                         return "statusLavatrice" in data
                     except json.JSONDecodeError:
-                        _LOGGER.error("Invalid JSON response: %s", text[:200])
                         return False
                 return False
-    except Exception as e:
-        _LOGGER.error("Connection test failed: %s", e)
+    except Exception:
         return False
 
 
@@ -56,14 +54,10 @@ class BiancaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=STEP_DATA_SCHEMA)
 
-        errors = {}
-        
-        # Проверяем соединение, но не блокируем создание интеграции при ошибке
         connected = await test_connection(self.hass, user_input[CONF_IP_ADDRESS])
         
         if not connected:
             _LOGGER.warning(f"Cannot connect to {user_input[CONF_IP_ADDRESS]}, but creating integration anyway")
-            # Не показываем ошибку, просто предупреждаем в логе
         
         return self.async_create_entry(
             title=user_input.get("device_name", CONF_INTEGRATION_TITLE),
