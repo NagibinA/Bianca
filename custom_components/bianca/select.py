@@ -1,4 +1,15 @@
-"""Select platform for Bianca integration."""
+"""
+SELECT PLATFORM FOR BIANCA INTEGRATION
+Version: 1.0.20 - Revision 10
+Date: 2026-05-31
+
+Changes in Revision 10:
+- Removed "Нет" option from soil selection for regular programs
+- Regular programs: only "Мало", "Нормально", "Очень" (default "Мало")
+- Perfect 20°C: only "Нормально"
+- Programs without soil selection: only "Нет"
+"""
+
 from __future__ import annotations
 
 from homeassistant.components.select import SelectEntity
@@ -121,13 +132,18 @@ def get_spin_options(program: str) -> tuple[list[str], str]:
 
 
 def get_soil_options(program: str) -> tuple[list[str], str]:
-    """Get soil level options and default value for a program."""
+    """Get soil level options and default value for a program.
+    
+    Revision 10 fix:
+    - Regular programs: only "Мало", "Нормально", "Очень" (NO "Нет")
+    """
     if program in ["Perfect 20°C"]:
         return ["Нормально"], "Нормально"
     elif program in ["Шерсть", "Деликатная", "Полоскание", "Слив + Отжим", "Сохранить свежесть", "Perfect rapid 59 минут"]:
         return ["Нет"], "Нет"
     else:
-        return ["Нет", "Мало", "Нормально", "Очень"], "Нет"
+        # Regular programs - NO "Нет", only Мало, Нормально, Очень
+        return ["Мало", "Нормально", "Очень"], "Мало"
 
 
 def get_steam_options(program: str) -> tuple[list[str], str]:
