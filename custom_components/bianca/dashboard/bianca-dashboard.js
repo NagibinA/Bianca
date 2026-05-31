@@ -1,3 +1,20 @@
+/**
+ * BIANCA DASHBOARD STRATEGY
+ * Version: 1.0.20 - Revision 9
+ * Date: 2026-05-31
+ * 
+ * Changes in Revision 9:
+ * - Fixed soil level icon logic:
+ *   - Perfect 20°C: shows phu:duco-2 (cyan, inactive)
+ *   - Programs without soil selection: shows phu:duco-1 (grey, inactive)
+ *   - Regular programs: shows active icon with color based on selected value
+ * - Fixed font-weight: "font-weight": "bold" (with hyphen)
+ * - Removed font-weight from program name
+ * - Power icon changed to bianca:power
+ * - Icon sizes: 24px for visual indicators, 49px for controls
+ * - Added transform: translate(0%, 0%) for all icons
+ */
+
 class BiancaDashboardStrategy extends HTMLElement {
     static getCreateSuggestions(_hass) {
         return {
@@ -21,10 +38,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                     type: "picture-elements",
                                     image: "/local/community/bianca/original.png",
                                     elements: [
+                                        // ========== ИКОНКА ПИТАНИЯ ==========
                                         {
                                             type: "icon",
-                                            icon: "mdi:power",
-                                            style: { left: "44.8%", top: "11.2%", "--mdc-icon-size": "49px" },
+                                            icon: "bianca:power",
+                                            style: { 
+                                                left: "44.8%", 
+                                                top: "11.2%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -38,10 +62,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА WI-FI ==========
                                         {
                                             type: "icon",
                                             icon: "mdi:wifi",
-                                            style: { left: "30%", top: "14%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "30%", 
+                                                top: "14%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -55,10 +86,18 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА SET (ПЕРЕБОР ПРОГРАММ) ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:set",
-                                            style: { left: "35%", top: "23.5%", "--mdc-icon-size": "65px", opacity: "0.7" },
+                                            style: { 
+                                                left: "35%", 
+                                                top: "23.5%", 
+                                                "--mdc-icon-size": "65px", 
+                                                "opacity": "0.7",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -82,10 +121,14 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== НАЗВАНИЕ ПРОГРАММЫ (ВЫБРАННОЕ) ==========
                                         {
                                             type: "state-label",
                                             entity: "select.bianca_program",
-                                            style: { left: "50%", top: "49%", fontSize: "14px", textAlign: "center", width: "40%" },
+                                            style: { 
+                                                left: "50%", 
+                                                top: "49%"
+                                            },
                                             tap_action: { action: "none" },
                                             hold_action: { action: "more-info" },
                                             card_mod: {
@@ -106,10 +149,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ХЛОПОК 1 ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:cotton-1",
-                                            style: { left: "60.5%", top: "13.2%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "60.5%", 
+                                                top: "13.2%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -124,10 +174,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ХЛОПОК 2 ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:cotton-2",
-                                            style: { left: "71%", top: "20.5%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "71%", 
+                                                top: "20.5%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -142,10 +199,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА СИНТЕТИКА ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:synthetics",
-                                            style: { left: "78%", top: "29.7%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "78%", 
+                                                top: "29.7%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -160,10 +224,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ШЕРСТЬ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:wool",
-                                            style: { left: "78%", top: "40.5%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "78%", 
+                                                top: "40.5%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -178,10 +249,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ДЕЛИКАТНАЯ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:delicate",
-                                            style: { left: "71.5%", top: "49.5%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "71.5%", 
+                                                top: "49.5%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -196,10 +274,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА PERFECT 20°C ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:perfect20",
-                                            style: { left: "59%", top: "56.5%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "59%", 
+                                                top: "56.5%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -214,10 +299,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ПОЛОСКАНИЕ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:rinsing",
-                                            style: { left: "45%", top: "58.8%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "45%", 
+                                                top: "58.8%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -232,10 +324,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА СЛИВ + ОТЖИМ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:draining",
-                                            style: { left: "30%", top: "56.5%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "30%", 
+                                                top: "56.5%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -250,10 +349,18 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== РАБОЧАЯ ТЕМПЕРАТУРА ==========
                                         {
                                             type: "state-label",
                                             entity: "sensor.bianca_temperature",
-                                            style: { left: "27%", top: "51%", fontSize: "18px", fontWeight: "bold", color: "cyan" },
+                                            style: { 
+                                                left: "27%", 
+                                                top: "51%", 
+                                                fontSize: "18px", 
+                                                "font-weight": "bold", 
+                                                color: "cyan",
+                                                "transform": "translate(0%, 0%)"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -270,10 +377,18 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ВЫБРАННАЯ ТЕМПЕРАТУРА ==========
                                         {
                                             type: "state-label",
                                             entity: "select.bianca_temperature",
-                                            style: { left: "62%", top: "38%", fontSize: "18px", fontWeight: "bold", color: "cyan" },
+                                            style: { 
+                                                left: "62%", 
+                                                top: "38%", 
+                                                fontSize: "18px", 
+                                                "font-weight": "bold", 
+                                                color: "cyan",
+                                                "transform": "translate(0%, 0%)"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -290,10 +405,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ТЕМПЕРАТУРЫ ==========
                                         {
                                             type: "icon",
                                             icon: "mdi:thermometer-water",
-                                            style: { left: "20%", top: "50%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "20%", 
+                                                top: "50%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -317,10 +439,18 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== РАБОЧИЙ ОТЖИМ ==========
                                         {
                                             type: "state-label",
                                             entity: "sensor.bianca_spin_speed",
-                                            style: { left: "20%", top: "41%", fontSize: "18px", fontWeight: "bold", color: "cyan" },
+                                            style: { 
+                                                left: "20%", 
+                                                top: "41%", 
+                                                fontSize: "18px", 
+                                                "font-weight": "bold", 
+                                                color: "cyan",
+                                                "transform": "translate(0%, 0%)"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -337,10 +467,18 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ВЫБРАННЫЙ ОТЖИМ ==========
                                         {
                                             type: "state-label",
                                             entity: "select.bianca_spin",
-                                            style: { left: "48%", top: "33%", fontSize: "18px", fontWeight: "bold", color: "cyan" },
+                                            style: { 
+                                                left: "48%", 
+                                                top: "33%", 
+                                                fontSize: "18px", 
+                                                "font-weight": "bold", 
+                                                color: "cyan",
+                                                "transform": "translate(0%, 0%)"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -357,10 +495,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ОТЖИМА ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:spin",
-                                            style: { left: "11.5%", top: "40.5%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "11.5%", 
+                                                top: "40.5%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -384,10 +529,18 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ОСТАВШЕЕСЯ ВРЕМЯ ==========
                                         {
                                             type: "state-label",
                                             entity: "sensor.bianca_remaining_time",
-                                            style: { left: "32%", top: "33%", fontSize: "18px", fontWeight: "bold", color: "cyan" },
+                                            style: { 
+                                                left: "32%", 
+                                                top: "33%", 
+                                                fontSize: "18px", 
+                                                "font-weight": "bold", 
+                                                color: "cyan",
+                                                "transform": "translate(0%, 0%)"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -404,10 +557,18 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ВЫБРАННАЯ ЗАДЕРЖКА ==========
                                         {
                                             type: "state-label",
                                             entity: "select.bianca_delay_start",
-                                            style: { left: "25%", top: "38%", fontSize: "18px", fontWeight: "bold", color: "cyan" },
+                                            style: { 
+                                                left: "25%", 
+                                                top: "38%", 
+                                                fontSize: "18px", 
+                                                "font-weight": "bold", 
+                                                color: "cyan",
+                                                "transform": "translate(0%, 0%)"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -424,10 +585,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ЗАДЕРЖКИ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:delay",
-                                            style: { left: "11%", top: "30%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "11%", 
+                                                top: "30%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -451,10 +619,18 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ФАЗА ПРОГРАММЫ ==========
                                         {
                                             type: "state-label",
                                             entity: "sensor.bianca_program_phase",
-                                            style: { left: "27%", top: "37.5%", fontSize: "16px", fontWeight: "bold", color: "cyan" },
+                                            style: { 
+                                                left: "27%", 
+                                                top: "37.5%", 
+                                                fontSize: "16px", 
+                                                "font-weight": "bold", 
+                                                color: "cyan",
+                                                "transform": "translate(0%, 0%)"
+                                            },
                                             card_mod: {
                                                 style: `
                                                     :host {
@@ -471,10 +647,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ПАРА ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:steam-1",
-                                            style: { left: "18%", top: "20%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "18%", 
+                                                top: "20%", 
+                                                "--mdc-icon-size": "49px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -499,10 +682,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА УРОВНЯ ЗАГРЯЗНЕНИЯ ==========
                                         {
                                             type: "icon",
                                             icon: "phu:duco-1",
-                                            style: { left: "25%", top: "44.2%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "25%", 
+                                                top: "44.2%", 
+                                                "--mdc-icon-size": "24px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -516,32 +706,57 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                and is_state('binary_sensor.bianca_available', 'on')
                                                                and is_state('sensor.bianca_remote_control', 'Вкл') %}
                                                         {% set soil_val = states('select.bianca_soil') %}
-                                                        {% if machine_ready %}
-                                                        visibility: visible;
-                                                        pointer-events: auto;
-                                                        {% if soil_val == 'Мало' %}
-                                                        --card-mod-icon-color: cyan;
-                                                        {% elif soil_val == 'Нормально' %}
+                                                        {% set program = states('select.bianca_program') %}
+                                                        
+                                                        {# Perfect 20°C - только Нормально, иконка phu:duco-2 #}
+                                                        {% if program == 'Perfect 20°C' %}
                                                         --card-mod-icon: phu:duco-2;
                                                         --card-mod-icon-color: cyan;
-                                                        {% elif soil_val == 'Очень' %}
-                                                        --card-mod-icon: phu:duco-3;
-                                                        --card-mod-icon-color: cyan;
-                                                        {% else %}
-                                                        --card-mod-icon-color: grey;
-                                                        {% endif %}
-                                                        {% else %}
-                                                        visibility: hidden;
                                                         pointer-events: none;
+                                                        
+                                                        {# Программы без выбора загрязнения - только Нет, иконка серая #}
+                                                        {% elif program in ['Шерсть', 'Деликатная', 'Полоскание', 'Слив + Отжим', 'Сохранить свежесть', 'Perfect rapid 59 минут'] %}
+                                                        --card-mod-icon: phu:duco-1;
+                                                        --card-mod-icon-color: grey;
+                                                        pointer-events: none;
+                                                        
+                                                        {# Остальные программы - можно выбирать #}
+                                                        {% else %}
+                                                            {% if machine_ready %}
+                                                            pointer-events: auto;
+                                                            {% else %}
+                                                            pointer-events: none;
+                                                            {% endif %}
+                                                            
+                                                            {% if soil_val == 'Мало' %}
+                                                            --card-mod-icon: phu:duco-1;
+                                                            --card-mod-icon-color: cyan;
+                                                            {% elif soil_val == 'Нормально' %}
+                                                            --card-mod-icon: phu:duco-2;
+                                                            --card-mod-icon-color: cyan;
+                                                            {% elif soil_val == 'Очень' %}
+                                                            --card-mod-icon: phu:duco-3;
+                                                            --card-mod-icon-color: cyan;
+                                                            {% else %}
+                                                            --card-mod-icon: phu:duco-1;
+                                                            --card-mod-icon-color: grey;
+                                                            {% endif %}
                                                         {% endif %}
                                                     }
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ПРЕДВАРИТЕЛЬНОЙ СТИРКИ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:pre-wash",
-                                            style: { left: "31.7%", top: "44.2%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "31.7%", 
+                                                top: "44.2%", 
+                                                "--mdc-icon-size": "24px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -555,22 +770,30 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                and is_state('binary_sensor.bianca_available', 'on')
                                                                and is_state('sensor.bianca_remote_control', 'Вкл') %}
                                                         {% set prewash_val = states('select.bianca_pre_wash') %}
-                                                        {% if machine_ready %}
+                                                        {% if machine_ready and prewash_val in ['Есть', 'Нет'] %}
                                                         visibility: visible;
                                                         pointer-events: auto;
                                                         --card-mod-icon-color: {{ 'cyan' if prewash_val == 'Есть' else 'grey' }};
                                                         {% else %}
                                                         visibility: hidden;
                                                         pointer-events: none;
+                                                        --card-mod-icon-color: grey;
                                                         {% endif %}
                                                     }
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ГИГИЕНЫ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:hygiene-wash",
-                                            style: { left: "39%", top: "44.2%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "39%", 
+                                                top: "44.2%", 
+                                                "--mdc-icon-size": "24px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -584,22 +807,30 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                and is_state('binary_sensor.bianca_available', 'on')
                                                                and is_state('sensor.bianca_remote_control', 'Вкл') %}
                                                         {% set hygiene_val = states('select.bianca_hygiene') %}
-                                                        {% if machine_ready %}
+                                                        {% if machine_ready and hygiene_val in ['Есть', 'Нет'] %}
                                                         visibility: visible;
                                                         pointer-events: auto;
                                                         --card-mod-icon-color: {{ 'cyan' if hygiene_val == 'Есть' else 'grey' }};
                                                         {% else %}
                                                         visibility: hidden;
                                                         pointer-events: none;
+                                                        --card-mod-icon-color: grey;
                                                         {% endif %}
                                                     }
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА АНТИСМИНАНИЯ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:anti-crease",
-                                            style: { left: "46.6%", top: "44.2%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "46.6%", 
+                                                top: "44.2%", 
+                                                "--mdc-icon-size": "24px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -613,22 +844,30 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                and is_state('binary_sensor.bianca_available', 'on')
                                                                and is_state('sensor.bianca_remote_control', 'Вкл') %}
                                                         {% set anticrease_val = states('select.bianca_anti_crease') %}
-                                                        {% if machine_ready %}
+                                                        {% if machine_ready and anticrease_val in ['Есть', 'Нет'] %}
                                                         visibility: visible;
                                                         pointer-events: auto;
                                                         --card-mod-icon-color: {{ 'cyan' if anticrease_val == 'Есть' else 'grey' }};
                                                         {% else %}
                                                         visibility: hidden;
                                                         pointer-events: none;
+                                                        --card-mod-icon-color: grey;
                                                         {% endif %}
                                                     }
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА НОЧНОЙ СТИРКИ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:night-spin",
-                                            style: { left: "55%", top: "44.2%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "55%", 
+                                                top: "44.2%", 
+                                                "--mdc-icon-size": "24px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -642,22 +881,30 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                and is_state('binary_sensor.bianca_available', 'on')
                                                                and is_state('sensor.bianca_remote_control', 'Вкл') %}
                                                         {% set nightspin_val = states('select.bianca_night_spin') %}
-                                                        {% if machine_ready %}
+                                                        {% if machine_ready and nightspin_val in ['Есть', 'Нет'] %}
                                                         visibility: visible;
                                                         pointer-events: auto;
                                                         --card-mod-icon-color: {{ 'cyan' if nightspin_val == 'Есть' else 'grey' }};
                                                         {% else %}
                                                         visibility: hidden;
                                                         pointer-events: none;
+                                                        --card-mod-icon-color: grey;
                                                         {% endif %}
                                                     }
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ДОПОЛНИТЕЛЬНЫХ ПОЛОСКАНИЙ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:rinse-1",
-                                            style: { left: "62%", top: "44.2%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "62%", 
+                                                top: "44.2%", 
+                                                "--mdc-icon-size": "24px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -693,10 +940,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА АКВАПЛЮС ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:extra-water",
-                                            style: { left: "68.5%", top: "44.2%", "--mdc-icon-size": "49px" },
+                                            style: { 
+                                                left: "68.5%", 
+                                                top: "44.2%", 
+                                                "--mdc-icon-size": "24px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -722,10 +976,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== ИКОНКА ZOOM ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:zoom",
-                                            style: { left: "38%", top: "47%", "--mdc-icon-size": "110px" },
+                                            style: { 
+                                                left: "38%", 
+                                                top: "47%", 
+                                                "--mdc-icon-size": "110px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "select.select_next",
@@ -754,10 +1015,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== КНОПКА PLAY ==========
                                         {
                                             type: "icon",
                                             icon: "mdi:play",
-                                            style: { left: "52%", top: "23.6%", "--mdc-icon-size": "52px" },
+                                            style: { 
+                                                left: "52%", 
+                                                top: "23.6%", 
+                                                "--mdc-icon-size": "52px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "bianca.start_washing"
@@ -785,10 +1053,17 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
+                                        // ========== КНОПКА STOP ==========
                                         {
                                             type: "icon",
                                             icon: "mdi:stop",
-                                            style: { left: "60%", top: "23.6%", "--mdc-icon-size": "52px" },
+                                            style: { 
+                                                left: "60%", 
+                                                top: "23.6%", 
+                                                "--mdc-icon-size": "52px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
                                             tap_action: {
                                                 action: "perform-action",
                                                 perform_action: "bianca.stop_washing"
@@ -818,6 +1093,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                         }
                                     ]
                                 },
+                                // ========== КАРТОЧКА СОСТОЯНИЯ ==========
                                 {
                                     type: "entities",
                                     title: "Состояние",
@@ -828,6 +1104,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                         "sensor.bianca_remote_control"
                                     ]
                                 },
+                                // ========== КАРТОЧКА ПАРАМЕТРОВ ==========
                                 {
                                     type: "entities",
                                     title: "Параметры",
