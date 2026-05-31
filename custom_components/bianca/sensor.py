@@ -8,7 +8,6 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     UnitOfTemperature,
-    UnitOfTime,
     CONF_IP_ADDRESS,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -86,9 +85,8 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         self._key = key
         self._entry = entry
         self._hass = hass
-        self.entity_id = f"sensor.bianca_{entity_id_key}"
-        self._attr_name = f"Bianca {display_name}"
         self._attr_unique_id = f"{entry.entry_id}_{entity_id_key}"
+        self._attr_name = f"Bianca {display_name}"
         self._attr_icon = icon
         self._attr_device_class = device_class
         self._attr_state_class = state_class
@@ -141,9 +139,8 @@ class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._entry = entry
         self._hass = hass
-        self.entity_id = "sensor.bianca_api_response"
-        self._attr_name = "Bianca Статус API"
         self._attr_unique_id = f"{entry.entry_id}_api_response"
+        self._attr_name = "Bianca Статус API"
         self._attr_icon = "mdi:api"
 
     @property
@@ -155,7 +152,6 @@ class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
     
     @property
     def _device_available(self) -> bool:
-        """Check if device is available via ping."""
         if DOMAIN not in self._hass.data:
             return False
         if self._entry.entry_id not in self._hass.data[DOMAIN]:
@@ -164,21 +160,17 @@ class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def available(self) -> bool:
-        """Return if sensor is available."""
         return True
 
     @property
     def native_value(self) -> str:
-        """Return the API response status."""
         if not self._device_available:
             return "NO RESPONSE"
         return self.coordinator.api_response_status
 
 
 class BiancaRemoteControlSensor(BiancaBaseSensor):
-    """Remote control sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "WiFiStatus", "remote_control", "Удаленное управление", "mdi:wifi")
 
     @property
@@ -194,9 +186,7 @@ class BiancaRemoteControlSensor(BiancaBaseSensor):
 
 
 class BiancaErrorSensor(BiancaBaseSensor):
-    """Error sensor with text description."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Err", "error", "Ошибка", "mdi:alert-circle")
 
     @property
@@ -212,9 +202,7 @@ class BiancaErrorSensor(BiancaBaseSensor):
 
 
 class BiancaMachineStateSensor(BiancaBaseSensor):
-    """Machine state sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "MachMd", "machine_state", "Состояние машины", "mdi:washing-machine")
 
     @property
@@ -228,9 +216,7 @@ class BiancaMachineStateSensor(BiancaBaseSensor):
 
 
 class BiancaProgramSensor(BiancaBaseSensor):
-    """Program sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Pr", "program", "Программа стирки", "mdi:format-list-bulleted")
 
     @property
@@ -244,16 +230,13 @@ class BiancaProgramSensor(BiancaBaseSensor):
 
     @property
     def extra_state_attributes(self):
-        """Return program number attribute."""
         if not self._device_available or self.coordinator.data is None:
             return {}
         return {"program_number": self.coordinator.data.get("Pr")}
 
 
 class BiancaProgramPhaseSensor(BiancaBaseSensor):
-    """Program phase sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "PrPh", "program_phase", "Фаза программы", "mdi:progress-clock")
 
     @property
@@ -267,43 +250,30 @@ class BiancaProgramPhaseSensor(BiancaBaseSensor):
 
 
 class BiancaSoilLevelSensor(BiancaBaseSensor):
-    """Soil level sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
-        super().__init__(
-            coordinator, entry, hass, "SLevel", "soil_level", "Уровень загрязнения", "mdi:water-percent",
-        )
+    def __init__(self, coordinator, entry, hass):
+        super().__init__(coordinator, entry, hass, "SLevel", "soil_level", "Уровень загрязнения", "mdi:water-percent")
 
     @property
     def native_value(self):
         if not self._device_available:
             return None
-        
         if self.coordinator.data is None:
             return None
-        
         value = self.coordinator.data.get("SLevel")
-        
         if value is None:
             return None
-        
         str_value = str(value)
-        
         if str_value == "0":
             return None
-        
         return SOIL_LEVEL_MAP.get(str_value, str_value)
 
     @property
     def icon(self):
         if not self._device_available:
             return "mdi:help-circle-outline"
-        
         if self.coordinator.data is None:
             return "mdi:help-circle-outline"
-        
         value = self.coordinator.data.get("SLevel")
-        
         if value == "1":
             return "phu:duco-1"
         elif value == "2":
@@ -314,9 +284,7 @@ class BiancaSoilLevelSensor(BiancaBaseSensor):
 
 
 class BiancaTemperatureSensor(BiancaBaseSensor):
-    """Temperature sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(
             coordinator, entry, hass, "Temp", "temperature", "Температура стирки", "mdi:thermometer",
             device_class=SensorDeviceClass.TEMPERATURE,
@@ -326,11 +294,9 @@ class BiancaTemperatureSensor(BiancaBaseSensor):
 
 
 class BiancaSpinSpeedSensor(BiancaBaseSensor):
-    """Spin speed sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(
-            coordinator, entry, hass, "SpinSp", "spin_speed", "Скорость отжима", "bianca:spin",
+            coordinator, entry, hass, "SpinSp", "spin_speed", "Скорость отжима", "mdi:rotate-right",
             state_class=SensorStateClass.MEASUREMENT,
             unit=None
         )
@@ -349,9 +315,7 @@ class BiancaSpinSpeedSensor(BiancaBaseSensor):
 
 
 class BiancaRemainingTimeSensor(BiancaBaseSensor):
-    """Remaining time sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(
             coordinator, entry, hass, "RemTime", "remaining_time", "Оставшееся время", "mdi:timer-outline",
             unit=None
@@ -361,39 +325,29 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
     def native_value(self):
         if not self._device_available:
             return None
-        
         if self.coordinator.data is None:
             return None
-        
         machine_state = self.coordinator.data.get("MachMd")
-        
         if machine_state not in ["2", "3"]:
             return "00:00"
-        
         value = self.coordinator.data.get("RemTime")
-        
         if value is None:
             return "00:00"
-        
         try:
             seconds = int(value)
             if seconds <= 0:
                 return "00:00"
-            
             hours = seconds // 3600
             minutes = (seconds % 3600) // 60
-            
             return f"{hours:02d}:{minutes:02d}"
         except (ValueError, TypeError):
             return "00:00"
 
 
 class BiancaDelayStartSensor(BiancaBaseSensor):
-    """Delay start sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(
-            coordinator, entry, hass, "DelVal", "delay_start", "Отложенный старт", "bianca:delay",
+            coordinator, entry, hass, "DelVal", "delay_start", "Отложенный старт", "mdi:timer-outline",
             unit=None
         )
 
@@ -401,37 +355,27 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
     def native_value(self):
         if not self._device_available:
             return None
-        
         if self.coordinator.data is None:
             return ""
-        
         machine_state = self.coordinator.data.get("MachMd")
-        
         if machine_state != "4":
             return ""
-        
         value = self.coordinator.data.get("DelVal")
-        
         if value is None:
             return ""
-        
         try:
             seconds = int(value)
             if seconds <= 0:
                 return ""
-            
             hours = seconds // 3600
             minutes = (seconds % 3600) // 60
-            
             return f"{hours:02d}:{minutes:02d}"
         except (ValueError, TypeError):
             return ""
 
 
 class BiancaLanguageSensor(BiancaBaseSensor):
-    """Language sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Lang", "language", "Язык дисплея", "mdi:translate")
 
     @property
@@ -445,9 +389,7 @@ class BiancaLanguageSensor(BiancaBaseSensor):
 
 
 class BiancaSteamSensor(BiancaBaseSensor):
-    """Steam sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Steam", "steam", "Пар", "bianca:steam")
 
     @property
@@ -459,9 +401,7 @@ class BiancaSteamSensor(BiancaBaseSensor):
 
 
 class BiancaPreWashSensor(BiancaBaseSensor):
-    """Pre-wash sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt1", "pre_wash", "Предварительная стирка", "bianca:pre-wash")
 
     @property
@@ -473,9 +413,7 @@ class BiancaPreWashSensor(BiancaBaseSensor):
 
 
 class BiancaHygienicSensor(BiancaBaseSensor):
-    """Hygienic wash sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt2", "hygienic_wash", "Гигиеническая стирка", "bianca:hygiene-wash")
 
     @property
@@ -487,9 +425,7 @@ class BiancaHygienicSensor(BiancaBaseSensor):
 
 
 class BiancaAntiCreaseSensor(BiancaBaseSensor):
-    """Anti-crease sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt3", "anti_crease", "Анти сминание", "bianca:anti-crease")
 
     @property
@@ -501,9 +437,7 @@ class BiancaAntiCreaseSensor(BiancaBaseSensor):
 
 
 class BiancaNightSpinSensor(BiancaBaseSensor):
-    """Night spin sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt4", "night_spin", "Ночной отжим", "bianca:night-spin")
 
     @property
@@ -515,21 +449,15 @@ class BiancaNightSpinSensor(BiancaBaseSensor):
 
 
 class BiancaRinseSensor(BiancaBaseSensor):
-    """Rinse sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
-        super().__init__(
-            coordinator, entry, hass, None, "rinse", "Полоскание", "mdi:water-off",
-        )
+    def __init__(self, coordinator, entry, hass):
+        super().__init__(coordinator, entry, hass, None, "rinse", "Полоскание", "mdi:water-off")
 
     @property
     def native_value(self):
         if not self._device_available:
             return None
-        
         if self.coordinator.data is None:
             return ""
-        
         if self.coordinator.data.get("Opt5") == "1":
             return "Одно"
         elif self.coordinator.data.get("Opt6") == "1":
@@ -542,10 +470,8 @@ class BiancaRinseSensor(BiancaBaseSensor):
     def icon(self):
         if not self._device_available:
             return "mdi:water-off"
-        
         if self.coordinator.data is None:
             return "mdi:water-off"
-        
         if self.coordinator.data.get("Opt5") == "1":
             return "bianca:rinse-1"
         elif self.coordinator.data.get("Opt6") == "1":
@@ -556,9 +482,7 @@ class BiancaRinseSensor(BiancaBaseSensor):
 
 
 class BiancaAquaPlusSensor(BiancaBaseSensor):
-    """Aqua plus sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt8", "aqua_plus", "Акваплюс", "bianca:extra-water")
 
     @property
@@ -570,9 +494,7 @@ class BiancaAquaPlusSensor(BiancaBaseSensor):
 
 
 class BiancaZoomSensor(BiancaBaseSensor):
-    """Zoom sensor."""
-
-    def __init__(self, coordinator: BiancaDataUpdateCoordinator, entry: ConfigEntry, hass: HomeAssistant):
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt9", "zoom", "Режим ZOOM", "bianca:zoom")
 
     @property
