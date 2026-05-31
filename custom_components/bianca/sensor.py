@@ -35,6 +35,9 @@ async def async_setup_entry(
     """Set up Bianca sensors."""
     coordinator: BiancaDataUpdateCoordinator = entry.runtime_data
     
+    if DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
+        hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
+    
     entities = [
         BiancaApiResponseSensor(coordinator, entry, hass),
         BiancaRemoteControlSensor(coordinator, entry, hass),
