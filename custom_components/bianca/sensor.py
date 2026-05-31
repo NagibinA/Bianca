@@ -1,4 +1,18 @@
-"""Sensor platform for Bianca integration."""
+"""
+SENSOR PLATFORM FOR BIANCA INTEGRATION
+Version: 1.0.22
+Date: 2026-06-01
+
+Changes in this version:
+- RemTime: value is in SECONDS (divide by 60 for minutes, 3600 for hours)
+- DelVal: value is in MINUTES (divide by 60 for hours)
+- DelayStartSensor shows when MachMd = 4 (selection)
+- DelayCountdownSensor shows when MachMd = 5 (countdown)
+- RemainingTimeSensor shows when MachMd = 2 or 3 (running/paused)
+- Temperature sensor returns integer without °C symbol
+- Program phase "Последнее полоскание" shortened to "Посл. полоскание"
+"""
+
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
@@ -50,6 +64,7 @@ async def async_setup_entry(
         BiancaSpinSpeedSensor(coordinator, entry, hass),
         BiancaRemainingTimeSensor(coordinator, entry, hass),
         BiancaDelayStartSensor(coordinator, entry, hass),
+        BiancaDelayCountdownSensor(coordinator, entry, hass),
         BiancaLanguageSensor(coordinator, entry, hass),
         BiancaSteamSensor(coordinator, entry, hass),
         BiancaPreWashSensor(coordinator, entry, hass),
@@ -255,8 +270,18 @@ class BiancaTemperatureSensor(BiancaBaseSensor):
             coordinator, entry, hass, "Temp", "temperature", "Температура стирки", "mdi:thermometer",
             device_class=SensorDeviceClass.TEMPERATURE,
             state_class=SensorStateClass.MEASUREMENT,
-            unit=UnitOfTemperature.CELSIUS
+            unit=None
         )
+
+    @property
+    def native_value(self):
+        value = super().native_value
+        if value is None:
+            return None
+        try:
+            return int(float(value))
+        except (ValueError, TypeError):
+            return value
 
 
 class BiancaSpinSpeedSensor(BiancaBaseSensor):
@@ -279,6 +304,8 @@ class BiancaSpinSpeedSensor(BiancaBaseSensor):
 
 
 class BiancaRemainingTimeSensor(BiancaBaseSensor):
+    """Remaining time sensor - RemTime comes in SECONDS."""
+
     def __init__(self, coordinator, entry, hass):
         super().__init__(
             coordinator, entry, hass, "RemTime", "remaining_time", "Оставшееся время", "mdi:timer-outline",
@@ -307,9 +334,11 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
 
 
 class BiancaDelayStartSensor(BiancaBaseSensor):
+    """Delay start sensor - shows selected delay when MachMd = 4. DelVal comes in MINUTES."""
+
     def __init__(self, coordinator, entry, hass):
         super().__init__(
-            coordinator, entry, hass, "DelVal", "delay_start", "Отложенный старт", "mdi:timer-outline",
+            coordinator, entry, hass, "DelVal", "delay_start", "Отложенный старт (выбор)", "mdi:timer-outline",
             unit=None
         )
 
@@ -324,12 +353,42 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
         if value is None:
             return ""
         try:
-            seconds = int(value)
-            if seconds <= 0:
+            minutes = int(value)
+            if minutes <= 0:
                 return ""
-            hours = seconds // 3600
-            minutes = (seconds % 3600) // 60
-            return f"{hours:02d}:{minutes:02d}"
+            hours = minutes // 60
+            mins = minutes % 60
+            return f"{hours:02d}:{mins:02d}"
+        except (ValueError, TypeError):
+            return ""
+
+
+class BiancaDelayCountdownSensor(BiancaBaseSensor):
+    """Delay countdown sensor - shows countdown when MachMd = 5. DelVal comes in MINUTES."""
+
+    def __init__(self, coordinator, entry, hass):
+        super().__init__(
+            coordinator, entry, hass, "DelVal", "delay_countdown", "Обратный отсчет", "mdi:timer-outline",
+            unit=None
+        )
+
+    @property
+    def native_value(self):
+        if self.coordinator.data is None:
+            return ""
+        machine_state = self.coordinator.data.get("MachMd")
+        if machine_state != "5":
+            return ""
+        value = self.coordinator.data.get("DelVal")
+        if value is None:
+            return ""
+        try:
+            minutes = int(value)
+            if minutes <= 0:
+                return ""
+            hours = minutes // 60
+            mins = minutes % 60
+            return f"{hours:02d}:{mins:02d}"
         except (ValueError, TypeError):
             return ""
 
