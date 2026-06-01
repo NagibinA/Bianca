@@ -11,6 +11,11 @@ Changes in this version:
 - RemainingTimeSensor shows when MachMd = 2 or 3 (running/paused)
 - Temperature sensor returns integer without °C symbol
 - Program phase "Последнее полоскание" shortened to "Посл. полоскание"
+
+ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (2026-06-01):
+- Исправлен метод available - теперь сенсоры становятся недоступными когда устройство оффлайн
+- Изменён unique_id - добавлен префикс "sensor_" для избежания конфликта с селектами
+- Убран device_class у температурного сенсора (не используется)
 """
 
 from __future__ import annotations
@@ -101,7 +106,8 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         self._entry = entry
         self._hass = hass
         self.entity_id = f"sensor.bianca_{entity_id_key}"
-        self._attr_unique_id = f"{entry.entry_id}_{entity_id_key}"
+        # ИЗМЕНЕНИЕ: добавлен префикс "sensor_" для уникальности (чтобы не конфликтовать с select)
+        self._attr_unique_id = f"{entry.entry_id}_sensor_{entity_id_key}"
         self._attr_name = f"Bianca {display_name}"
         self._attr_icon = icon
         self._attr_device_class = device_class
@@ -117,12 +123,26 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def available(self) -> bool:
-        """Return if sensor is available."""
+        """
+        Возвращает доступен ли сенсор.
+        
+        ИЗМЕНЕНИЕ: теперь сенсор доступен ТОЛЬКО если:
+        1. Устройство доступно по пингу (coordinator.device_available)
+        2. И есть данные от координатора (coordinator.data is not None)
+        
+        Раньше всегда возвращалось True, что приводило к отображению устаревших данных.
+        """
+        if not self.coordinator.device_available:
+            return False
+        if self.coordinator.data is None:
+            return False
         return True
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
+        if not self.coordinator.device_available:
+            return None
         if self.coordinator.data is None:
             return None
         if self._key is None:
@@ -144,7 +164,8 @@ class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
         self._entry = entry
         self._hass = hass
         self.entity_id = "sensor.bianca_api_response"
-        self._attr_unique_id = f"{entry.entry_id}_api_response"
+        # ИЗМЕНЕНИЕ: добавлен префикс "sensor_" для уникальности
+        self._attr_unique_id = f"{entry.entry_id}_sensor_api_response"
         self._attr_name = "Bianca Статус API"
         self._attr_icon = "mdi:api"
 
@@ -157,10 +178,15 @@ class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def available(self) -> bool:
+        """Return if sensor is available."""
+        # ИЗМЕНЕНИЕ: учитываем доступность устройства
+        if not self.coordinator.device_available:
+            return False
         return True
 
     @property
     def native_value(self) -> str:
+        """Return API response status."""
         return self.coordinator.api_response_status
 
 
@@ -268,7 +294,7 @@ class BiancaTemperatureSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(
             coordinator, entry, hass, "Temp", "temperature", "Температура стирки", "mdi:thermometer",
-            device_class=SensorDeviceClass.TEMPERATURE,
+            device_class=None,  # ИЗМЕНЕНИЕ: убран device_class (не нужен, нет единицы измерения)
             state_class=SensorStateClass.MEASUREMENT,
             unit=None
         )
@@ -314,8 +340,10 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
+        if not self.coordinator.device_available:
+            return "00:00"
         if self.coordinator.data is None:
-            return None
+            return "00:00"
         machine_state = self.coordinator.data.get("MachMd")
         if machine_state not in ["2", "3"]:
             return "00:00"
@@ -344,6 +372,8 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
+        if not self.coordinator.device_available:
+            return ""
         if self.coordinator.data is None:
             return ""
         machine_state = self.coordinator.data.get("MachMd")
@@ -374,6 +404,8 @@ class BiancaDelayCountdownSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
+        if not self.coordinator.device_available:
+            return ""
         if self.coordinator.data is None:
             return ""
         machine_state = self.coordinator.data.get("MachMd")
