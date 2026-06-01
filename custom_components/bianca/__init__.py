@@ -184,6 +184,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 await session.get(url)
         except Exception:
             pass
+        
+        # Сбрасываем селект отложенного старта на "Нет"
+        delay_select_entity = "select.bianca_delay_start"
+        delay_select_state = hass.states.get(delay_select_entity)
+        if delay_select_state and delay_select_state.state != "Нет":
+            await hass.services.async_call(
+                "select", "select_option",
+                {"entity_id": delay_select_entity, "option": "Нет"}
+            )
     
     async def handle_stop_washing(call):
         """Handle stop washing service."""
@@ -216,13 +225,13 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     version_file_path = hass.config.path("www/community/bianca/version.txt")
     
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
-    current_version = "1.0.22"
+    current_version = "1.0.23"
     try:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "1.0.22")
+        current_version = manifest.get("version", "1.0.23")
     except Exception:
         pass
     
