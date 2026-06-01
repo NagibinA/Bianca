@@ -12,10 +12,11 @@ Changes in this version:
 - Temperature sensor returns integer without °C symbol
 - Program phase "Последнее полоскание" shortened to "Посл. полоскание"
 
-ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (2026-06-01):
+ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (2026-06-02):
 - Исправлен метод available - теперь сенсоры становятся недоступными когда устройство оффлайн
 - Изменён unique_id - добавлен префикс "sensor_" для избежания конфликта с селектами
 - Убран device_class у температурного сенсора (не используется)
+- Удалён сенсор BiancaDelayStartSensor (sensor.bianca_delay_start) - не используется в дашборде
 """
 
 from __future__ import annotations
@@ -68,7 +69,7 @@ async def async_setup_entry(
         BiancaTemperatureSensor(coordinator, entry, hass),
         BiancaSpinSpeedSensor(coordinator, entry, hass),
         BiancaRemainingTimeSensor(coordinator, entry, hass),
-        BiancaDelayStartSensor(coordinator, entry, hass),
+        # BiancaDelayStartSensor(coordinator, entry, hass),  # УДАЛЁН - не используется в дашборде
         BiancaDelayCountdownSensor(coordinator, entry, hass),
         BiancaLanguageSensor(coordinator, entry, hass),
         BiancaSteamSensor(coordinator, entry, hass),
@@ -359,38 +360,6 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
             return f"{hours:02d}:{minutes:02d}"
         except (ValueError, TypeError):
             return "00:00"
-
-
-class BiancaDelayStartSensor(BiancaBaseSensor):
-    """Delay start sensor - shows selected delay when MachMd = 4. DelVal comes in MINUTES."""
-
-    def __init__(self, coordinator, entry, hass):
-        super().__init__(
-            coordinator, entry, hass, "DelVal", "delay_start", "Отложенный старт (выбор)", "mdi:timer-outline",
-            unit=None
-        )
-
-    @property
-    def native_value(self):
-        if not self.coordinator.device_available:
-            return ""
-        if self.coordinator.data is None:
-            return ""
-        machine_state = self.coordinator.data.get("MachMd")
-        if machine_state != "4":
-            return ""
-        value = self.coordinator.data.get("DelVal")
-        if value is None:
-            return ""
-        try:
-            minutes = int(value)
-            if minutes <= 0:
-                return ""
-            hours = minutes // 60
-            mins = minutes % 60
-            return f"{hours:02d}:{mins:02d}"
-        except (ValueError, TypeError):
-            return ""
 
 
 class BiancaDelayCountdownSensor(BiancaBaseSensor):
