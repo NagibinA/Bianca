@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import timedelta
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
@@ -12,6 +13,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
 
 from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -73,19 +76,41 @@ class BiancaAvailableBinarySensor(BinarySensorEntity):
         return "mdi:network" if self._state else "mdi:network-off"
 
     async def async_update_ping(self, now=None) -> None:
-        """Update ping state and store in global storage."""
+        """
+        Обновление статуса пинга.
+        
+        ИЗМЕНЕНИЯ:
+        1. Добавлено логирование изменения статуса
+        2. При восстановлении доступности принудительно обновляем координатор
+        3. При потере доступности обновляем слушателей, чтобы сенсоры стали unavailable
+        """
+        old_state = self._state
         self._state = await async_ping(self._ip_address)
         
+        # Логируем изменение статуса
+        if old_state != self._state:
+            _LOGGER.info(f"Device {self._ip_address} availability changed: {'online' if self._state else 'offline'} (was: {'online' if old_state else 'offline'})")
+        
+        # Обновляем флаг в глобальном хранилище
         if DOMAIN in self._hass.data:
             if self._entry.entry_id in self._hass.data[DOMAIN]:
                 self._hass.data[DOMAIN][self._entry.entry_id]["available"] = self._state
         
         self.async_write_ha_state()
         
-        if self._state and DOMAIN in self._hass.data and self._entry.entry_id in self._hass.data[DOMAIN]:
-            coordinator = self._hass.data[DOMAIN].get(self._entry.entry_id, {}).get("coordinator")
+        # Если устройство появилось в сети - принудительно обновляем данные
+        if self._state and not old_state:
+            _LOGGER.info(f"Device {self._ip_address} came online, refreshing coordinator")
+            coordinator = self._hass.data.get(DOMAIN, {}).get(self._entry.entry_id, {}).get("coordinator")
             if coordinator:
                 await coordinator.async_refresh()
+        
+        # Если устройство ушло в оффлайн - обновляем слушателей, чтобы сенсоры стали unavailable
+        elif not self._state and old_state:
+            _LOGGER.warning(f"Device {self._ip_address} went offline")
+            coordinator = self._hass.data.get(DOMAIN, {}).get(self._entry.entry_id, {}).get("coordinator")
+            if coordinator:
+                coordinator.async_update_listeners()
 
     async def async_added_to_hass(self) -> None:
         """Start polling when entity is added."""
