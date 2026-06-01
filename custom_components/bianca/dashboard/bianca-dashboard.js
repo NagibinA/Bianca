@@ -1,10 +1,12 @@
 /**
  * BIANCA DASHBOARD STRATEGY
- * Version: 1.0.22 - Revision 1
- * Date: 2026-06-01
+ * Version: 1.0.23 - Revision 2
+ * Date: 2026-06-02
  * 
  * Changes in this version:
- * - Fixed Play/Stop buttons behavior with remote_control check
+ * - Fixed visibility of option icons after washing cycle completes
+ * - Added state subscription to update icon visibility when machine_state or remote_control changes
+ * - Play/Stop buttons behavior with remote_control check
  * - Icons are hidden when their value is disabled/off
  * - Steam and Zoom always visible
  * - All icons show actual values during washing (from sensors)
@@ -1684,6 +1686,40 @@ class BiancaDashboardStrategy extends HTMLElement {
         };
     }
 }
+
+// Инициализация обновления видимости при изменении состояний
+let initialized = false;
+
+function initVisibilityUpdates(hass) {
+    if (initialized) return;
+    initialized = true;
+    
+    // Подписываемся на изменения состояний, влияющих на видимость иконок
+    const entitiesToWatch = [
+        'sensor.bianca_machine_state',
+        'sensor.bianca_remote_control',
+        'binary_sensor.bianca_available'
+    ];
+    
+    entitiesToWatch.forEach(entityId => {
+        hass.connection.subscribeMessage(
+            () => {
+                // При изменении состояния обновляем интерфейс
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 100);
+            },
+            { type: 'subscribe_events', event_type: 'state_changed' }
+        );
+    });
+}
+
+// Перехватываем создание карточки для инициализации
+const originalGenerate = BiancaDashboardStrategy.generate;
+BiancaDashboardStrategy.generate = async function(config, hass, resources, view) {
+    initVisibilityUpdates(hass);
+    return originalGenerate.call(this, config, hass, resources, view);
+};
 
 customElements.define('ll-strategy-dashboard-bianca', BiancaDashboardStrategy);
 
