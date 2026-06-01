@@ -319,10 +319,17 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         return self._api_response_status
 
     async def _async_update_data(self) -> dict:
+        """
+        Получение данных от устройства.
+        
+        ИЗМЕНЕНИЕ: Если устройство недоступно по пингу - не возвращаем кэш,
+        а сразу вызываем исключение UpdateFailed. Это заставит все сенсоры
+        стать "unavailable", а не показывать устаревшие данные.
+        """
+        # Если устройство недоступно по пингу - НЕ возвращаем кэш
         if not self.device_available:
-            if self._last_valid_data is not None:
-                return self._last_valid_data
-            return {}
+            _LOGGER.debug(f"Device {self.ip_address} is offline, raising UpdateFailed")
+            raise UpdateFailed("Device is offline")
         
         session = async_get_clientsession(self.hass)
         
@@ -336,7 +343,9 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                             
                             if "response" in data:
                                 self._api_response_status = data["response"]
+                                # API вернул ошибку, но устройство доступно по пингу
                                 if self._last_valid_data is not None:
+                                    _LOGGER.debug(f"API error but device online, using cached data: {self._api_response_status}")
                                     return self._last_valid_data
                                 raise UpdateFailed(f"API error: {self._api_response_status}")
                             
@@ -360,7 +369,10 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                         if self._last_valid_data is not None:
                             return self._last_valid_data
                         raise UpdateFailed(f"HTTP error {response.status}")
-        except Exception:
-            if self._last_valid_data is not None:
+        except Exception as e:
+            # Любая другая ошибка - проверяем доступность устройства
+            if self.device_available and self._last_valid_data is not None:
+                _LOGGER.debug(f"Device available but error occurred, using cached data: {e}")
                 return self._last_valid_data
-            raise UpdateFailed("Error fetching data")
+            _LOGGER.warning(f"Device unavailable or no cache, raising UpdateFailed: {e}")
+            raise UpdateFailed(f"Error fetching data: {e}")
