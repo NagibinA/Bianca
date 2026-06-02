@@ -1,5 +1,9 @@
 """Constants for the Bianca integration."""
 
+import json
+import os
+from typing import Any
+
 DOMAIN = "bianca"
 CONF_INTEGRATION_TITLE = "Bianca"
 DEFAULT_SCAN_INTERVAL = 30
@@ -9,6 +13,27 @@ CONF_IP_ADDRESS = "ip_address"
 API_ENDPOINT = "http://{}/http-read.json?encrypted=0"
 
 PLATFORMS = ["sensor", "binary_sensor", "select"]
+
+# Путь к файлу конфигурации программ
+PROGRAMS_CONFIG_FILE = "programs.json"
+
+# Опции и их соответствие entity_id
+OPTION_TO_ENTITY = {
+    "temperature": "select.bianca_temperature",
+    "spin": "select.bianca_spin",
+    "soil": "select.bianca_soil",
+    "steam": "select.bianca_steam",
+    "pre_wash": "select.bianca_pre_wash",
+    "hygiene": "select.bianca_hygiene",
+    "anti_crease": "select.bianca_anti_crease",
+    "night_spin": "select.bianca_night_spin",
+    "extra_rinse": "select.bianca_extra_rinse",
+    "aqua_plus": "select.bianca_aqua_plus",
+    "zoom": "select.bianca_zoom",
+}
+
+# Обратное отображение entity_id -> option
+ENTITY_TO_OPTION = {v: k for k, v in OPTION_TO_ENTITY.items()}
 
 # MachMd (machine mode) mapping
 MACHMD_MAP = {
@@ -44,12 +69,12 @@ PRPH_MAP = {
     "1": "Предварительная стирка",
     "2": "Стирка",
     "3": "Полоскание",
-    "4": "Отжим",
+    "4": "Последнее полоскание",
     "5": "Конец",
     "7": "Ошибка",
     "8": "Пар",
     "9": "Ночной отжим",
-    "10": "Слив",
+    "10": "Отжим",
 }
 
 # Err (error) mapping
@@ -72,3 +97,36 @@ SOIL_LEVEL_MAP = {
     "2": "Нормально",
     "3": "Очень",
 }
+
+# Словарь для преобразования значений опций в коды API
+OPTION_VALUE_TO_CODE = {
+    "pre_wash": {"Нет": 0, "Есть": 1},
+    "hygiene": {"Нет": 0, "Есть": 2},
+    "anti_crease": {"Нет": 0, "Есть": 4},
+    "night_spin": {"Нет": 0, "Есть": 8},
+    "extra_rinse": {
+        "Нет": 0,
+        "1 полоскание": 16,
+        "2 полоскания": 32,
+        "3 полоскания": 64,
+    },
+    "aqua_plus": {"Нет": 0, "Есть": 128},
+    "zoom": {"Нет": 0, "Есть": 1},
+    "steam": {"Без пара": 0, "С паром": 5},
+}
+
+
+def load_programs_config(hass) -> dict[str, Any]:
+    """Загружает конфигурацию программ из JSON файла."""
+    config_path = hass.config.path("custom_components/bianca/programs.json")
+    
+    if not os.path.exists(config_path):
+        _LOGGER.error(f"Programs config file not found: {config_path}")
+        return {}
+    
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        _LOGGER.error(f"Failed to load programs config: {e}")
+        return {}
