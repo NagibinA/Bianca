@@ -57,6 +57,15 @@
             border-radius: 5px;
             font-size: 14px;
         }
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
         .option-card {
             background: #f8f9fa;
             border-radius: 8px;
@@ -275,6 +284,13 @@
             text-align: center;
             padding: 20px;
             color: #666;
+        }
+        .batch-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
         }
     </style>
 </head>
@@ -586,6 +602,21 @@
                 <div id="message" class="message"></div>
             </div>
         </div>
+        
+        <!-- Массовое добавление -->
+        <div class="batch-section">
+            <h2>📦 Массовое добавление программ</h2>
+            <div class="info">
+                Вставьте JSON с программами в формате:<br>
+                <code>{"programs": {"17": {"name": "Джинсы", "pr_code": 15, "pr_str": "Jeans", "options": {...}}}}</code><br>
+                или<br>
+                <code>{"programs": [{"id": "17", "name": "Джинсы", "pr_code": 15, "pr_str": "Jeans", "options": {...}}]}</code>
+            </div>
+            <div class="form-group">
+                <textarea id="batchJson" rows="12" placeholder='{"programs": {"17": {"name": "Джинсы", "pr_code": 15, "pr_str": "Jeans", "options": {"temperature": {"values": ["0°C","20°C","30°C","40°C"], "default": "40°C"}, "spin": {"values": ["0 об/мин"], "default": "0 об/мин"}, "soil": {"values": ["Нет"], "default": "Нет"}, "steam": {"values": ["Без пара"], "default": "Без пара"}, "pre_wash": {"values": ["Нет"], "default": "Нет"}, "hygiene": {"values": ["Нет"], "default": "Нет"}, "anti_crease": {"values": ["Нет"], "default": "Нет"}, "night_spin": {"values": ["Нет"], "default": "Нет"}, "extra_rinse": {"values": ["Нет"], "default": "Нет"}, "aqua_plus": {"values": ["Нет"], "default": "Нет"}, "zoom": {"values": ["Нет"], "default": "Нет"}}, "mutual_exclusion": []}}}'></textarea>
+            </div>
+            <button type="button" class="btn-primary" onclick="batchAddPrograms()" style="margin-top: 0;">📦 Добавить программы из JSON</button>
+        </div>
     </div>
     
     <script>
@@ -802,7 +833,6 @@
                     document.getElementById('pr_code').value = prog.pr_code;
                     document.getElementById('pr_str').value = prog.pr_str;
                     
-                    // Устанавливаем опции
                     if (prog.options) {
                         setSelectedValues('temp_checkboxes', prog.options.temperature?.values || []);
                         document.getElementById('temp_default').value = prog.options.temperature?.default || '0°C';
@@ -888,7 +918,6 @@
             document.getElementById('addProgramForm').reset();
             document.getElementById('idError').style.display = 'none';
             
-            // Сбрасываем чекбоксы (оставляем первый выбранным)
             document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach((cb, idx) => {
                 const group = cb.closest('.checkbox-group');
                 const firstCheckbox = group.querySelector('input[type="checkbox"]');
@@ -898,6 +927,50 @@
             mutualExclusions = [];
             renderMutualList();
             initSelectedDisplays();
+        }
+        
+        async function batchAddPrograms() {
+            const jsonText = document.getElementById('batchJson').value;
+            if (!jsonText.trim()) {
+                showMessage('Введите JSON с программами', 'warning');
+                return;
+            }
+            
+            let programs;
+            try {
+                programs = JSON.parse(jsonText);
+            } catch (e) {
+                showMessage('Ошибка парсинга JSON: ' + e.message, 'error');
+                return;
+            }
+            
+            const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: jsonText
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                let message = result.message;
+                if (result.added && result.added.length) {
+                    message += '\n\n✅ Добавлены:\n' + result.added.join('\n');
+                }
+                if (result.skipped && result.skipped.length) {
+                    message += '\n\n⚠️ Пропущены (уже есть):\n' + result.skipped.join('\n');
+                }
+                if (result.errors && result.errors.length) {
+                    message += '\n\n❌ Ошибки:\n' + result.errors.join('\n');
+                }
+                showMessage(message, 'success');
+                await loadPrograms();
+                document.getElementById('batchJson').value = '';
+            } else {
+                showMessage(result.error, 'error');
+            }
         }
         
         document.getElementById('addProgramForm').addEventListener('submit', async (e) => {
@@ -992,7 +1065,7 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    showMessage(result.message + ' Перезапустите Home Assistant.', 'success');
+                    showMessage(result.message, 'success');
                     await loadPrograms();
                     cancelEdit();
                 } else {
