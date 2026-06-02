@@ -1,11 +1,11 @@
 """Program manager for Bianca integration."""
 
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from homeassistant.core import HomeAssistant
 
-from .const import load_programs_config, OPTION_TO_ENTITY, ENTITY_TO_OPTION
+from .const import load_programs_config
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -109,10 +109,8 @@ class ProgramManager:
         
         for exclusion in exclusions:
             if isinstance(exclusion, list):
-                # Простой формат: ["anti_crease", "night_spin"]
                 result.append(exclusion)
             elif isinstance(exclusion, dict):
-                # Старый формат: {"options": [...], "type": "mutual"}
                 options = exclusion.get("options", [])
                 if options:
                     result.append(options)
@@ -129,7 +127,6 @@ class ProgramManager:
         exclusions = self.get_mutual_exclusions(program_id)
         
         for exclusion in exclusions:
-            # exclusion — это список опций, например ["anti_crease", "night_spin"]
             if option_name in exclusion and value == "Есть":
                 for opt in exclusion:
                     if opt != option_name:
