@@ -50,6 +50,20 @@ class ProgramManager:
         option = options.get(option_name, {})
         return option.get("default", "")
 
+    def get_pr_code(self, program_id: str) -> int:
+        """Get PrCode for a program."""
+        program = self.get_program(program_id)
+        if not program:
+            return 0
+        return program.get("pr_code", 0)
+
+    def get_pr_str(self, program_id: str) -> str:
+        """Get PrStr for a program (display text on machine)."""
+        program = self.get_program(program_id)
+        if not program:
+            return "test"
+        return program.get("pr_str", "test")
+
     def is_option_available(self, program_id: str, option_name: str, context: Dict[str, str] = None) -> bool:
         """Check if an option is available for the program."""
         options = self.get_program_options(program_id)
@@ -136,10 +150,3 @@ class ProgramManager:
     def get_all_programs(self) -> List[tuple[str, str]]:
         """Get list of all programs (id, name)."""
         return [(pid, prog.get("name", pid)) for pid, prog in self.programs.items()]
-
-    def get_pr_code(self, program_id: str) -> int:
-        """Get PrCode for a program."""
-        program = self.get_program(program_id)
-        if not program:
-            return 0
-        return program.get("pr_code", 0)
