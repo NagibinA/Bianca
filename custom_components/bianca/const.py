@@ -2,11 +2,13 @@
 
 import json
 import os
+import logging
 from typing import Any
 
 DOMAIN = "bianca"
 CONF_INTEGRATION_TITLE = "Bianca"
 DEFAULT_SCAN_INTERVAL = 30
+VERSION = "2.1.0"
 
 CONF_IP_ADDRESS = "ip_address"
 
@@ -115,10 +117,12 @@ OPTION_VALUE_TO_CODE = {
     "steam": {"Без пара": 0, "С паром": 5},
 }
 
+_LOGGER = logging.getLogger(__name__)
+
 
 def load_programs_config(hass) -> dict[str, Any]:
     """Загружает конфигурацию программ из JSON файла."""
-    config_path = hass.config.path("custom_components/bianca/programs.json")
+    config_path = hass.config.path(f"custom_components/{DOMAIN}/{PROGRAMS_CONFIG_FILE}")
     
     if not os.path.exists(config_path):
         _LOGGER.error(f"Programs config file not found: {config_path}")
