@@ -1,9 +1,8 @@
-"""Select platform for Bianca integration - Version 2.0.0."""
+"""Select platform for Bianca integration - Version 2.1.0."""
 
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
@@ -25,16 +24,13 @@ async def async_setup_entry(
 ) -> None:
     """Set up Bianca selects dynamically."""
     
-    # Сохраняем коллбэк для динамического добавления
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN].setdefault(entry.entry_id, {})
     hass.data[DOMAIN][entry.entry_id]["async_add_entities"] = async_add_entities
     
-    # Инициализируем ProgramManager
     program_manager = ProgramManager(hass)
     hass.data[DOMAIN][entry.entry_id]["program_manager"] = program_manager
     
-    # Получаем ID программы по умолчанию (1 = Хлопок: Интенсивная)
     default_program_id = "1"
     default_program = program_manager.get_program(default_program_id)
     
@@ -42,10 +38,8 @@ async def async_setup_entry(
         _LOGGER.error("Failed to load default program configuration")
         return
     
-    # Создаём селект программы
     program_select = BiancaProgramSelect(entry, hass, program_manager)
     
-    # Создаём все зависимые селекты
     selects = {}
     entities = [program_select]
     
@@ -61,12 +55,10 @@ async def async_setup_entry(
         selects[option_key] = select
         entities.append(select)
     
-    # Создаём селект отложенного старта (не зависит от программы)
     delay_start_select = BiancaDelayStartSelect(entry, hass)
     selects["delay_start"] = delay_start_select
     entities.append(delay_start_select)
     
-    # Сохраняем ссылки на селекты
     hass.data[DOMAIN][entry.entry_id]["selects"] = selects
     hass.data[DOMAIN][entry.entry_id]["program_select"] = program_select
     
@@ -77,7 +69,6 @@ class BiancaProgramSelect(SelectEntity):
     """Program selection that triggers update of all dependent selects."""
 
     def __init__(self, entry: ConfigEntry, hass: HomeAssistant, program_manager: ProgramManager):
-        """Initialize the program select."""
         self._entry = entry
         self._hass = hass
         self._program_manager = program_manager
@@ -87,7 +78,6 @@ class BiancaProgramSelect(SelectEntity):
         self._attr_icon = "mdi:washing-machine"
         self._attr_entity_category = EntityCategory.CONFIG
         
-        # Список программ
         programs = program_manager.get_all_programs()
         self._attr_options = [name for _, name in programs]
         self._program_map = {name: pid for pid, name in programs}
@@ -95,13 +85,9 @@ class BiancaProgramSelect(SelectEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        return {
-            "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
-        }
+        return {"identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])}}
 
     async def async_select_option(self, option: str) -> None:
-        """Update current option and update all dependent selects."""
         self._attr_current_option = option
         self.async_write_ha_state()
         
@@ -111,16 +97,12 @@ class BiancaProgramSelect(SelectEntity):
             await self._update_all_selects(program_id)
 
     async def _update_all_selects(self, program_id: str):
-        """Update all option selects when program changes."""
         selects = self._hass.data[DOMAIN][self._entry.entry_id].get("selects", {})
         
-        # Получаем текущую температуру для проверки зависимостей
         temp_select = self._hass.states.get("select.bianca_temperature")
         current_temperature = temp_select.state if temp_select else "60°C"
-        
         context = {"temperature": current_temperature}
         
-        # Селекты, которые не зависят от программы (отложенный старт)
         skip_options = ["delay_start"]
         
         for option_key, select in selects.items():
@@ -144,7 +126,6 @@ class BiancaDelayStartSelect(SelectEntity):
     """Delay start selection - independent of program."""
 
     def __init__(self, entry: ConfigEntry, hass: HomeAssistant):
-        """Initialize the delay start select."""
         self._entry = entry
         self._hass = hass
         self.entity_id = "select.bianca_delay_start"
@@ -167,18 +148,13 @@ class BiancaDelayStartSelect(SelectEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        return {
-            "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
-        }
+        return {"identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])}}
 
     @property
     def available(self) -> bool:
-        """Delay start is always available."""
         return True
 
     async def async_select_option(self, option: str) -> None:
-        """Update the current selected option."""
         self._attr_current_option = option
         self.async_write_ha_state()
 
@@ -196,7 +172,6 @@ class BiancaOptionSelect(SelectEntity):
         default_option: str,
         entity_id: str,
     ):
-        """Initialize the option select."""
         self._entry = entry
         self._hass = hass
         self._program_manager = program_manager
@@ -211,7 +186,6 @@ class BiancaOptionSelect(SelectEntity):
         self._available = True
 
     def _get_option_name(self, option_key: str) -> str:
-        """Get display name for option."""
         names = {
             "temperature": "Температура стирки",
             "spin": "Скорость отжима",
@@ -228,7 +202,6 @@ class BiancaOptionSelect(SelectEntity):
         return names.get(option_key, option_key)
 
     def _get_option_icon(self, option_key: str) -> str:
-        """Get icon for option."""
         icons = {
             "temperature": "mdi:thermometer",
             "spin": "mdi:rotate-right",
@@ -246,22 +219,16 @@ class BiancaOptionSelect(SelectEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        return {
-            "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
-        }
+        return {"identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])}}
 
     @property
     def available(self) -> bool:
-        """Return if select is available."""
         return self._available
 
     async def async_select_option(self, option: str) -> None:
-        """Update the current selected option."""
         self._attr_current_option = option
         self.async_write_ha_state()
         
-        # Проверяем взаимные исключения
         program_id = self._program_manager.current_program
         if program_id:
             current_state = self._get_current_state()
@@ -274,21 +241,18 @@ class BiancaOptionSelect(SelectEntity):
                 if select and select.current_option != new_value:
                     await select.async_select_option(new_value)
         
-        # Если изменилась температура, обновляем гигиену
         if self._option_key == "temperature" and program_id:
             await self._update_hygiene(program_id, option)
 
     def _get_current_state(self) -> dict:
-        """Get current state of all option selects."""
         state = {}
         selects = self._hass.data[DOMAIN][self._entry.entry_id].get("selects", {})
         for opt_key, select in selects.items():
-            if opt_key != "delay_start":  # delay_start не входит в опции
+            if opt_key != "delay_start":
                 state[opt_key] = select.current_option
         return state
 
     async def _update_hygiene(self, program_id: str, temperature: str):
-        """Update hygiene options when temperature changes."""
         selects = self._hass.data[DOMAIN][self._entry.entry_id].get("selects", {})
         hygiene_select = selects.get("hygiene")
         
@@ -307,7 +271,6 @@ class BiancaOptionSelect(SelectEntity):
                 hygiene_select.update_options(values, current, available=True)
 
     def update_options(self, options: list[str], current_option: str = None, available: bool = True):
-        """Update available options dynamically."""
         self._attr_options = options
         if current_option and current_option in options:
             self._attr_current_option = current_option
