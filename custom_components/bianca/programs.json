@@ -1,8 +1,9 @@
 {
   "programs": {
     "1": {
-      "name": "Хлопок: Интенсивная стирка",
+      "name": "Хлопок: Интенсивна стирка",
       "pr_code": 65,
+      "pr_str": "Cotton Intensive",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C", "60°C", "90°C"],
@@ -58,6 +59,7 @@
     "2": {
       "name": "Хлопок",
       "pr_code": 2,
+      "pr_str": "Cotton",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C", "60°C"],
@@ -113,6 +115,7 @@
     "3": {
       "name": "Синтетика и цветные ткани",
       "pr_code": 3,
+      "pr_str": "Synthetics",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C", "60°C"],
@@ -170,6 +173,7 @@
     "4": {
       "name": "Шерсть",
       "pr_code": 5,
+      "pr_str": "Wool",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C"],
@@ -223,6 +227,7 @@
     "5": {
       "name": "Деликатная",
       "pr_code": 4,
+      "pr_str": "Delicate",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C"],
@@ -276,6 +281,7 @@
     "6": {
       "name": "Perfect 20°C",
       "pr_code": 11,
+      "pr_str": "Perfect 20",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C"],
@@ -327,6 +333,7 @@
     "7": {
       "name": "Полоскание",
       "pr_code": 35,
+      "pr_str": "Rinse",
       "options": {
         "temperature": {
           "values": ["0°C"],
@@ -378,6 +385,7 @@
     "8": {
       "name": "Слив + Отжим",
       "pr_code": 129,
+      "pr_str": "Drain Spin",
       "options": {
         "temperature": {
           "values": ["0°C"],
@@ -429,6 +437,7 @@
     "13": {
       "name": "Сохранить свежесть",
       "pr_code": 41,
+      "pr_str": "Fresh Care",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C"],
@@ -480,6 +489,7 @@
     "15": {
       "name": "Perfect rapid 59 минут",
       "pr_code": 8,
+      "pr_str": "Rapid 59",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C", "60°C"],
@@ -531,6 +541,7 @@
     "16": {
       "name": "Быстрая",
       "pr_code": 7,
+      "pr_str": "Quick",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C", "60°C"],
