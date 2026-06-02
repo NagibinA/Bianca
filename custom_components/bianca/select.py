@@ -1,4 +1,11 @@
-"""Select platform for Bianca integration."""
+"""
+Select platform for Bianca integration.
+
+ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.26):
+- unique_id для селектов БЕЗ префикса - это корректно, так как домен "select" отличается от "sensor"
+- Добавлены все необходимые опции для программ
+"""
+
 from __future__ import annotations
 
 from homeassistant.components.select import SelectEntity
@@ -108,7 +115,7 @@ def get_temp_options(program: str) -> tuple[list[str], str]:
 
 def get_spin_options(program: str) -> tuple[list[str], str]:
     """Get spin options and default value for a program."""
-    if program in ["Шерсть"]:
+    if program == "Шерсть":
         return ["0 об/мин", "400 об/мин", "500 об/мин", "600 об/мин", "700 об/мин", "800 об/мин"], "800 об/мин"
     elif program == "Сохранить свежесть":
         return ["0 об/мин", "400 об/мин", "600 об/мин", "800 об/мин"], "800 об/мин"
@@ -116,25 +123,28 @@ def get_spin_options(program: str) -> tuple[list[str], str]:
         return ["0 об/мин", "400 об/мин"], "400 об/мин"
     elif program in ["Perfect rapid 59 минут", "Полоскание"]:
         return ["0 об/мин", "400 об/мин", "500 об/мин", "600 об/мин", "700 об/мин", "800 об/мин", "900 об/мин", "1000 об/мин"], "1000 об/мин"
+    elif program == "Слив + Отжим":
+        return ["0 об/мин", "400 об/мин", "500 об/мин", "600 об/мин", "700 об/мин", "800 об/мин", "900 об/мин", "1000 об/мин", "1100 об/мин", "1200 об/мин", "1300 об/мин", "1400 об/мин"], "1000 об/мин"
     else:
         return ["0 об/мин", "400 об/мин", "600 об/мин", "700 об/мин", "800 об/мин", "900 об/мин", "1000 об/мин", "1100 об/мин", "1200 об/мин", "1300 об/мин", "1400 об/мин"], "1000 об/мин"
 
 
 def get_soil_options(program: str) -> tuple[list[str], str]:
     """Get soil level options and default value for a program."""
-    if program in ["Perfect 20°C"]:
-        return ["Нормально"], "Нормально"
-    elif program in ["Шерсть", "Деликатная", "Полоскание", "Слив + Отжим", "Сохранить свежесть", "Perfect rapid 59 минут"]:
-        return ["Нет"], "Нет"
-    else:
+    if program in ["Хлопок: Интенсивная стирка", "Синтетика и цветные ткани"]:
         return ["Мало", "Нормально", "Очень"], "Мало"
+    elif program == "Perfect 20°C":
+        return ["Нормально"], "Нормально"
+    else:
+        return ["Нет"], "Нет"
 
 
 def get_steam_options(program: str) -> tuple[list[str], str]:
     """Get steam options and default value for a program."""
-    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Синтетика и цветные ткани", "Perfect 20°C", "Деликатная"]:
+    if program in ["Шерсть", "Полоскание", "Слив + Отжим"]:
+        return ["Без пара"], "Без пара"
+    else:
         return ["Без пара", "С паром"], "Без пара"
-    return ["Без пара"], "Без пара"
 
 
 def get_prewash_options(program: str) -> tuple[list[str], str]:
@@ -146,7 +156,7 @@ def get_prewash_options(program: str) -> tuple[list[str], str]:
 
 def get_hygiene_options(program: str, temperature: str = "0°C") -> tuple[list[str], str]:
     """Get hygiene options based on program AND temperature."""
-    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Синтетика и цветные ткани"]:
+    if program in ["Хлопок: Интенсивная стирка", "Синтетика и цветные ткани"]:
         if temperature in ["60°C", "90°C"]:
             return ["Нет", "Есть"], "Нет"
     return ["Нет"], "Нет"
@@ -154,42 +164,39 @@ def get_hygiene_options(program: str, temperature: str = "0°C") -> tuple[list[s
 
 def get_anticrease_options(program: str) -> tuple[list[str], str]:
     """Get anti-crease options for a program."""
-    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Полоскание", "Слив + Отжим", "Perfect rapid 59 минут", "Быстрая"]:
-        return ["Нет"], "Нет"
-    return ["Нет", "Есть"], "Нет"
+    if program in ["Синтетика и цветные ткани", "Шерсть"]:
+        return ["Нет", "Есть"], "Нет"
+    return ["Нет"], "Нет"
 
 
 def get_nightspin_options(program: str) -> tuple[list[str], str]:
     """Get night spin options for a program."""
-    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Синтетика и цветные ткани", "Шерсть", "Деликатная", "Perfect 20°C"]:
+    if program in ["Хлопок: Интенсивная стирка", "Синтетика и цветные ткани", "Шерсть", "Perfect 20°C"]:
         return ["Нет", "Есть"], "Нет"
     return ["Нет"], "Нет"
 
 
 def get_rinses_options(program: str) -> tuple[list[str], str]:
     """Get extra rinse options for a program."""
-    if program in ["Perfect rapid 59 минут", "Быстрая", "Сохранить свежесть"]:
-        return ["Нет"], "Нет"
+    if program in ["Хлопок: Интенсивная стирка", "Синтетика и цветные ткани", "Perfect 20°C"]:
+        return ["Нет", "1 полоскание", "2 полоскания", "3 полоскания"], "Нет"
     elif program == "Шерсть":
         return ["Нет", "1 полоскание"], "Нет"
-    elif program == "Полоскание":
-        return ["Нет"], "Нет"
-    else:
-        return ["Нет", "1 полоскание", "2 полоскания", "3 полоскания"], "Нет"
+    return ["Нет"], "Нет"
 
 
 def get_aquaplus_options(program: str) -> tuple[list[str], str]:
     """Get aqua plus options for a program."""
-    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Perfect 20°C"]:
+    if program in ["Хлопок: Интенсивная стирка", "Синтетика и цветные ткани", "Perfect 20°C"]:
         return ["Нет", "Есть"], "Нет"
     return ["Нет"], "Нет"
 
 
 def get_zoom_options(program: str) -> tuple[list[str], str]:
     """Get zoom options for a program."""
-    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Синтетика и цветные ткани", "Шерсть", "Perfect rapid 59 минут", "Деликатная"]:
-        return ["Нет", "Есть"], "Нет"
-    return ["Нет"], "Нет"
+    if program in ["Полоскание", "Слив + Отжим"]:
+        return ["Нет"], "Нет"
+    return ["Нет", "Есть"], "Нет"
 
 
 # ========== ФУНКЦИИ ДЛЯ ПЕРЕСОЗДАНИЯ СЕЛЕКТОВ ==========
@@ -508,7 +515,7 @@ class BiancaAntiCreaseSelect(BiancaBaseSelect):
             return
         
         program = program_select.state
-        mutual_exclusive = program in ["Синтетика и цветные ткани", "Шерсть", "Деликатная"]
+        mutual_exclusive = program in ["Синтетика и цветные ткани", "Шерсть"]
         
         if mutual_exclusive and option == "Есть":
             night_spin = self._hass.states.get("select.bianca_night_spin")
@@ -534,7 +541,7 @@ class BiancaNightSpinSelect(BiancaBaseSelect):
             return
         
         program = program_select.state
-        mutual_exclusive = program in ["Синтетика и цветные ткани", "Шерсть", "Деликатная"]
+        mutual_exclusive = program in ["Синтетика и цветные ткани", "Шерсть"]
         
         if mutual_exclusive and option == "Есть":
             anti_crease = self._hass.states.get("select.bianca_anti_crease")
