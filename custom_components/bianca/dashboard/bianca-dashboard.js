@@ -1,11 +1,11 @@
 /**
  * BIANCA DASHBOARD STRATEGY
- * Version: 1.0.26
+ * Version: 1.0.27
  * Date: 2026-06-02
  * 
  * Changes in this version:
- * - Fixed visibility of option icons after washing cycle completes
- * - Added state subscription to update icon visibility when machine_state or remote_control changes
+ * - Исправлена видимость иконок опций (антисминание, ночная стирка, предстирка, гигиена, полоскания, акваплюс)
+ * - Добавлено явное visibility: visible в ветку machine_ready для всех иконок
  * - Play/Stop buttons behavior with remote_control check
  * - Icons are hidden when their value is disabled/off
  * - Steam and Zoom always visible
@@ -980,7 +980,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ПРЕДВАРИТЕЛЬНОЙ СТИРКИ (СКРЫВАЕМ ПРИ "Нет") ==========
+                                        // ========== ИКОНКА ПРЕДВАРИТЕЛЬНОЙ СТИРКИ (ВИДИМА ПРИ "Есть") ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:pre-wash",
@@ -1028,7 +1028,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ГИГИЕНЫ (СКРЫВАЕМ ПРИ "Выключен") ==========
+                                        // ========== ИКОНКА ГИГИЕНЫ (ВИДИМА ПРИ "Есть") ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:hygiene-wash",
@@ -1076,7 +1076,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА АНТИСМИНАНИЯ (СКРЫВАЕМ ПРИ "Выключен") ==========
+                                        // ========== ИКОНКА АНТИСМИНАНИЯ (ВИДИМА ПРИ "Есть") ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:anti-crease",
@@ -1124,7 +1124,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА НОЧНОЙ СТИРКИ (СКРЫВАЕМ ПРИ "Выключен") ==========
+                                        // ========== ИКОНКА НОЧНОЙ СТИРКИ (ВИДИМА ПРИ "Есть") ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:night-spin",
@@ -1172,7 +1172,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ДОПОЛНИТЕЛЬНЫХ ПОЛОСКАНИЙ (СКРЫВАЕМ ПРИ "Нет") ==========
+                                        // ========== ИКОНКА ДОПОЛНИТЕЛЬНЫХ ПОЛОСКАНИЙ (ВИДИМА ПРИ ВЫБРАННОМ ЗНАЧЕНИИ) ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:rinse-1",
@@ -1229,7 +1229,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА АКВАПЛЮС (СКРЫВАЕМ ПРИ "Выключен") ==========
+                                        // ========== ИКОНКА АКВАПЛЮС (ВИДИМА ПРИ "Есть") ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:extra-water",
