@@ -61,6 +61,11 @@ async def async_setup_entry(
         selects[option_key] = select
         entities.append(select)
     
+    # Создаём селект отложенного старта (не зависит от программы)
+    delay_start_select = BiancaDelayStartSelect(entry, hass)
+    selects["delay_start"] = delay_start_select
+    entities.append(delay_start_select)
+    
     # Сохраняем ссылки на селекты
     hass.data[DOMAIN][entry.entry_id]["selects"] = selects
     hass.data[DOMAIN][entry.entry_id]["program_select"] = program_select
@@ -115,7 +120,13 @@ class BiancaProgramSelect(SelectEntity):
         
         context = {"temperature": current_temperature}
         
+        # Селекты, которые не зависят от программы (отложенный старт)
+        skip_options = ["delay_start"]
+        
         for option_key, select in selects.items():
+            if option_key in skip_options:
+                continue
+            
             values = self._program_manager.get_option_values(program_id, option_key)
             default_value = self._program_manager.get_option_default(program_id, option_key)
             is_available = self._program_manager.is_option_available(program_id, option_key, context)
@@ -127,6 +138,49 @@ class BiancaProgramSelect(SelectEntity):
                 if current not in values:
                     current = default_value if default_value in values else values[0]
                 select.update_options(values, current, available=True)
+
+
+class BiancaDelayStartSelect(SelectEntity):
+    """Delay start selection - independent of program."""
+
+    def __init__(self, entry: ConfigEntry, hass: HomeAssistant):
+        """Initialize the delay start select."""
+        self._entry = entry
+        self._hass = hass
+        self.entity_id = "select.bianca_delay_start"
+        self._attr_name = "Bianca Отложенный старт"
+        self._attr_unique_id = f"{entry.entry_id}_delay_start"
+        self._attr_icon = "mdi:timer-outline"
+        self._attr_entity_category = EntityCategory.CONFIG
+        
+        self._attr_options = [
+            "Нет", "30 мин", "1 час", "1 час 30 мин", "2 часа", "2 часа 30 мин",
+            "3 часа", "3 часа 30 мин", "4 часа", "4 час 30 мин", "5 часов", "5 часов 30 мин",
+            "6 часов", "6 часов 30 мин", "7 часов", "7 часов 30 мин", "8 часов", "8 часов 30 мин",
+            "9 часов", "9 часов 30 мин", "10 часов", "10 часов 30 мин", "11 часов", "11 часов 30 мин",
+            "12 часов", "12 часов 30 мин", "13 часов", "13 часов 30 мин", "14 часов", "14 часов 30 мин",
+            "15 часов", "15 часов 30 мин", "16 часов", "16 часов 30 мин", "17 часов", "17 часов 30 мин",
+            "18 часов", "18 часов 30 мин", "19 часов", "19 часов 30 мин", "20 часов", "20 часов 30 мин",
+            "21 час", "21 час 30 мин", "22 часа", "22 часа 30 мин", "23 часа", "23 часа 30 мин", "24 часа"
+        ]
+        self._attr_current_option = "Нет"
+
+    @property
+    def device_info(self):
+        """Return device info."""
+        return {
+            "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
+        }
+
+    @property
+    def available(self) -> bool:
+        """Delay start is always available."""
+        return True
+
+    async def async_select_option(self, option: str) -> None:
+        """Update the current selected option."""
+        self._attr_current_option = option
+        self.async_write_ha_state()
 
 
 class BiancaOptionSelect(SelectEntity):
@@ -229,7 +283,8 @@ class BiancaOptionSelect(SelectEntity):
         state = {}
         selects = self._hass.data[DOMAIN][self._entry.entry_id].get("selects", {})
         for opt_key, select in selects.items():
-            state[opt_key] = select.current_option
+            if opt_key != "delay_start":  # delay_start не входит в опции
+                state[opt_key] = select.current_option
         return state
 
     async def _update_hygiene(self, program_id: str, temperature: str):
