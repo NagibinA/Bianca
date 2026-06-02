@@ -1,11 +1,10 @@
 """
 Select platform for Bianca integration.
-Version: 1.0.31
+Version: 1.0.32
 
-ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.31):
-- Взята за основу версия 1.0.30
-- Функции get_xxx_options скорректированы по образцу из версии 1.0.21
-- Сохранена логика обновления опций без удаления сущностей
+ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.32):
+- Приведены функции get_xxx_options в соответствие с логикой из scripts.yaml
+- Исправлены опции: антисминание, ночная стирка, акваплюс, зум, гигиена
 """
 
 from __future__ import annotations
@@ -95,7 +94,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-# ========== ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ ОПЦИЙ (скорректированы по версии 1.0.21) ==========
+# ========== ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ ОПЦИЙ (приведены в соответствие с scripts.yaml) ==========
 
 def get_temp_options(program: str) -> tuple[list[str], str]:
     """Get temperature options and default value for a program."""
@@ -105,9 +104,7 @@ def get_temp_options(program: str) -> tuple[list[str], str]:
         return ["0°C", "20°C"], "20°C"
     elif program in ["Шерсть", "Деликатная", "Сохранить свежесть"]:
         return ["0°C", "20°C", "30°C", "40°C"], "30°C" if program in ["Шерсть", "Деликатная"] else "20°C"
-    elif program in ["Быстрая", "Perfect rapid 59 минут"]:
-        return ["0°C", "20°C", "30°C", "40°C", "60°C"], "40°C"
-    elif program in ["Хлопок", "Синтетика и цветные ткани"]:
+    elif program in ["Быстрая", "Perfect rapid 59 минут", "Хлопок", "Синтетика и цветные ткани"]:
         return ["0°C", "20°C", "30°C", "40°C", "60°C"], "40°C"
     elif program in ["Хлопок: Интенсивная стирка"]:
         return ["0°C", "20°C", "30°C", "40°C", "60°C", "90°C"], "60°C"
@@ -125,8 +122,8 @@ def get_spin_options(program: str) -> tuple[list[str], str]:
         return ["0 об/мин", "400 об/мин"], "400 об/мин"
     elif program in ["Perfect rapid 59 минут", "Полоскание"]:
         return ["0 об/мин", "400 об/мин", "500 об/мин", "600 об/мин", "700 об/мин", "800 об/мин", "900 об/мин", "1000 об/мин"], "1000 об/мин"
-    elif program == "Слив + Отжим":
-        return ["0 об/мин", "400 об/мин", "500 об/мин", "600 об/мин", "700 об/мин", "800 об/мин", "900 об/мин", "1000 об/мин", "1100 об/мин", "1200 об/мин", "1300 об/мин", "1400 об/мин"], "1000 об/мин"
+    elif program in ["Хлопок: Интенсивная стирка", "Слив + Отжим", "Хлопок"]:
+        return ["0 об/мин", "400 об/мин", "600 об/мин", "700 об/мин", "800 об/мин", "900 об/мин", "1000 об/мин", "1100 об/мин", "1200 об/мин", "1300 об/мин", "1400 об/мин"], "1000 об/мин"
     else:
         return ["0 об/мин", "400 об/мин", "600 об/мин", "700 об/мин", "800 об/мин", "900 об/мин", "1000 об/мин", "1100 об/мин", "1200 об/мин", "1300 об/мин", "1400 об/мин"], "1000 об/мин"
 
@@ -158,7 +155,8 @@ def get_prewash_options(program: str) -> tuple[list[str], str]:
 
 def get_hygiene_options(program: str, temperature: str = "0°C") -> tuple[list[str], str]:
     """Get hygiene options based on program AND temperature."""
-    if program in ["Хлопок: Интенсивная стирка", "Синтетика и цветные ткани"]:
+    # По scripts.yaml: гигиена доступна для Хлопок: Интенсивная, Хлопок, Синтетика при t≥60
+    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Синтетика и цветные ткани"]:
         if temperature in ["60°C", "90°C"]:
             return ["Нет", "Есть"], "Нет"
     return ["Нет"], "Нет"
@@ -166,39 +164,48 @@ def get_hygiene_options(program: str, temperature: str = "0°C") -> tuple[list[s
 
 def get_anticrease_options(program: str) -> tuple[list[str], str]:
     """Get anti-crease options for a program."""
-    if program in ["Синтетика и цветные ткани", "Шерсть"]:
-        return ["Нет", "Есть"], "Нет"
-    return ["Нет"], "Нет"
+    # По scripts.yaml: антисминание НЕ доступно для: Хлопок: Интенсивная, Хлопок, Полоскание, Слив+Отжим, Perfect rapid, Быстрая
+    # Доступно для всех остальных: Синтетика, Шерсть, Деликатная, Perfect 20°C, Сохранить свежесть
+    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Полоскание", "Слив + Отжим", "Perfect rapid 59 минут", "Быстрая"]:
+        return ["Нет"], "Нет"
+    return ["Нет", "Есть"], "Нет"
 
 
 def get_nightspin_options(program: str) -> tuple[list[str], str]:
     """Get night spin options for a program."""
-    if program in ["Хлопок: Интенсивная стирка", "Синтетика и цветные ткани", "Шерсть", "Perfect 20°C"]:
+    # По scripts.yaml: ночная стирка доступна для: Хлопок: Интенсивная, Хлопок, Синтетика, Шерсть, Деликатная, Perfect 20°C
+    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Синтетика и цветные ткани", "Шерсть", "Деликатная", "Perfect 20°C"]:
         return ["Нет", "Есть"], "Нет"
     return ["Нет"], "Нет"
 
 
 def get_rinses_options(program: str) -> tuple[list[str], str]:
     """Get extra rinse options for a program."""
-    if program in ["Хлопок: Интенсивная стирка", "Синтетика и цветные ткани", "Perfect 20°C"]:
-        return ["Нет", "1 полоскание", "2 полоскания", "3 полоскания"], "Нет"
+    # По scripts.yaml: полоскания НЕ доступны для Perfect rapid, Быстрая, Сохранить свежесть
+    if program in ["Perfect rapid 59 минут", "Быстрая", "Сохранить свежесть"]:
+        return ["Нет"], "Нет"
     elif program == "Шерсть":
         return ["Нет", "1 полоскание"], "Нет"
-    return ["Нет"], "Нет"
+    elif program == "Полоскание":
+        return ["Нет"], "Нет"
+    else:
+        return ["Нет", "1 полоскание", "2 полоскания", "3 полоскания"], "Нет"
 
 
 def get_aquaplus_options(program: str) -> tuple[list[str], str]:
     """Get aqua plus options for a program."""
-    if program in ["Хлопок: Интенсивная стирка", "Синтетика и цветные ткани", "Perfect 20°C"]:
+    # По scripts.yaml: акваплюс доступен только для: Хлопок: Интенсивная, Хлопок, Perfect 20°C
+    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Perfect 20°C"]:
         return ["Нет", "Есть"], "Нет"
     return ["Нет"], "Нет"
 
 
 def get_zoom_options(program: str) -> tuple[list[str], str]:
     """Get zoom options for a program."""
-    if program in ["Полоскание", "Слив + Отжим"]:
-        return ["Нет"], "Нет"
-    return ["Нет", "Есть"], "Нет"
+    # По scripts.yaml: зум доступен для: Хлопок: Интенсивная, Хлопок, Синтетика, Шерсть, Perfect rapid, Деликатная
+    if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Синтетика и цветные ткани", "Шерсть", "Perfect rapid 59 минут", "Деликатная"]:
+        return ["Нет", "Есть"], "Нет"
+    return ["Нет"], "Нет"
 
 
 # ========== ФУНКЦИИ ДЛЯ ОБНОВЛЕНИЯ СЕЛЕКТОВ ==========
@@ -492,7 +499,8 @@ class BiancaAntiCreaseSelect(BiancaBaseSelect):
             return
         
         program = program_select.state
-        mutual_exclusive = program in ["Синтетика и цветные ткани", "Шерсть"]
+        # Взаимоисключение для программ: Синтетика, Шерсть, Деликатная
+        mutual_exclusive = program in ["Синтетика и цветные ткани", "Шерсть", "Деликатная"]
         
         if mutual_exclusive and option == "Есть":
             night_spin = self._hass.states.get("select.bianca_night_spin")
@@ -518,7 +526,8 @@ class BiancaNightSpinSelect(BiancaBaseSelect):
             return
         
         program = program_select.state
-        mutual_exclusive = program in ["Синтетика и цветные ткани", "Шерсть"]
+        # Взаимоисключение для программ: Синтетика, Шерсть, Деликатная
+        mutual_exclusive = program in ["Синтетика и цветные ткани", "Шерсть", "Деликатная"]
         
         if mutual_exclusive and option == "Есть":
             anti_crease = self._hass.states.get("select.bianca_anti_crease")
