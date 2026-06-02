@@ -1,9 +1,11 @@
 """
 Select platform for Bianca integration.
+Version: 1.0.27
 
-ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.26):
-- unique_id для селектов БЕЗ префикса - это корректно, так как домен "select" отличается от "sensor"
-- Добавлены все необходимые опции для программ
+ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.27):
+- Убрано физическое удаление сущностей при пересоздании селектов
+- Селекты теперь обновляются через async_update_options без удаления
+- Это предотвращает потерю селектов при смене режимов
 """
 
 from __future__ import annotations
@@ -199,45 +201,52 @@ def get_zoom_options(program: str) -> tuple[list[str], str]:
     return ["Нет", "Есть"], "Нет"
 
 
-# ========== ФУНКЦИИ ДЛЯ ПЕРЕСОЗДАНИЯ СЕЛЕКТОВ ==========
+# ========== ФУНКЦИИ ДЛЯ ОБНОВЛЕНИЯ СЕЛЕКТОВ ==========
 
-async def recreate_select(
+async def update_select_options(
     hass: HomeAssistant, 
     entry: ConfigEntry, 
     select_type: str,
-    create_func,
-    *args,
+    new_options: list[str],
+    current_option: str = None,
 ) -> None:
-    """Delete old select and create a new one."""
+    """
+    Обновляет опции существующего селекта без удаления сущности.
+    
+    ИЗМЕНЕНИЕ В ВЕРСИИ 1.0.27:
+    Вместо удаления и пересоздания сущности, мы находим существующую
+    и обновляем её опции через async_update_options.
+    Это предотвращает потерю селектов при смене режимов.
+    """
     entity_registry = er.async_get(hass)
     
-    # Находим старую сущность
-    old_entity_id = None
+    # Находим существующую сущность
     for entity in list(entity_registry.entities.values()):
         if entity.config_entry_id == entry.entry_id and entity.unique_id.endswith(select_type):
-            old_entity_id = entity.entity_id
+            entity_id = entity.entity_id
             break
+    else:
+        # Если сущность не найдена, пробуем создать заново
+        entity_id = f"select.bianca_{select_type}"
     
-    if not old_entity_id:
-        old_entity_id = f"select.bianca_{select_type}"
-    
-    # Удаляем старую сущность
-    if old_entity_id in [e.entity_id for e in list(entity_registry.entities.values())]:
-        entity_registry.async_remove(old_entity_id)
-    
-    # Создаём новую сущность с тем же entity_id
-    new_entity = create_func(*args, old_entity_id)
-    
-    # Добавляем через сохранённый коллбэк
-    add_callback = hass.data[DOMAIN][entry.entry_id]["async_add_entities"]
-    if add_callback:
-        add_callback([new_entity])
-    
-    return new_entity
+    # Получаем состояние сущности
+    state = hass.states.get(entity_id)
+    if state:
+        # Находим объект селекта в памяти
+        for select in hass.data[DOMAIN][entry.entry_id].get("selects", []):
+            if select.entity_id == entity_id and hasattr(select, 'async_update_options'):
+                await select.async_update_options(new_options, current_option)
+                break
 
 
 async def recreate_all_selects(hass: HomeAssistant, entry: ConfigEntry, program: str) -> None:
-    """Recreate all dependent selects when program changes."""
+    """
+    Обновляет все зависимые селекты при смене программы.
+    
+    ИЗМЕНЕНИЕ В ВЕРСИИ 1.0.27:
+    Теперь не удаляет сущности, а только обновляет их опции.
+    Это предотвращает потерю селектов при смене режимов.
+    """
     
     # Получаем текущую температуру для гигиены
     temp_select = hass.states.get("select.bianca_temperature")
@@ -245,79 +254,68 @@ async def recreate_all_selects(hass: HomeAssistant, entry: ConfigEntry, program:
     
     # Температура
     temp_options, default_temp = get_temp_options(program)
-    await recreate_select(
-        hass, entry, "temperature",
-        lambda eid: BiancaTemperatureSelect(entry, hass, temp_options, default_temp, eid)
+    await update_select_options(
+        hass, entry, "temperature", temp_options, default_temp
     )
     
     # Отжим
     spin_options, default_spin = get_spin_options(program)
-    await recreate_select(
-        hass, entry, "spin",
-        lambda eid: BiancaSpinSelect(entry, hass, spin_options, default_spin, eid)
+    await update_select_options(
+        hass, entry, "spin", spin_options, default_spin
     )
     
     # Уровень загрязнения
     soil_options, default_soil = get_soil_options(program)
-    await recreate_select(
-        hass, entry, "soil",
-        lambda eid: BiancaSoilSelect(entry, hass, soil_options, default_soil, eid)
+    await update_select_options(
+        hass, entry, "soil", soil_options, default_soil
     )
     
     # Пар
     steam_options, default_steam = get_steam_options(program)
-    await recreate_select(
-        hass, entry, "steam",
-        lambda eid: BiancaSteamSelect(entry, hass, steam_options, default_steam, eid)
+    await update_select_options(
+        hass, entry, "steam", steam_options, default_steam
     )
     
     # Предварительная стирка
     prewash_options, default_prewash = get_prewash_options(program)
-    await recreate_select(
-        hass, entry, "pre_wash",
-        lambda eid: BiancaPreWashSelect(entry, hass, prewash_options, default_prewash, eid)
+    await update_select_options(
+        hass, entry, "pre_wash", prewash_options, default_prewash
     )
     
     # Гигиена
     hygiene_options, default_hygiene = get_hygiene_options(program, current_temperature)
-    await recreate_select(
-        hass, entry, "hygiene",
-        lambda eid: BiancaHygieneSelect(entry, hass, hygiene_options, default_hygiene, eid)
+    await update_select_options(
+        hass, entry, "hygiene", hygiene_options, default_hygiene
     )
     
     # Антисминание
     anticrease_options, default_anticrease = get_anticrease_options(program)
-    await recreate_select(
-        hass, entry, "anti_crease",
-        lambda eid: BiancaAntiCreaseSelect(entry, hass, anticrease_options, default_anticrease, eid)
+    await update_select_options(
+        hass, entry, "anti_crease", anticrease_options, default_anticrease
     )
     
     # Ночная стирка
     nightspin_options, default_nightspin = get_nightspin_options(program)
-    await recreate_select(
-        hass, entry, "night_spin",
-        lambda eid: BiancaNightSpinSelect(entry, hass, nightspin_options, default_nightspin, eid)
+    await update_select_options(
+        hass, entry, "night_spin", nightspin_options, default_nightspin
     )
     
     # Дополнительные полоскания
     rinses_options, default_rinse = get_rinses_options(program)
-    await recreate_select(
-        hass, entry, "extra_rinse",
-        lambda eid: BiancaExtraRinseSelect(entry, hass, rinses_options, default_rinse, eid)
+    await update_select_options(
+        hass, entry, "extra_rinse", rinses_options, default_rinse
     )
     
     # Акваплюс
     aquaplus_options, default_aquaplus = get_aquaplus_options(program)
-    await recreate_select(
-        hass, entry, "aqua_plus",
-        lambda eid: BiancaAquaPlusSelect(entry, hass, aquaplus_options, default_aquaplus, eid)
+    await update_select_options(
+        hass, entry, "aqua_plus", aquaplus_options, default_aquaplus
     )
     
     # Зум
     zoom_options, default_zoom = get_zoom_options(program)
-    await recreate_select(
-        hass, entry, "zoom",
-        lambda eid: BiancaZoomSelect(entry, hass, zoom_options, default_zoom, eid)
+    await update_select_options(
+        hass, entry, "zoom", zoom_options, default_zoom
     )
 
 
@@ -364,7 +362,12 @@ class BiancaBaseSelect(SelectEntity):
         self.async_write_ha_state()
     
     async def async_update_options(self, options: list[str], current_option: str = None) -> None:
-        """Update available options dynamically."""
+        """
+        Update available options dynamically without recreating the entity.
+        
+        ИЗМЕНЕНИЕ В ВЕРСИИ 1.0.27:
+        Теперь обновляет опции существующего селекта без удаления.
+        """
         self._attr_options = options
         if current_option and current_option in options:
             self._attr_current_option = current_option
@@ -423,25 +426,11 @@ class BiancaTemperatureSelect(BiancaBaseSelect):
         
         program = program_select.state
         
-        # Пересоздаём гигиену с учётом новой температуры
+        # Обновляем гигиену с учётом новой температуры
         hygiene_options, default_hygiene = get_hygiene_options(program, option)
-        
-        entity_registry = er.async_get(self._hass)
-        
-        old_entity_id = None
-        for entity in list(entity_registry.entities.values()):
-            if entity.config_entry_id == self._entry.entry_id and entity.unique_id.endswith("hygiene"):
-                old_entity_id = entity.entity_id
-                break
-        
-        if old_entity_id:
-            entity_registry.async_remove(old_entity_id)
-        
-        new_entity = BiancaHygieneSelect(self._entry, self._hass, hygiene_options, default_hygiene, old_entity_id)
-        
-        add_callback = self._hass.data[DOMAIN][self._entry.entry_id]["async_add_entities"]
-        if add_callback:
-            add_callback([new_entity])
+        await update_select_options(
+            self._hass, self._entry, "hygiene", hygiene_options, default_hygiene
+        )
 
 
 class BiancaSpinSelect(BiancaBaseSelect):
