@@ -1,10 +1,11 @@
 """
 Select platform for Bianca integration.
-Version: 1.0.29
+Version: 1.0.31
 
-ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.29):
-- Убран атрибут has_yes (не используется в дашборде)
-- Селекты обновляются без удаления сущностей
+ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.31):
+- Взята за основу версия 1.0.30
+- Функции get_xxx_options скорректированы по образцу из версии 1.0.21
+- Сохранена логика обновления опций без удаления сущностей
 """
 
 from __future__ import annotations
@@ -94,7 +95,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-# ========== ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ ОПЦИЙ ==========
+# ========== ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ ОПЦИЙ (скорректированы по версии 1.0.21) ==========
 
 def get_temp_options(program: str) -> tuple[list[str], str]:
     """Get temperature options and default value for a program."""
@@ -132,12 +133,12 @@ def get_spin_options(program: str) -> tuple[list[str], str]:
 
 def get_soil_options(program: str) -> tuple[list[str], str]:
     """Get soil level options and default value for a program."""
-    if program in ["Хлопок: Интенсивная стирка", "Синтетика и цветные ткани"]:
-        return ["Мало", "Нормально", "Очень"], "Мало"
-    elif program == "Perfect 20°C":
+    if program == "Perfect 20°C":
         return ["Нормально"], "Нормально"
-    else:
+    elif program in ["Шерсть", "Деликатная", "Полоскание", "Слив + Отжим", "Сохранить свежесть", "Perfect rapid 59 минут"]:
         return ["Нет"], "Нет"
+    else:
+        return ["Мало", "Нормально", "Очень"], "Мало"
 
 
 def get_steam_options(program: str) -> tuple[list[str], str]:
