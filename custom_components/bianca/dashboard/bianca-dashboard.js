@@ -1,13 +1,17 @@
 /**
  * BIANCA DASHBOARD STRATEGY
- * Version: 1.0.30
+ * Version: 2.1.0
  * Date: 2026-06-02
  * 
  * Changes in this version:
- * - Исправлена логика отображения 6 иконок опций (предстирка, гигиена, антисминание, ночная стирка, полоскания, акваплюс)
- * - В режиме выбора (Бездействие + remote_control = Вкл) иконки показывают значения из селектов и кликабельны
- * - В режиме стирки или remote_control = Выкл иконки показывают значения из сенсоров и НЕ кликабельны
- * - Иконка Пар и Zoom не изменялись (работают как в версии 1.0.26)
+ * - Добавлена кнопка управления программами (открывает admin.html)
+ * - Кнопки расположены: Database-plus → Set → Play → Stop
+ * - Полностью переработана логика отображения иконок опций
+ * - Режим стирки: показываем значения от API, иконки НЕ кликабельны
+ * - Режим бездействия + remote_control = Выкл: показываем значения от API, иконки НЕ кликабельны
+ * - Режим бездействия + remote_control = Вкл: показываем значения от селектов, иконки кликабельны
+ * - Нет связи (ping = off): иконки скрыты
+ * - Иконка Пар и Zoom работают как в версии 1.0.26
  */
 
 class BiancaDashboardStrategy extends HTMLElement {
@@ -139,6 +143,35 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                             visibility: hidden;
                                                         {% endif %}
                                                         pointer-events: none;
+                                                    }
+                                                `
+                                            }
+                                        },
+                                        // ========== КНОПКА УПРАВЛЕНИЯ ПРОГРАММАМИ ==========
+                                        {
+                                            type: "icon",
+                                            icon: "mdi:database-plus",
+                                            style: { 
+                                                left: "28%", 
+                                                top: "23.6%", 
+                                                "--mdc-icon-size": "52px",
+                                                "transform": "translate(0%, 0%)",
+                                                "color": "grey"
+                                            },
+                                            tap_action: {
+                                                action: "url",
+                                                url_path: "/local/community/bianca/admin.html"
+                                            },
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if is_state('binary_sensor.bianca_available', 'on') %}
+                                                            pointer-events: auto;
+                                                            --card-mod-icon-color: white;
+                                                        {% else %}
+                                                            pointer-events: none;
+                                                            --card-mod-icon-color: grey;
+                                                        {% endif %}
                                                     }
                                                 `
                                             }
@@ -859,7 +892,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ПАРА (БЕЗ ИЗМЕНЕНИЙ, КАК В ВЕРСИИ 1.0.26) ==========
+                                        // ========== ИКОНКА ПАРА ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:steam-1",
@@ -969,7 +1002,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ПРЕДВАРИТЕЛЬНОЙ СТИРКИ (ИСПРАВЛЕНА) ==========
+                                        // ========== ИКОНКА ПРЕДВАРИТЕЛЬНОЙ СТИРКИ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:pre-wash",
@@ -1016,7 +1049,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ГИГИЕНЫ (ИСПРАВЛЕНА) ==========
+                                        // ========== ИКОНКА ГИГИЕНЫ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:hygiene-wash",
@@ -1063,7 +1096,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА АНТИСМИНАНИЯ (ИСПРАВЛЕНА) ==========
+                                        // ========== ИКОНКА АНТИСМИНАНИЯ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:anti-crease",
@@ -1110,7 +1143,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА НОЧНОЙ СТИРКИ (ИСПРАВЛЕНА) ==========
+                                        // ========== ИКОНКА НОЧНОЙ СТИРКИ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:night-spin",
@@ -1157,7 +1190,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ДОПОЛНИТЕЛЬНЫХ ПОЛОСКАНИЙ (ИСПРАВЛЕНА) ==========
+                                        // ========== ИКОНКА ДОПОЛНИТЕЛЬНЫХ ПОЛОСКАНИЙ ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:rinse-1",
@@ -1226,7 +1259,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА АКВАПЛЮС (ИСПРАВЛЕНА) ==========
+                                        // ========== ИКОНКА АКВАПЛЮС ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:extra-water",
@@ -1273,7 +1306,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ZOOM (БЕЗ ИЗМЕНЕНИЙ, КАК В ВЕРСИИ 1.0.26) ==========
+                                        // ========== ИКОНКА ZOOM ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:zoom",
@@ -1690,7 +1723,6 @@ function initVisibilityUpdates(hass) {
     if (initialized) return;
     initialized = true;
     
-    // Подписываемся на изменения состояний, влияющих на видимость иконок
     const entitiesToWatch = [
         'sensor.bianca_machine_state',
         'sensor.bianca_remote_control',
@@ -1700,7 +1732,6 @@ function initVisibilityUpdates(hass) {
     entitiesToWatch.forEach(entityId => {
         hass.connection.subscribeMessage(
             () => {
-                // При изменении состояния обновляем интерфейс
                 setTimeout(() => {
                     window.dispatchEvent(new Event('resize'));
                 }, 100);
@@ -1710,7 +1741,6 @@ function initVisibilityUpdates(hass) {
     });
 }
 
-// Перехватываем создание карточки для инициализации
 const originalGenerate = BiancaDashboardStrategy.generate;
 BiancaDashboardStrategy.generate = async function(config, hass, resources, view) {
     initVisibilityUpdates(hass);
