@@ -2,7 +2,6 @@
 
 import json
 import os
-import asyncio
 import logging
 from typing import Any
 
@@ -121,10 +120,8 @@ OPTION_VALUE_TO_CODE = {
 _LOGGER = logging.getLogger(__name__)
 
 
-async def load_programs_config(hass) -> dict[str, Any]:
-    """Загружает конфигурацию программ из JSON файла (асинхронно)."""
-    import asyncio
-    
+def load_programs_config(hass) -> dict[str, Any]:
+    """Загружает конфигурацию программ из JSON файла (синхронно)."""
     config_path = hass.config.path(f"custom_components/{DOMAIN}/{PROGRAMS_CONFIG_FILE}")
     
     if not os.path.exists(config_path):
@@ -132,11 +129,8 @@ async def load_programs_config(hass) -> dict[str, Any]:
         return {}
     
     try:
-        def read_file():
-            with open(config_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        
-        return await asyncio.to_thread(read_file)
+        with open(config_path, "r", encoding="utf-8") as f:
+            return json.load(f)
     except Exception as e:
         _LOGGER.error(f"Failed to load programs config: {e}")
         return {}
