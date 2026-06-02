@@ -1,11 +1,11 @@
 """Program manager for Bianca integration."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from homeassistant.core import HomeAssistant
 
-from .const import load_programs_config
+from .const import load_programs_config, OPTION_TO_ENTITY, ENTITY_TO_OPTION
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,16 +16,9 @@ class ProgramManager:
     def __init__(self, hass: HomeAssistant):
         """Initialize the program manager."""
         self.hass = hass
-        self.config = None
-        self.programs = {}
-        self._current_program = None
-        # Загружаем конфигурацию асинхронно
-        self.hass.loop.create_task(self._async_load_config())
-
-    async def _async_load_config(self):
-        """Асинхронно загружает конфигурацию программ."""
-        self.config = await load_programs_config(self.hass)
+        self.config = load_programs_config(hass)
         self.programs = self.config.get("programs", {})
+        self._current_program = None
 
     def get_program(self, program_id: str) -> Optional[Dict[str, Any]]:
         """Get program configuration by ID."""
@@ -80,6 +73,7 @@ class ProgramManager:
         if not values or (len(values) == 1 and values[0] == "Нет"):
             return False
         
+        # Проверяем зависимости
         depends_on = option.get("depends_on")
         if depends_on and context:
             dep_option = depends_on.get("option")
@@ -99,7 +93,13 @@ class ProgramManager:
         return True
 
     def get_mutual_exclusions(self, program_id: str) -> List[List[str]]:
-        """Get mutual exclusion rules for a program."""
+        """
+        Get mutual exclusion rules for a program.
+        
+        Поддерживает два формата:
+        1. ["anti_crease", "night_spin"]  (простой массив)
+        2. {"options": ["anti_crease", "night_spin"], "type": "mutual"}  (старый формат)
+        """
         program = self.get_program(program_id)
         if not program:
             return []
@@ -109,8 +109,10 @@ class ProgramManager:
         
         for exclusion in exclusions:
             if isinstance(exclusion, list):
+                # Простой формат: ["anti_crease", "night_spin"]
                 result.append(exclusion)
             elif isinstance(exclusion, dict):
+                # Старый формат: {"options": [...], "type": "mutual"}
                 options = exclusion.get("options", [])
                 if options:
                     result.append(options)
@@ -118,11 +120,16 @@ class ProgramManager:
         return result
 
     def check_mutual_exclusion(self, program_id: str, option_name: str, value: str, current_state: Dict[str, str]) -> Dict[str, str]:
-        """Check mutual exclusion and return options to disable."""
+        """
+        Check mutual exclusion and return options to disable.
+        
+        Returns a dictionary of {option_key: "Нет"} for options that should be disabled.
+        """
         result = {}
         exclusions = self.get_mutual_exclusions(program_id)
         
         for exclusion in exclusions:
+            # exclusion — это список опций, например ["anti_crease", "night_spin"]
             if option_name in exclusion and value == "Есть":
                 for opt in exclusion:
                     if opt != option_name:
