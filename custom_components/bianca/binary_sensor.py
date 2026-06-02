@@ -1,4 +1,5 @@
-"""Binary sensor for Bianca device availability via ping."""
+"""Binary sensor for Bianca device availability via ping - Version 2.1.0."""
+
 from __future__ import annotations
 
 import asyncio
@@ -46,7 +47,6 @@ class BiancaAvailableBinarySensor(BinarySensorEntity):
     """Binary sensor for device availability via ping."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, ip_address: str) -> None:
-        """Initialize the sensor."""
         self._hass = hass
         self._entry = entry
         self._ip_address = ip_address
@@ -60,23 +60,17 @@ class BiancaAvailableBinarySensor(BinarySensorEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        return {
-            "identifiers": {(DOMAIN, self._ip_address)},
-        }
+        return {"identifiers": {(DOMAIN, self._ip_address)}}
 
     @property
     def is_on(self) -> bool:
-        """Return true if device is online."""
         return self._state
 
     @property
     def icon(self):
-        """Return icon based on state."""
         return "mdi:network" if self._state else "mdi:network-off"
 
     async def async_update_ping(self, now=None) -> None:
-        """Update ping state and store in global storage."""
         old_state = self._state
         self._state = await async_ping(self._ip_address)
         
@@ -101,14 +95,12 @@ class BiancaAvailableBinarySensor(BinarySensorEntity):
                 coordinator.async_update_listeners()
 
     async def async_added_to_hass(self) -> None:
-        """Start polling when entity is added."""
         await self.async_update_ping()
         self._unsub_update = async_track_time_interval(
             self.hass, self.async_update_ping, timedelta(seconds=30)
         )
 
     async def async_will_remove_from_hass(self) -> None:
-        """Stop polling when entity is removed."""
         if self._unsub_update:
             self._unsub_update()
             self._unsub_update = None
