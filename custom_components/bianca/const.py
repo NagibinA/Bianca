@@ -8,7 +8,7 @@ from typing import Any
 DOMAIN = "bianca"
 CONF_INTEGRATION_TITLE = "Bianca"
 DEFAULT_SCAN_INTERVAL = 30
-VERSION = "2.1.0"
+VERSION = "2.1.1"
 
 CONF_IP_ADDRESS = "ip_address"
 
