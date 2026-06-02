@@ -1,4 +1,5 @@
-"""The Bianca integration."""
+"""The Bianca integration - Version 2.0.0."""
+
 from __future__ import annotations
 
 import json
@@ -17,7 +18,8 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.helpers.device_registry import async_get as async_get_device_registry
 from homeassistant.components.frontend import add_extra_js_url
 
-from .const import DOMAIN, API_ENDPOINT, DEFAULT_SCAN_INTERVAL, PLATFORMS
+from .const import DOMAIN, API_ENDPOINT, DEFAULT_SCAN_INTERVAL, PLATFORMS, OPTION_VALUE_TO_CODE
+from .program_manager import ProgramManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,6 +35,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if entry.entry_id not in hass.data[DOMAIN]:
         hass.data[DOMAIN][entry.entry_id] = {}
     hass.data[DOMAIN][entry.entry_id]["available"] = False
+    
+    # Инициализируем ProgramManager
+    program_manager = ProgramManager(hass)
+    hass.data[DOMAIN][entry.entry_id]["program_manager"] = program_manager
     
     # Регистрируем кастомные иконки и дашборд
     await async_register_assets(hass)
@@ -67,28 +73,42 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Регистрация сервисов
     async def handle_start_washing(call):
         """Handle start washing service."""
-        ip_address = entry.data[CONF_IP_ADDRESS]
-        
-        # Получаем значения из всех select
+        # Получаем значения из всех select через ProgramManager
         program_select = hass.states.get("select.bianca_program")
-        temperature_select = hass.states.get("select.bianca_temperature")
-        spin_select = hass.states.get("select.bianca_spin")
-        delay_select = hass.states.get("select.bianca_delay_start")
-        soil_select = hass.states.get("select.bianca_soil")
-        steam_select = hass.states.get("select.bianca_steam")
-        prewash_select = hass.states.get("select.bianca_pre_wash")
-        hygiene_select = hass.states.get("select.bianca_hygiene")
-        anticrease_select = hass.states.get("select.bianca_anti_crease")
-        nightspin_select = hass.states.get("select.bianca_night_spin")
-        extrarinse_select = hass.states.get("select.bianca_extra_rinse")
-        aquaplus_select = hass.states.get("select.bianca_aqua_plus")
-        zoom_select = hass.states.get("select.bianca_zoom")
+        program_name = program_select.state if program_select else "Хлопок: Интенсивная стирка"
         
+        program_id, program = program_manager.get_program_by_name(program_name)
+        if not program_id:
+            _LOGGER.error(f"Unknown program: {program_name}")
+            return
+        
+        # Получаем значения опций
+        values = {}
+        for option_key, entity_id in {
+            "temperature": "select.bianca_temperature",
+            "spin": "select.bianca_spin",
+            "soil": "select.bianca_soil",
+            "steam": "select.bianca_steam",
+            "pre_wash": "select.bianca_pre_wash",
+            "hygiene": "select.bianca_hygiene",
+            "anti_crease": "select.bianca_anti_crease",
+            "night_spin": "select.bianca_night_spin",
+            "extra_rinse": "select.bianca_extra_rinse",
+            "aqua_plus": "select.bianca_aqua_plus",
+            "zoom": "select.bianca_zoom",
+        }.items():
+            select = hass.states.get(entity_id)
+            values[option_key] = select.state if select else "Нет"
+        
+        # Получаем отложенный старт
+        delay_select = hass.states.get("select.bianca_delay_start")
+        delay_str = delay_select.state if delay_select else "Нет"
+        
+        # Преобразуем значения в коды API
         # StSt (Start Status)
         StSt = 1
         
         # DelVl (Delay Value)
-        delay_str = delay_select.state if delay_select else "Нет"
         DelVl = {
             "Нет": 0, "30 мин": 1, "1 час": 2, "1 час 30 мин": 3, "2 часа": 4, "2 часа 30 мин": 5,
             "3 часа": 6, "3 часа 30 мин": 7, "4 часа": 8, "4 час 30 мин": 9, "5 часов": 10,
@@ -105,68 +125,41 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         }.get(delay_str, 0)
         
         # PrNm (Program Number)
-        program_str = program_select.state if program_select else "Хлопок: Интенсивная стирка"
-        PrNm = {
-            "Хлопок: Интенсивная стирка": 1, "Хлопок": 2, "Синтетика и цветные ткани": 3,
-            "Шерсть": 4, "Деликатная": 5, "Perfect 20°C": 6, "Полоскание": 7,
-            "Слив + Отжим": 8, "Сохранить свежесть": 13, "Perfect rapid 59 минут": 15,
-            "Быстрая": 16
-        }.get(program_str, 0)
+        PrNm = int(program_id)
         
         # PrCode (Program Code)
-        PrCode = {
-            "Хлопок: Интенсивная стирка": 65, "Хлопок": 2, "Синтетика и цветные ткани": 3,
-            "Шерсть": 5, "Деликатная": 4, "Perfect 20°C": 11, "Полоскание": 35,
-            "Слив + Отжим": 129, "Сохранить свежесть": 41, "Perfect rapid 59 минут": 8,
-            "Быстрая": 7
-        }.get(program_str, 0)
+        PrCode = program.get("pr_code", 0)
         
         # PrStr (Program String)
         PrStr = "test"
         
         # TmpTgt (Temperature Target)
-        temp_str = temperature_select.state if temperature_select else "60°C"
-        TmpTgt = temp_str.replace("°C", "")
+        TmpTgt = values["temperature"].replace("°C", "")
         
         # SLevTgt (Soil Level Target)
-        soil_str = soil_select.state if soil_select else "Нет"
-        SLevTgt = {"Нет": 0, "Мало": 1, "Нормально": 2, "Очень": 3}.get(soil_str, 0)
+        soil_value = values["soil"]
+        SLevTgt = {"Нет": 0, "Мало": 1, "Нормально": 2, "Очень": 3}.get(soil_value, 0)
         
         # SpdTgt (Speed Target)
-        spin_str = spin_select.state if spin_select else "1000 об/мин"
+        spin_value = values["spin"]
         SpdTgt = {
             "0 об/мин": 0, "400 об/мин": 4, "500 об/мин": 5, "600 об/мин": 6,
             "700 об/мин": 7, "800 об/мин": 8, "900 об/мин": 9, "1000 об/мин": 10,
             "1100 об/мин": 11, "1200 об/мин": 12, "1300 об/мин": 13, "1400 об/мин": 14
-        }.get(spin_str, 10)
+        }.get(spin_value, 10)
         
         # Stm (Steam)
-        steam_str = steam_select.state if steam_select else "Без пара"
-        Stm = 5 if steam_str == "С паром" else 0
+        Stm = 5 if values["steam"] == "С паром" else 0
         
         # OptMsk1 (Options Mask 1)
         OptMsk1 = 0
-        if prewash_select and prewash_select.state == "Есть":
-            OptMsk1 += 1
-        if hygiene_select and hygiene_select.state == "Есть":
-            OptMsk1 += 2
-        if anticrease_select and anticrease_select.state == "Есть":
-            OptMsk1 += 4
-        if nightspin_select and nightspin_select.state == "Есть":
-            OptMsk1 += 8
-        if extrarinse_select:
-            rinse_val = extrarinse_select.state
-            if rinse_val == "1 полоскание":
-                OptMsk1 += 16
-            elif rinse_val == "2 полоскания":
-                OptMsk1 += 32
-            elif rinse_val == "3 полоскания":
-                OptMsk1 += 64
-        if aquaplus_select and aquaplus_select.state == "Есть":
-            OptMsk1 += 128
+        opt_masks = ["pre_wash", "hygiene", "anti_crease", "night_spin", "extra_rinse", "aqua_plus"]
+        for opt in opt_masks:
+            code_map = OPTION_VALUE_TO_CODE.get(opt, {})
+            OptMsk1 += code_map.get(values[opt], 0)
         
         # OptMsk2 (Options Mask 2)
-        OptMsk2 = 1 if (zoom_select and zoom_select.state == "Есть") else 0
+        OptMsk2 = 1 if values["zoom"] == "Есть" else 0
         
         # Формируем URL
         url = (
@@ -182,16 +175,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         try:
             async with async_timeout.timeout(10):
                 await session.get(url)
-        except Exception:
-            pass
+        except Exception as e:
+            _LOGGER.error(f"Error starting washing: {e}")
         
         # Сбрасываем селект отложенного старта на "Нет"
-        delay_select_entity = "select.bianca_delay_start"
-        delay_select_state = hass.states.get(delay_select_entity)
-        if delay_select_state and delay_select_state.state != "Нет":
+        if delay_str != "Нет":
             await hass.services.async_call(
                 "select", "select_option",
-                {"entity_id": delay_select_entity, "option": "Нет"}
+                {"entity_id": "select.bianca_delay_start", "option": "Нет"}
             )
     
     async def handle_stop_washing(call):
@@ -202,8 +193,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         try:
             async with async_timeout.timeout(10):
                 await session.get(url)
-        except Exception:
-            pass
+        except Exception as e:
+            _LOGGER.error(f"Error stopping washing: {e}")
     
     hass.services.async_register(DOMAIN, "start_washing", handle_start_washing)
     hass.services.async_register(DOMAIN, "stop_washing", handle_stop_washing)
@@ -225,13 +216,13 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     version_file_path = hass.config.path("www/community/bianca/version.txt")
     
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
-    current_version = "1.0.27"
+    current_version = "2.0.0"
     try:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "1.0.27")
+        current_version = manifest.get("version", "2.0.0")
     except Exception:
         pass
     
@@ -328,15 +319,7 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         return self._api_response_status
 
     async def _async_update_data(self) -> dict:
-        """
-        Получение данных от устройства.
-        
-        Если устройство недоступно по пингу - не возвращаем кэш,
-        а сразу вызываем исключение UpdateFailed.
-        """
-        # Если устройство недоступно по пингу - НЕ возвращаем кэш
         if not self.device_available:
-            _LOGGER.debug(f"Device {self.ip_address} is offline, raising UpdateFailed")
             raise UpdateFailed("Device is offline")
         
         session = async_get_clientsession(self.hass)
@@ -351,9 +334,7 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                             
                             if "response" in data:
                                 self._api_response_status = data["response"]
-                                # API вернул ошибку, но устройство доступно по пингу
                                 if self._last_valid_data is not None:
-                                    _LOGGER.debug(f"API error but device online, using cached data: {self._api_response_status}")
                                     return self._last_valid_data
                                 raise UpdateFailed(f"API error: {self._api_response_status}")
                             
@@ -378,9 +359,6 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                             return self._last_valid_data
                         raise UpdateFailed(f"HTTP error {response.status}")
         except Exception as e:
-            # Любая другая ошибка - проверяем доступность устройства
             if self.device_available and self._last_valid_data is not None:
-                _LOGGER.debug(f"Device available but error occurred, using cached data: {e}")
                 return self._last_valid_data
-            _LOGGER.warning(f"Device unavailable or no cache, raising UpdateFailed: {e}")
             raise UpdateFailed(f"Error fetching data: {e}")
