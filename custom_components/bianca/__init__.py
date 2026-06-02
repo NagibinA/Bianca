@@ -1,4 +1,4 @@
-"""The Bianca integration - Version 2.0.0."""
+"""The Bianca integration - Version 2.0.1."""
 
 from __future__ import annotations
 
@@ -104,7 +104,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         delay_select = hass.states.get("select.bianca_delay_start")
         delay_str = delay_select.state if delay_select else "Нет"
         
-        # Преобразуем значения в коды API
         # StSt (Start Status)
         StSt = 1
         
@@ -130,23 +129,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # PrCode (Program Code)
         PrCode = program.get("pr_code", 0)
         
-        # PrStr (Program String)
-        PrStr = "test"
+        # PrStr (Program String for display)
+        PrStr = program_manager.get_pr_str(program_id)
         
         # TmpTgt (Temperature Target)
         TmpTgt = values["temperature"].replace("°C", "")
         
         # SLevTgt (Soil Level Target)
-        soil_value = values["soil"]
-        SLevTgt = {"Нет": 0, "Мало": 1, "Нормально": 2, "Очень": 3}.get(soil_value, 0)
+        SLevTgt = {"Нет": 0, "Мало": 1, "Нормально": 2, "Очень": 3}.get(values["soil"], 0)
         
         # SpdTgt (Speed Target)
-        spin_value = values["spin"]
         SpdTgt = {
             "0 об/мин": 0, "400 об/мин": 4, "500 об/мин": 5, "600 об/мин": 6,
             "700 об/мин": 7, "800 об/мин": 8, "900 об/мин": 9, "1000 об/мин": 10,
             "1100 об/мин": 11, "1200 об/мин": 12, "1300 об/мин": 13, "1400 об/мин": 14
-        }.get(spin_value, 10)
+        }.get(values["spin"], 10)
         
         # Stm (Steam)
         Stm = 5 if values["steam"] == "С паром" else 0
@@ -216,13 +213,13 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     version_file_path = hass.config.path("www/community/bianca/version.txt")
     
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
-    current_version = "2.0.0"
+    current_version = "2.0.1"
     try:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "2.0.0")
+        current_version = manifest.get("version", "2.0.1")
     except Exception:
         pass
     
