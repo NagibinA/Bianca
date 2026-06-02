@@ -225,13 +225,13 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     version_file_path = hass.config.path("www/community/bianca/version.txt")
     
     manifest_path = hass.config.path("custom_components/bianca/manifest.json")
-    current_version = "1.0.23"
+    current_version = "1.0.26"
     try:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
         manifest = await asyncio.to_thread(read_manifest)
-        current_version = manifest.get("version", "1.0.23")
+        current_version = manifest.get("version", "1.0.26")
     except Exception:
         pass
     
@@ -331,9 +331,8 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         """
         Получение данных от устройства.
         
-        ИЗМЕНЕНИЕ: Если устройство недоступно по пингу - не возвращаем кэш,
-        а сразу вызываем исключение UpdateFailed. Это заставит все сенсоры
-        стать "unavailable", а не показывать устаревшие данные.
+        Если устройство недоступно по пингу - не возвращаем кэш,
+        а сразу вызываем исключение UpdateFailed.
         """
         # Если устройство недоступно по пингу - НЕ возвращаем кэш
         if not self.device_available:
