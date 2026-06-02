@@ -1,11 +1,10 @@
 """
 Select platform for Bianca integration.
-Version: 1.0.28
+Version: 1.0.29
 
-ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.28):
-- Добавлен атрибут has_yes в extra_state_attributes для каждого селекта
-- Атрибут показывает, есть ли у селекта опция "Есть" или "Включен"
-- Используется в дашборде для определения цветовой подсветки иконок
+ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.29):
+- Убран атрибут has_yes (не используется в дашборде)
+- Селекты обновляются без удаления сущностей
 """
 
 from __future__ import annotations
@@ -345,20 +344,6 @@ class BiancaBaseSelect(SelectEntity):
         """Return device info."""
         return {
             "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
-        }
-
-    @property
-    def extra_state_attributes(self):
-        """
-        Return additional attributes.
-        
-        ИЗМЕНЕНИЕ В ВЕРСИИ 1.0.28:
-        Добавлен атрибут has_yes, который показывает,
-        есть ли у селекта опция "Есть" или "Включен".
-        Используется в дашборде для определения цветовой подсветки иконок.
-        """
-        return {
-            "has_yes": "Есть" in self._attr_options or "Включен" in self._attr_options
         }
 
     async def async_select_option(self, option: str) -> None:
