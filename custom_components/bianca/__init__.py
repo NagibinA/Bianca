@@ -94,6 +94,9 @@ class BiancaAddProgramFullView(HomeAssistantView):
             )
 
 
+
+
+
 class BiancaGetProgramsView(HomeAssistantView):
     """Эндпоинт для получения списка программ."""
     
@@ -138,26 +141,28 @@ class BiancaGetProgramView(HomeAssistantView):
     name = "api:bianca:get_program"
     requires_auth = False
 
-    async def get(self, request):
+    async def get(self, request, program_id):  # <-- ДОБАВЛЕН program_id
         hass = request.app["hass"]
-        program_id = request.match_info.get("program_id")
         
         config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
         
         try:
-            def read_file():
-                if not os.path.exists(config_path):
-                    return None
-                with open(config_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
+            import os
+            if not os.path.exists(config_path):
+                return web.json_response({
+                    "success": False, 
+                    "error": f"File not found: {config_path}"
+                }, status=404)
             
-            programs_data = await asyncio.to_thread(read_file)
-            
-            if programs_data is None:
-                return web.json_response({"success": False, "error": "Файл programs.json не найден"}, status=404)
+            import json
+            with open(config_path, "r", encoding="utf-8") as f:
+                programs_data = json.load(f)
             
             if str(program_id) not in programs_data.get("programs", {}):
-                return web.json_response({"success": False, "error": f"Программа с ID {program_id} не найдена"}, status=404)
+                return web.json_response({
+                    "success": False, 
+                    "error": f"Program {program_id} not found"
+                }, status=404)
             
             program = programs_data["programs"][str(program_id)]
             
@@ -172,9 +177,10 @@ class BiancaGetProgramView(HomeAssistantView):
                     "mutual_exclusion": program.get("mutual_exclusion", [])
                 }
             })
+            
         except Exception as e:
+            _LOGGER.error(f"Error in get_program: {e}")
             return web.json_response({"success": False, "error": str(e)}, status=500)
-
 
 class BiancaUpdateProgramView(HomeAssistantView):
     """Эндпоинт для обновления программы."""
