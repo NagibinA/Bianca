@@ -1,23 +1,26 @@
 """
 Select platform for Bianca integration.
-Version: 1.0.32
+Version: 1.0.34
 
-ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.32):
-- Приведены функции get_xxx_options в соответствие с логикой из scripts.yaml
-- Исправлены опции: антисминание, ночная стирка, акваплюс, зум, гигиена
+ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.34):
+- Исправлен сброс всех селектов при выборе температуры
+- При изменении температуры обновляется только гигиена (зависит от температуры)
+- Остальные селекты сохраняют выбранные пользователем значения
 """
 
 from __future__ import annotations
 
+import logging
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity import EntityCategory
-from homeassistant.helpers import entity_registry as er
 from homeassistant.const import CONF_IP_ADDRESS
 
 from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -43,58 +46,83 @@ async def async_setup_entry(
     
     # Температура
     temp_options, default_temp = get_temp_options(default_program)
-    entities.append(BiancaTemperatureSelect(entry, hass, temp_options, default_temp))
+    temp_select = BiancaTemperatureSelect(entry, hass, temp_options, default_temp)
+    entities.append(temp_select)
     
     # Отжим
     spin_options, default_spin = get_spin_options(default_program)
-    entities.append(BiancaSpinSelect(entry, hass, spin_options, default_spin))
+    spin_select = BiancaSpinSelect(entry, hass, spin_options, default_spin)
+    entities.append(spin_select)
     
     # Уровень загрязнения
     soil_options, default_soil = get_soil_options(default_program)
-    entities.append(BiancaSoilSelect(entry, hass, soil_options, default_soil))
+    soil_select = BiancaSoilSelect(entry, hass, soil_options, default_soil)
+    entities.append(soil_select)
     
     # Пар
     steam_options, default_steam = get_steam_options(default_program)
-    entities.append(BiancaSteamSelect(entry, hass, steam_options, default_steam))
+    steam_select = BiancaSteamSelect(entry, hass, steam_options, default_steam)
+    entities.append(steam_select)
     
     # Предварительная стирка
     prewash_options, default_prewash = get_prewash_options(default_program)
-    entities.append(BiancaPreWashSelect(entry, hass, prewash_options, default_prewash))
+    prewash_select = BiancaPreWashSelect(entry, hass, prewash_options, default_prewash)
+    entities.append(prewash_select)
     
     # Гигиена (зависит от программы и температуры)
     hygiene_options, default_hygiene = get_hygiene_options(default_program, default_temperature)
-    entities.append(BiancaHygieneSelect(entry, hass, hygiene_options, default_hygiene))
+    hygiene_select = BiancaHygieneSelect(entry, hass, hygiene_options, default_hygiene)
+    entities.append(hygiene_select)
     
     # Антисминание
     anticrease_options, default_anticrease = get_anticrease_options(default_program)
-    entities.append(BiancaAntiCreaseSelect(entry, hass, anticrease_options, default_anticrease))
+    anticrease_select = BiancaAntiCreaseSelect(entry, hass, anticrease_options, default_anticrease)
+    entities.append(anticrease_select)
     
     # Ночная стирка
     nightspin_options, default_nightspin = get_nightspin_options(default_program)
-    entities.append(BiancaNightSpinSelect(entry, hass, nightspin_options, default_nightspin))
+    nightspin_select = BiancaNightSpinSelect(entry, hass, nightspin_options, default_nightspin)
+    entities.append(nightspin_select)
     
     # Дополнительные полоскания
     rinses_options, default_rinse = get_rinses_options(default_program)
-    entities.append(BiancaExtraRinseSelect(entry, hass, rinses_options, default_rinse))
+    rinses_select = BiancaExtraRinseSelect(entry, hass, rinses_options, default_rinse)
+    entities.append(rinses_select)
     
     # Акваплюс
     aquaplus_options, default_aquaplus = get_aquaplus_options(default_program)
-    entities.append(BiancaAquaPlusSelect(entry, hass, aquaplus_options, default_aquaplus))
+    aquaplus_select = BiancaAquaPlusSelect(entry, hass, aquaplus_options, default_aquaplus)
+    entities.append(aquaplus_select)
     
     # Зум
     zoom_options, default_zoom = get_zoom_options(default_program)
-    entities.append(BiancaZoomSelect(entry, hass, zoom_options, default_zoom))
+    zoom_select = BiancaZoomSelect(entry, hass, zoom_options, default_zoom)
+    entities.append(zoom_select)
     
     # Отложенный старт (всегда одинаковый)
-    entities.append(BiancaDelayStartSelect(entry, hass))
+    delay_select = BiancaDelayStartSelect(entry, hass)
+    entities.append(delay_select)
     
-    # Сохраняем ссылки на все созданные selects
-    hass.data[DOMAIN][entry.entry_id]["selects"] = entities
+    # Сохраняем ссылки на все созданные selects для прямого доступа
+    hass.data[DOMAIN][entry.entry_id]["selects"] = {
+        "temperature": temp_select,
+        "spin": spin_select,
+        "soil": soil_select,
+        "steam": steam_select,
+        "pre_wash": prewash_select,
+        "hygiene": hygiene_select,
+        "anti_crease": anticrease_select,
+        "night_spin": nightspin_select,
+        "extra_rinse": rinses_select,
+        "aqua_plus": aquaplus_select,
+        "zoom": zoom_select,
+        "delay_start": delay_select,
+    }
     
     async_add_entities(entities)
 
 
-# ========== ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ ОПЦИЙ (приведены в соответствие с scripts.yaml) ==========
+# ========== ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ ОПЦИЙ (по scripts.yaml) ==========
 
 def get_temp_options(program: str) -> tuple[list[str], str]:
     """Get temperature options and default value for a program."""
@@ -155,7 +183,6 @@ def get_prewash_options(program: str) -> tuple[list[str], str]:
 
 def get_hygiene_options(program: str, temperature: str = "0°C") -> tuple[list[str], str]:
     """Get hygiene options based on program AND temperature."""
-    # По scripts.yaml: гигиена доступна для Хлопок: Интенсивная, Хлопок, Синтетика при t≥60
     if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Синтетика и цветные ткани"]:
         if temperature in ["60°C", "90°C"]:
             return ["Нет", "Есть"], "Нет"
@@ -164,8 +191,6 @@ def get_hygiene_options(program: str, temperature: str = "0°C") -> tuple[list[s
 
 def get_anticrease_options(program: str) -> tuple[list[str], str]:
     """Get anti-crease options for a program."""
-    # По scripts.yaml: антисминание НЕ доступно для: Хлопок: Интенсивная, Хлопок, Полоскание, Слив+Отжим, Perfect rapid, Быстрая
-    # Доступно для всех остальных: Синтетика, Шерсть, Деликатная, Perfect 20°C, Сохранить свежесть
     if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Полоскание", "Слив + Отжим", "Perfect rapid 59 минут", "Быстрая"]:
         return ["Нет"], "Нет"
     return ["Нет", "Есть"], "Нет"
@@ -173,7 +198,6 @@ def get_anticrease_options(program: str) -> tuple[list[str], str]:
 
 def get_nightspin_options(program: str) -> tuple[list[str], str]:
     """Get night spin options for a program."""
-    # По scripts.yaml: ночная стирка доступна для: Хлопок: Интенсивная, Хлопок, Синтетика, Шерсть, Деликатная, Perfect 20°C
     if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Синтетика и цветные ткани", "Шерсть", "Деликатная", "Perfect 20°C"]:
         return ["Нет", "Есть"], "Нет"
     return ["Нет"], "Нет"
@@ -181,7 +205,6 @@ def get_nightspin_options(program: str) -> tuple[list[str], str]:
 
 def get_rinses_options(program: str) -> tuple[list[str], str]:
     """Get extra rinse options for a program."""
-    # По scripts.yaml: полоскания НЕ доступны для Perfect rapid, Быстрая, Сохранить свежесть
     if program in ["Perfect rapid 59 минут", "Быстрая", "Сохранить свежесть"]:
         return ["Нет"], "Нет"
     elif program == "Шерсть":
@@ -194,7 +217,6 @@ def get_rinses_options(program: str) -> tuple[list[str], str]:
 
 def get_aquaplus_options(program: str) -> tuple[list[str], str]:
     """Get aqua plus options for a program."""
-    # По scripts.yaml: акваплюс доступен только для: Хлопок: Интенсивная, Хлопок, Perfect 20°C
     if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Perfect 20°C"]:
         return ["Нет", "Есть"], "Нет"
     return ["Нет"], "Нет"
@@ -202,119 +224,101 @@ def get_aquaplus_options(program: str) -> tuple[list[str], str]:
 
 def get_zoom_options(program: str) -> tuple[list[str], str]:
     """Get zoom options for a program."""
-    # По scripts.yaml: зум доступен для: Хлопок: Интенсивная, Хлопок, Синтетика, Шерсть, Perfect rapid, Деликатная
     if program in ["Хлопок: Интенсивная стирка", "Хлопок", "Синтетика и цветные ткани", "Шерсть", "Perfect rapid 59 минут", "Деликатная"]:
         return ["Нет", "Есть"], "Нет"
     return ["Нет"], "Нет"
 
 
-# ========== ФУНКЦИИ ДЛЯ ОБНОВЛЕНИЯ СЕЛЕКТОВ ==========
+# ========== ФУНКЦИЯ ОБНОВЛЕНИЯ ВСЕХ СЕЛЕКТОВ ПРИ СМЕНЕ ПРОГРАММЫ ==========
 
-async def update_select_options(
-    hass: HomeAssistant, 
-    entry: ConfigEntry, 
-    select_type: str,
-    new_options: list[str],
-    current_option: str = None,
-) -> None:
+async def update_all_selects(hass: HomeAssistant, entry: ConfigEntry, program: str) -> None:
     """
-    Обновляет опции существующего селекта без удаления сущности.
+    Обновляет опции всех селектов при смене программы.
+    Использует прямые ссылки на объекты селектов.
     """
-    entity_registry = er.async_get(hass)
+    selects = hass.data[DOMAIN][entry.entry_id].get("selects", {})
     
-    # Находим существующую сущность
-    for entity in list(entity_registry.entities.values()):
-        if entity.config_entry_id == entry.entry_id and entity.unique_id.endswith(select_type):
-            entity_id = entity.entity_id
-            break
-    else:
-        # Если сущность не найдена, пробуем создать заново
-        entity_id = f"select.bianca_{select_type}"
+    if not selects:
+        _LOGGER.warning("No selects found in storage")
+        return
     
-    # Получаем состояние сущности
-    state = hass.states.get(entity_id)
-    if state:
-        # Находим объект селекта в памяти
-        for select in hass.data[DOMAIN][entry.entry_id].get("selects", []):
-            if select.entity_id == entity_id and hasattr(select, 'async_update_options'):
-                await select.async_update_options(new_options, current_option)
-                break
-
-
-async def recreate_all_selects(hass: HomeAssistant, entry: ConfigEntry, program: str) -> None:
-    """
-    Обновляет все зависимые селекты при смене программы.
-    """
-    
-    # Получаем текущую температуру для гигиены
+    # Получаем текущую температуру
     temp_select = hass.states.get("select.bianca_temperature")
-    current_temperature = temp_select.state if temp_select else "60°C"
+    temperature = temp_select.state if temp_select else "60°C"
     
-    # Температура
+    # Обновляем температуру
     temp_options, default_temp = get_temp_options(program)
-    await update_select_options(
-        hass, entry, "temperature", temp_options, default_temp
-    )
+    if "temperature" in selects:
+        selects["temperature"].update_options(temp_options, default_temp)
     
-    # Отжим
+    # Обновляем отжим
     spin_options, default_spin = get_spin_options(program)
-    await update_select_options(
-        hass, entry, "spin", spin_options, default_spin
-    )
+    if "spin" in selects:
+        selects["spin"].update_options(spin_options, default_spin)
     
-    # Уровень загрязнения
+    # Обновляем уровень загрязнения
     soil_options, default_soil = get_soil_options(program)
-    await update_select_options(
-        hass, entry, "soil", soil_options, default_soil
-    )
+    if "soil" in selects:
+        selects["soil"].update_options(soil_options, default_soil)
     
-    # Пар
+    # Обновляем пар
     steam_options, default_steam = get_steam_options(program)
-    await update_select_options(
-        hass, entry, "steam", steam_options, default_steam
-    )
+    if "steam" in selects:
+        selects["steam"].update_options(steam_options, default_steam)
     
-    # Предварительная стирка
+    # Обновляем предварительную стирку
     prewash_options, default_prewash = get_prewash_options(program)
-    await update_select_options(
-        hass, entry, "pre_wash", prewash_options, default_prewash
-    )
+    if "pre_wash" in selects:
+        selects["pre_wash"].update_options(prewash_options, default_prewash)
     
-    # Гигиена
-    hygiene_options, default_hygiene = get_hygiene_options(program, current_temperature)
-    await update_select_options(
-        hass, entry, "hygiene", hygiene_options, default_hygiene
-    )
+    # Обновляем гигиену
+    hygiene_options, default_hygiene = get_hygiene_options(program, temperature)
+    if "hygiene" in selects:
+        selects["hygiene"].update_options(hygiene_options, default_hygiene)
     
-    # Антисминание
+    # Обновляем антисминание
     anticrease_options, default_anticrease = get_anticrease_options(program)
-    await update_select_options(
-        hass, entry, "anti_crease", anticrease_options, default_anticrease
-    )
+    if "anti_crease" in selects:
+        selects["anti_crease"].update_options(anticrease_options, default_anticrease)
     
-    # Ночная стирка
+    # Обновляем ночную стирку
     nightspin_options, default_nightspin = get_nightspin_options(program)
-    await update_select_options(
-        hass, entry, "night_spin", nightspin_options, default_nightspin
-    )
+    if "night_spin" in selects:
+        selects["night_spin"].update_options(nightspin_options, default_nightspin)
     
-    # Дополнительные полоскания
+    # Обновляем дополнительные полоскания
     rinses_options, default_rinse = get_rinses_options(program)
-    await update_select_options(
-        hass, entry, "extra_rinse", rinses_options, default_rinse
-    )
+    if "extra_rinse" in selects:
+        selects["extra_rinse"].update_options(rinses_options, default_rinse)
     
-    # Акваплюс
+    # Обновляем акваплюс
     aquaplus_options, default_aquaplus = get_aquaplus_options(program)
-    await update_select_options(
-        hass, entry, "aqua_plus", aquaplus_options, default_aquaplus
-    )
+    if "aqua_plus" in selects:
+        selects["aqua_plus"].update_options(aquaplus_options, default_aquaplus)
     
-    # Зум
+    # Обновляем зум
     zoom_options, default_zoom = get_zoom_options(program)
-    await update_select_options(
-        hass, entry, "zoom", zoom_options, default_zoom
-    )
+    if "zoom" in selects:
+        selects["zoom"].update_options(zoom_options, default_zoom)
+
+
+# ========== ФУНКЦИЯ ОБНОВЛЕНИЯ ТОЛЬКО ГИГИЕНЫ ПРИ СМЕНЕ ТЕМПЕРАТУРЫ ==========
+
+async def update_hygiene_only(hass: HomeAssistant, entry: ConfigEntry, program: str, temperature: str) -> None:
+    """
+    Обновляет только опции гигиены при смене температуры.
+    Остальные селекты не трогаем.
+    """
+    selects = hass.data[DOMAIN][entry.entry_id].get("selects", {})
+    
+    if not selects:
+        _LOGGER.warning("No selects found in storage")
+        return
+    
+    # Обновляем только гигиену
+    hygiene_options, default_hygiene = get_hygiene_options(program, temperature)
+    if "hygiene" in selects:
+        selects["hygiene"].update_options(hygiene_options, default_hygiene)
 
 
 # ========== БАЗОВЫЙ КЛАСС ==========
@@ -331,15 +335,11 @@ class BiancaBaseSelect(SelectEntity):
         icon: str,
         options: list[str],
         current_option: str = None,
-        fixed_entity_id: str = None,
     ) -> None:
         """Initialize the select."""
         self._entry = entry
         self._hass = hass
-        if fixed_entity_id:
-            self.entity_id = fixed_entity_id
-        else:
-            self.entity_id = f"select.bianca_{entity_id_key}"
+        self.entity_id = f"select.bianca_{entity_id_key}"
         self._attr_name = f"Bianca {name}"
         self._attr_unique_id = f"{entry.entry_id}_{entity_id_key}"
         self._attr_icon = icon
@@ -359,9 +359,10 @@ class BiancaBaseSelect(SelectEntity):
         self._attr_current_option = option
         self.async_write_ha_state()
     
-    async def async_update_options(self, options: list[str], current_option: str = None) -> None:
+    def update_options(self, options: list[str], current_option: str = None) -> None:
         """
-        Update available options dynamically without recreating the entity.
+        Update available options dynamically.
+        Вызывается синхронно из update_all_selects и update_hygiene_only.
         """
         self._attr_options = options
         if current_option and current_option in options:
@@ -374,7 +375,7 @@ class BiancaBaseSelect(SelectEntity):
 # ========== ПРОГРАММА ==========
 
 class BiancaProgramSelect(BiancaBaseSelect):
-    """Program selection that triggers recreation of all dependent selects."""
+    """Program selection that triggers update of all dependent selects."""
 
     def __init__(self, entry, hass):
         super().__init__(
@@ -396,48 +397,41 @@ class BiancaProgramSelect(BiancaBaseSelect):
         )
 
     async def async_select_option(self, option: str) -> None:
-        """Update current option and recreate all dependent selects."""
+        """Update current option and update all dependent selects."""
         self._attr_current_option = option
         self.async_write_ha_state()
-        await recreate_all_selects(self._hass, self._entry, option)
+        await update_all_selects(self._hass, self._entry, option)
 
 
 # ========== ЗАВИСИМЫЕ СЕЛЕКТЫ ==========
 
 class BiancaTemperatureSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "temperature", "Температура стирки", "mdi:thermometer",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
 
     async def async_select_option(self, option: str) -> None:
-        """Update temperature and handle hygiene availability."""
+        """Update temperature and update only hygiene (depends on temperature)."""
         await super().async_select_option(option)
         
         program_select = self._hass.states.get("select.bianca_program")
-        if not program_select:
-            return
-        
-        program = program_select.state
-        
-        # Обновляем гигиену с учётом новой температуры
-        hygiene_options, default_hygiene = get_hygiene_options(program, option)
-        await update_select_options(
-            self._hass, self._entry, "hygiene", hygiene_options, default_hygiene
-        )
+        if program_select:
+            # Обновляем только гигиену, остальные селекты не трогаем
+            await update_hygiene_only(self._hass, self._entry, program_select.state, option)
 
 
 class BiancaSpinSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "spin", "Скорость отжима", "mdi:rotate-right",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
 
 
 class BiancaDelayStartSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, fixed_entity_id=None):
+    def __init__(self, entry, hass):
         options = ["Нет", "30 мин", "1 час", "1 час 30 мин", "2 часа", "2 часа 30 мин",
                    "3 часа", "3 часа 30 мин", "4 часа", "4 час 30 мин", "5 часов", "5 часов 30 мин",
                    "6 часов", "6 часов 30 мин", "7 часов", "7 часов 30 мин", "8 часов", "8 часов 30 мин",
@@ -448,47 +442,47 @@ class BiancaDelayStartSelect(BiancaBaseSelect):
                    "21 час", "21 час 30 мин", "22 часа", "22 часа 30 мин", "23 часа", "23 часа 30 мин", "24 часа"]
         super().__init__(
             entry, hass, "delay_start", "Отложенный старт", "mdi:timer-outline",
-            options, "Нет", fixed_entity_id
+            options, "Нет"
         )
 
 
 class BiancaSoilSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "soil", "Уровень загрязнения", "mdi:water-percent",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
 
 
 class BiancaSteamSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "steam", "Пар", "mdi:water-vapor",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
 
 
 class BiancaPreWashSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "pre_wash", "Предварительная стирка", "mdi:soap",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
 
 
 class BiancaHygieneSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "hygiene", "Гигиеническая стирка", "mdi:sterling",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
 
 
 class BiancaAntiCreaseSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "anti_crease", "Анти сминание", "mdi:iron",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
 
     async def async_select_option(self, option: str) -> None:
@@ -499,7 +493,6 @@ class BiancaAntiCreaseSelect(BiancaBaseSelect):
             return
         
         program = program_select.state
-        # Взаимоисключение для программ: Синтетика, Шерсть, Деликатная
         mutual_exclusive = program in ["Синтетика и цветные ткани", "Шерсть", "Деликатная"]
         
         if mutual_exclusive and option == "Есть":
@@ -512,10 +505,10 @@ class BiancaAntiCreaseSelect(BiancaBaseSelect):
 
 
 class BiancaNightSpinSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "night_spin", "Ночной отжим", "mdi:weather-night",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
 
     async def async_select_option(self, option: str) -> None:
@@ -526,7 +519,6 @@ class BiancaNightSpinSelect(BiancaBaseSelect):
             return
         
         program = program_select.state
-        # Взаимоисключение для программ: Синтетика, Шерсть, Деликатная
         mutual_exclusive = program in ["Синтетика и цветные ткани", "Шерсть", "Деликатная"]
         
         if mutual_exclusive and option == "Есть":
@@ -539,24 +531,24 @@ class BiancaNightSpinSelect(BiancaBaseSelect):
 
 
 class BiancaExtraRinseSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "extra_rinse", "Дополнительные полоскания", "mdi:water",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
 
 
 class BiancaAquaPlusSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "aqua_plus", "Акваплюс", "mdi:water-plus",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
 
 
 class BiancaZoomSelect(BiancaBaseSelect):
-    def __init__(self, entry, hass, options, default_option=None, fixed_entity_id=None):
+    def __init__(self, entry, hass, options, default_option=None):
         super().__init__(
             entry, hass, "zoom", "Режим ZOOM", "mdi:arrow-expand-all",
-            options, default_option, fixed_entity_id
+            options, default_option
         )
