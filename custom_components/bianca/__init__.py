@@ -31,7 +31,7 @@ class BiancaAddProgramFullView(HomeAssistantView):
     
     url = "/api/bianca/add_program_full"
     name = "api:bianca:add_program_full"
-    requires_auth = True
+    requires_auth = False
 
     async def post(self, request):
         hass = request.app["hass"]
@@ -94,7 +94,7 @@ class BiancaAddMutualView(HomeAssistantView):
     
     url = "/api/bianca/add_mutual"
     name = "api:bianca:add_mutual"
-    requires_auth = True
+    requires_auth = False
 
     async def post(self, request):
         hass = request.app["hass"]
@@ -152,6 +152,178 @@ class BiancaAddMutualView(HomeAssistantView):
             )
 
 
+class BiancaGetProgramsView(HomeAssistantView):
+    """Эндпоинт для получения списка программ."""
+    
+    url = "/api/bianca/get_programs"
+    name = "api:bianca:get_programs"
+    requires_auth = False
+
+    async def get(self, request):
+        hass = request.app["hass"]
+        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, "r", encoding="utf-8") as f:
+                    programs_data = json.load(f)
+            else:
+                programs_data = {"programs": {}}
+            
+            programs_list = []
+            for prog_id, prog in programs_data.get("programs", {}).items():
+                programs_list.append({
+                    "id": prog_id,
+                    "name": prog.get("name", prog_id),
+                    "pr_code": prog.get("pr_code", 0),
+                    "pr_str": prog.get("pr_str", "")
+                })
+            
+            return web.json_response({"success": True, "programs": programs_list})
+        except Exception as e:
+            return web.json_response({"success": False, "error": str(e)}, status=500)
+
+
+class BiancaGetProgramView(HomeAssistantView):
+    """Эндпоинт для получения полной информации о программе."""
+    
+    url = "/api/bianca/get_program/{program_id}"
+    name = "api:bianca:get_program"
+    requires_auth = False
+
+    async def get(self, request):
+        hass = request.app["hass"]
+        program_id = request.match_info.get("program_id")
+        
+        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        
+        try:
+            if not os.path.exists(config_path):
+                return web.json_response({"success": False, "error": "Файл programs.json не найден"}, status=404)
+            
+            with open(config_path, "r", encoding="utf-8") as f:
+                programs_data = json.load(f)
+            
+            if str(program_id) not in programs_data.get("programs", {}):
+                return web.json_response({"success": False, "error": f"Программа с ID {program_id} не найдена"}, status=404)
+            
+            program = programs_data["programs"][str(program_id)]
+            
+            return web.json_response({
+                "success": True,
+                "program": {
+                    "id": program_id,
+                    "name": program.get("name", ""),
+                    "pr_code": program.get("pr_code", 0),
+                    "pr_str": program.get("pr_str", ""),
+                    "options": program.get("options", {}),
+                    "mutual_exclusion": program.get("mutual_exclusion", [])
+                }
+            })
+        except Exception as e:
+            return web.json_response({"success": False, "error": str(e)}, status=500)
+
+
+class BiancaUpdateProgramView(HomeAssistantView):
+    """Эндпоинт для обновления программы."""
+    
+    url = "/api/bianca/update_program"
+    name = "api:bianca:update_program"
+    requires_auth = False
+
+    async def post(self, request):
+        hass = request.app["hass"]
+        data = await request.json()
+        
+        program_id = data.get("program_id")
+        name = data.get("name")
+        pr_code = data.get("pr_code")
+        pr_str = data.get("pr_str")
+        options = data.get("options", {})
+        mutual_exclusion = data.get("mutual_exclusion", [])
+        
+        if not all([program_id, name, pr_code, pr_str]):
+            return web.json_response(
+                {"success": False, "error": "Не все поля заполнены"},
+                status=400
+            )
+        
+        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        
+        try:
+            if not os.path.exists(config_path):
+                return web.json_response({"success": False, "error": "Файл programs.json не найден"}, status=404)
+            
+            with open(config_path, "r", encoding="utf-8") as f:
+                programs_data = json.load(f)
+            
+            if str(program_id) not in programs_data.get("programs", {}):
+                return web.json_response({"success": False, "error": f"Программа с ID {program_id} не найдена"}, status=404)
+            
+            programs_data["programs"][str(program_id)] = {
+                "name": name,
+                "pr_code": int(pr_code),
+                "pr_str": pr_str,
+                "options": options,
+                "mutual_exclusion": mutual_exclusion
+            }
+            
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(programs_data, f, ensure_ascii=False, indent=2)
+            
+            return web.json_response({
+                "success": True,
+                "message": f"Программа '{name}' (ID: {program_id}) обновлена! Перезапустите Home Assistant."
+            })
+        except Exception as e:
+            return web.json_response({"success": False, "error": str(e)}, status=500)
+
+
+class BiancaDeleteProgramView(HomeAssistantView):
+    """Эндпоинт для удаления программы."""
+    
+    url = "/api/bianca/delete_program"
+    name = "api:bianca:delete_program"
+    requires_auth = False
+
+    async def post(self, request):
+        hass = request.app["hass"]
+        data = await request.json()
+        
+        program_id = data.get("program_id")
+        
+        if not program_id:
+            return web.json_response(
+                {"success": False, "error": "ID программы не указан"},
+                status=400
+            )
+        
+        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        
+        try:
+            if not os.path.exists(config_path):
+                return web.json_response({"success": False, "error": "Файл programs.json не найден"}, status=404)
+            
+            with open(config_path, "r", encoding="utf-8") as f:
+                programs_data = json.load(f)
+            
+            if str(program_id) not in programs_data.get("programs", {}):
+                return web.json_response({"success": False, "error": f"Программа с ID {program_id} не найдена"}, status=404)
+            
+            program_name = programs_data["programs"][str(program_id)].get("name", program_id)
+            del programs_data["programs"][str(program_id)]
+            
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(programs_data, f, ensure_ascii=False, indent=2)
+            
+            return web.json_response({
+                "success": True,
+                "message": f"Программа '{program_name}' (ID: {program_id}) удалена! Перезапустите Home Assistant."
+            })
+        except Exception as e:
+            return web.json_response({"success": False, "error": str(e)}, status=500)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Bianca from a config entry."""
     ip_address = entry.data[CONF_IP_ADDRESS]
@@ -201,6 +373,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Регистрация API эндпоинтов
     hass.http.register_view(BiancaAddProgramFullView)
     hass.http.register_view(BiancaAddMutualView)
+    hass.http.register_view(BiancaGetProgramsView)
+    hass.http.register_view(BiancaGetProgramView)
+    hass.http.register_view(BiancaUpdateProgramView)
+    hass.http.register_view(BiancaDeleteProgramView)
     
     # Регистрация сервисов
     async def handle_start_washing(call):
@@ -469,7 +645,7 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                             self._api_response_status = "PARSE ERROR"
                             if self._last_valid_data is not None:
                                 return self._last_valid_data
-                            raise UpdateFailed("JSON decode error")
+                                raise UpdateFailed("JSON decode error")
                     else:
                         self._api_response_status = f"HTTP {response.status}"
                         if self._last_valid_data is not None:
