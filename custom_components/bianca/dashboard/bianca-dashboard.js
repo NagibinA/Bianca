@@ -1,15 +1,13 @@
 /**
  * BIANCA DASHBOARD STRATEGY
- * Version: 1.0.29
+ * Version: 1.0.30
  * Date: 2026-06-02
  * 
  * Changes in this version:
- * - Полностью переработана логика отображения иконок опций
- * - Режим стирки: показываем значения от API, иконки НЕ кликабельны
- * - Режим бездействия + remote_control = Выкл: показываем значения от API, иконки НЕ кликабельны
- * - Режим бездействия + remote_control = Вкл: показываем значения от селектов, иконки кликабельны
- * - Нет связи (ping = off): иконки скрыты
- * - Иконка Пар всегда видна (кроме случая отсутствия связи)
+ * - Исправлена логика отображения 6 иконок опций (предстирка, гигиена, антисминание, ночная стирка, полоскания, акваплюс)
+ * - В режиме выбора (Бездействие + remote_control = Вкл) иконки показывают значения из селектов и кликабельны
+ * - В режиме стирки или remote_control = Выкл иконки показывают значения из сенсоров и НЕ кликабельны
+ * - Иконка Пар и Zoom не изменялись (работают как в версии 1.0.26)
  */
 
 class BiancaDashboardStrategy extends HTMLElement {
@@ -861,7 +859,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ПАРА (ВСЕГДА ВИДИМА, КРОМЕ ОТСУТСТВИЯ СВЯЗИ) ==========
+                                        // ========== ИКОНКА ПАРА (БЕЗ ИЗМЕНЕНИЙ, КАК В ВЕРСИИ 1.0.26) ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:steam-1",
@@ -882,31 +880,24 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 style: `
                                                     :host {
                                                         {% if is_state('binary_sensor.bianca_available', 'on') %}
-                                                            {% set is_washing = state_attr('sensor.bianca_machine_state') in ['Работает', 'Пауза'] %}
-                                                            {% set is_idle = state_attr('sensor.bianca_machine_state') == 'Бездействие' %}
-                                                            {% set remote_enabled = is_state('sensor.bianca_remote_control', 'Вкл') %}
-                                                            
-                                                            visibility: visible;
-                                                            
-                                                            {% if is_idle and remote_enabled %}
-                                                                {% set select_val = states('select.bianca_steam') %}
-                                                                {% set select_options = state_attr('select.bianca_steam', 'options') %}
-                                                                {% set has_yes = 'С паром' in select_options %}
-                                                                
-                                                                {% if has_yes %}
-                                                                    pointer-events: auto;
-                                                                    --card-mod-icon-color: {{ 'cyan' if select_val == 'С паром' else 'grey' }};
-                                                                {% else %}
-                                                                    pointer-events: none;
-                                                                    --card-mod-icon-color: grey;
-                                                                {% endif %}
+                                                            {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                                   and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                            {% if machine_ready %}
+                                                                {% set steam_val = states('select.bianca_steam') %}
                                                             {% else %}
-                                                                {% set sensor_val = states('sensor.bianca_steam') %}
-                                                                pointer-events: none;
-                                                                --card-mod-icon-color: {{ 'cyan' if sensor_val == 'Включен' else 'grey' }};
+                                                                {% set steam_val = states('sensor.bianca_steam') %}
+                                                            {% endif %}
+                                                            visibility: visible;
+                                                            {% if machine_ready %}
+                                                            pointer-events: auto;
+                                                            --card-mod-icon-color: {{ 'cyan' if steam_val == 'С паром' else 'grey' }};
+                                                            {% else %}
+                                                            pointer-events: none;
+                                                            --card-mod-icon-color: {{ 'cyan' if steam_val == 'Включен' else 'grey' }};
                                                             {% endif %}
                                                         {% else %}
-                                                            visibility: hidden;
+                                                            --card-mod-icon-color: grey;
+                                                            pointer-events: none;
                                                         {% endif %}
                                                     }
                                                 `
@@ -933,59 +924,52 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 style: `
                                                     :host {
                                                         {% if is_state('binary_sensor.bianca_available', 'on') %}
-                                                            {% set is_washing = state_attr('sensor.bianca_machine_state') in ['Работает', 'Пауза'] %}
-                                                            {% set is_idle = state_attr('sensor.bianca_machine_state') == 'Бездействие' %}
-                                                            {% set remote_enabled = is_state('sensor.bianca_remote_control', 'Вкл') %}
-                                                            
-                                                            visibility: visible;
-                                                            
-                                                            {% if is_idle and remote_enabled %}
-                                                                {% set select_val = states('select.bianca_soil') %}
-                                                                {% set select_options = state_attr('select.bianca_soil', 'options') %}
-                                                                {% set has_options = select_options|length > 1 %}
-                                                                
-                                                                {% if has_options %}
-                                                                    pointer-events: auto;
-                                                                    {% if select_val == 'Мало' %}
-                                                                        --card-mod-icon: phu:duco-1;
-                                                                        --card-mod-icon-color: cyan;
-                                                                    {% elif select_val == 'Нормально' %}
-                                                                        --card-mod-icon: phu:duco-2;
-                                                                        --card-mod-icon-color: cyan;
-                                                                    {% elif select_val == 'Очень' %}
-                                                                        --card-mod-icon: phu:duco-3;
-                                                                        --card-mod-icon-color: cyan;
-                                                                    {% else %}
-                                                                        --card-mod-icon-color: grey;
-                                                                    {% endif %}
-                                                                {% else %}
-                                                                    pointer-events: none;
-                                                                    --card-mod-icon-color: grey;
-                                                                {% endif %}
+                                                            {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                                   and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                            {% if machine_ready %}
+                                                                {% set soil_val = states('select.bianca_soil') %}
                                                             {% else %}
-                                                                {% set sensor_val = states('sensor.bianca_soil_level') %}
-                                                                pointer-events: none;
-                                                                {% if sensor_val == 'Мало' %}
-                                                                    --card-mod-icon: phu:duco-1;
-                                                                    --card-mod-icon-color: cyan;
-                                                                {% elif sensor_val == 'Нормально' %}
-                                                                    --card-mod-icon: phu:duco-2;
-                                                                    --card-mod-icon-color: cyan;
-                                                                {% elif sensor_val == 'Очень' %}
-                                                                    --card-mod-icon: phu:duco-3;
-                                                                    --card-mod-icon-color: cyan;
-                                                                {% else %}
-                                                                    --card-mod-icon-color: grey;
-                                                                {% endif %}
+                                                                {% set soil_val = states('sensor.bianca_soil_level') %}
+                                                            {% endif %}
+                                                            visibility: visible;
+                                                            {% if machine_ready %}
+                                                            pointer-events: auto;
+                                                            {% if soil_val == 'Мало' %}
+                                                            --card-mod-icon: phu:duco-1;
+                                                            --card-mod-icon-color: cyan;
+                                                            {% elif soil_val == 'Нормально' %}
+                                                            --card-mod-icon: phu:duco-2;
+                                                            --card-mod-icon-color: cyan;
+                                                            {% elif soil_val == 'Очень' %}
+                                                            --card-mod-icon: phu:duco-3;
+                                                            --card-mod-icon-color: cyan;
+                                                            {% else %}
+                                                            --card-mod-icon-color: grey;
+                                                            {% endif %}
+                                                            {% else %}
+                                                            pointer-events: none;
+                                                            {% if soil_val == 'Мало' %}
+                                                            --card-mod-icon: phu:duco-1;
+                                                            --card-mod-icon-color: cyan;
+                                                            {% elif soil_val == 'Нормально' %}
+                                                            --card-mod-icon: phu:duco-2;
+                                                            --card-mod-icon-color: cyan;
+                                                            {% elif soil_val == 'Очень' %}
+                                                            --card-mod-icon: phu:duco-3;
+                                                            --card-mod-icon-color: cyan;
+                                                            {% else %}
+                                                            --card-mod-icon-color: grey;
+                                                            {% endif %}
                                                             {% endif %}
                                                         {% else %}
-                                                            visibility: hidden;
+                                                            --card-mod-icon-color: grey;
+                                                            pointer-events: none;
                                                         {% endif %}
                                                     }
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ПРЕДВАРИТЕЛЬНОЙ СТИРКИ ==========
+                                        // ========== ИКОНКА ПРЕДВАРИТЕЛЬНОЙ СТИРКИ (ИСПРАВЛЕНА) ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:pre-wash",
@@ -1006,18 +990,13 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 style: `
                                                     :host {
                                                         {% if is_state('binary_sensor.bianca_available', 'on') %}
-                                                            {% set is_washing = state_attr('sensor.bianca_machine_state') in ['Работает', 'Пауза'] %}
-                                                            {% set is_idle = state_attr('sensor.bianca_machine_state') == 'Бездействие' %}
-                                                            {% set remote_enabled = is_state('sensor.bianca_remote_control', 'Вкл') %}
-                                                            
-                                                            visibility: visible;
-                                                            
-                                                            {% if is_idle and remote_enabled %}
+                                                            {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                                   and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                            {% if machine_ready %}
                                                                 {% set select_val = states('select.bianca_pre_wash') %}
-                                                                {% set select_options = state_attr('select.bianca_pre_wash', 'options') %}
-                                                                {% set has_yes = 'Есть' in select_options %}
-                                                                
-                                                                {% if has_yes %}
+                                                                {% set has_option = 'Есть' in state_attr('select.bianca_pre_wash', 'options') %}
+                                                                visibility: visible;
+                                                                {% if has_option %}
                                                                     pointer-events: auto;
                                                                     --card-mod-icon-color: {{ 'cyan' if select_val == 'Есть' else 'grey' }};
                                                                 {% else %}
@@ -1026,6 +1005,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                 {% endif %}
                                                             {% else %}
                                                                 {% set sensor_val = states('sensor.bianca_pre_wash') %}
+                                                                visibility: visible;
                                                                 pointer-events: none;
                                                                 --card-mod-icon-color: {{ 'cyan' if sensor_val == 'Включен' else 'grey' }};
                                                             {% endif %}
@@ -1036,7 +1016,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ГИГИЕНЫ ==========
+                                        // ========== ИКОНКА ГИГИЕНЫ (ИСПРАВЛЕНА) ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:hygiene-wash",
@@ -1057,18 +1037,13 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 style: `
                                                     :host {
                                                         {% if is_state('binary_sensor.bianca_available', 'on') %}
-                                                            {% set is_washing = state_attr('sensor.bianca_machine_state') in ['Работает', 'Пауза'] %}
-                                                            {% set is_idle = state_attr('sensor.bianca_machine_state') == 'Бездействие' %}
-                                                            {% set remote_enabled = is_state('sensor.bianca_remote_control', 'Вкл') %}
-                                                            
-                                                            visibility: visible;
-                                                            
-                                                            {% if is_idle and remote_enabled %}
+                                                            {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                                   and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                            {% if machine_ready %}
                                                                 {% set select_val = states('select.bianca_hygiene') %}
-                                                                {% set select_options = state_attr('select.bianca_hygiene', 'options') %}
-                                                                {% set has_yes = 'Есть' in select_options %}
-                                                                
-                                                                {% if has_yes %}
+                                                                {% set has_option = 'Есть' in state_attr('select.bianca_hygiene', 'options') %}
+                                                                visibility: visible;
+                                                                {% if has_option %}
                                                                     pointer-events: auto;
                                                                     --card-mod-icon-color: {{ 'cyan' if select_val == 'Есть' else 'grey' }};
                                                                 {% else %}
@@ -1077,6 +1052,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                 {% endif %}
                                                             {% else %}
                                                                 {% set sensor_val = states('sensor.bianca_hygienic_wash') %}
+                                                                visibility: visible;
                                                                 pointer-events: none;
                                                                 --card-mod-icon-color: {{ 'cyan' if sensor_val == 'Включен' else 'grey' }};
                                                             {% endif %}
@@ -1087,7 +1063,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА АНТИСМИНАНИЯ ==========
+                                        // ========== ИКОНКА АНТИСМИНАНИЯ (ИСПРАВЛЕНА) ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:anti-crease",
@@ -1108,18 +1084,13 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 style: `
                                                     :host {
                                                         {% if is_state('binary_sensor.bianca_available', 'on') %}
-                                                            {% set is_washing = state_attr('sensor.bianca_machine_state') in ['Работает', 'Пауза'] %}
-                                                            {% set is_idle = state_attr('sensor.bianca_machine_state') == 'Бездействие' %}
-                                                            {% set remote_enabled = is_state('sensor.bianca_remote_control', 'Вкл') %}
-                                                            
-                                                            visibility: visible;
-                                                            
-                                                            {% if is_idle and remote_enabled %}
+                                                            {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                                   and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                            {% if machine_ready %}
                                                                 {% set select_val = states('select.bianca_anti_crease') %}
-                                                                {% set select_options = state_attr('select.bianca_anti_crease', 'options') %}
-                                                                {% set has_yes = 'Есть' in select_options %}
-                                                                
-                                                                {% if has_yes %}
+                                                                {% set has_option = 'Есть' in state_attr('select.bianca_anti_crease', 'options') %}
+                                                                visibility: visible;
+                                                                {% if has_option %}
                                                                     pointer-events: auto;
                                                                     --card-mod-icon-color: {{ 'cyan' if select_val == 'Есть' else 'grey' }};
                                                                 {% else %}
@@ -1128,6 +1099,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                 {% endif %}
                                                             {% else %}
                                                                 {% set sensor_val = states('sensor.bianca_anti_crease') %}
+                                                                visibility: visible;
                                                                 pointer-events: none;
                                                                 --card-mod-icon-color: {{ 'cyan' if sensor_val == 'Включен' else 'grey' }};
                                                             {% endif %}
@@ -1138,7 +1110,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА НОЧНОЙ СТИРКИ ==========
+                                        // ========== ИКОНКА НОЧНОЙ СТИРКИ (ИСПРАВЛЕНА) ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:night-spin",
@@ -1159,18 +1131,13 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 style: `
                                                     :host {
                                                         {% if is_state('binary_sensor.bianca_available', 'on') %}
-                                                            {% set is_washing = state_attr('sensor.bianca_machine_state') in ['Работает', 'Пауза'] %}
-                                                            {% set is_idle = state_attr('sensor.bianca_machine_state') == 'Бездействие' %}
-                                                            {% set remote_enabled = is_state('sensor.bianca_remote_control', 'Вкл') %}
-                                                            
-                                                            visibility: visible;
-                                                            
-                                                            {% if is_idle and remote_enabled %}
+                                                            {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                                   and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                            {% if machine_ready %}
                                                                 {% set select_val = states('select.bianca_night_spin') %}
-                                                                {% set select_options = state_attr('select.bianca_night_spin', 'options') %}
-                                                                {% set has_yes = 'Есть' in select_options %}
-                                                                
-                                                                {% if has_yes %}
+                                                                {% set has_option = 'Есть' in state_attr('select.bianca_night_spin', 'options') %}
+                                                                visibility: visible;
+                                                                {% if has_option %}
                                                                     pointer-events: auto;
                                                                     --card-mod-icon-color: {{ 'cyan' if select_val == 'Есть' else 'grey' }};
                                                                 {% else %}
@@ -1179,6 +1146,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                 {% endif %}
                                                             {% else %}
                                                                 {% set sensor_val = states('sensor.bianca_night_spin') %}
+                                                                visibility: visible;
                                                                 pointer-events: none;
                                                                 --card-mod-icon-color: {{ 'cyan' if sensor_val == 'Включен' else 'grey' }};
                                                             {% endif %}
@@ -1189,7 +1157,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ДОПОЛНИТЕЛЬНЫХ ПОЛОСКАНИЙ ==========
+                                        // ========== ИКОНКА ДОПОЛНИТЕЛЬНЫХ ПОЛОСКАНИЙ (ИСПРАВЛЕНА) ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:rinse-1",
@@ -1210,18 +1178,13 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 style: `
                                                     :host {
                                                         {% if is_state('binary_sensor.bianca_available', 'on') %}
-                                                            {% set is_washing = state_attr('sensor.bianca_machine_state') in ['Работает', 'Пауза'] %}
-                                                            {% set is_idle = state_attr('sensor.bianca_machine_state') == 'Бездействие' %}
-                                                            {% set remote_enabled = is_state('sensor.bianca_remote_control', 'Вкл') %}
-                                                            
-                                                            visibility: visible;
-                                                            
-                                                            {% if is_idle and remote_enabled %}
+                                                            {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                                   and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                            {% if machine_ready %}
                                                                 {% set select_val = states('select.bianca_extra_rinse') %}
-                                                                {% set select_options = state_attr('select.bianca_extra_rinse', 'options') %}
-                                                                {% set has_options = select_options|length > 1 %}
-                                                                
-                                                                {% if has_options %}
+                                                                {% set has_option = '1 полоскание' in state_attr('select.bianca_extra_rinse', 'options') %}
+                                                                visibility: visible;
+                                                                {% if has_option %}
                                                                     pointer-events: auto;
                                                                     {% if select_val == '1 полоскание' %}
                                                                         --card-mod-icon: bianca:rinse-1;
@@ -1241,6 +1204,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                 {% endif %}
                                                             {% else %}
                                                                 {% set sensor_val = states('sensor.bianca_rinse') %}
+                                                                visibility: visible;
                                                                 pointer-events: none;
                                                                 {% if sensor_val == 'Одно' %}
                                                                     --card-mod-icon: bianca:rinse-1;
@@ -1262,7 +1226,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА АКВАПЛЮС ==========
+                                        // ========== ИКОНКА АКВАПЛЮС (ИСПРАВЛЕНА) ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:extra-water",
@@ -1283,18 +1247,13 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 style: `
                                                     :host {
                                                         {% if is_state('binary_sensor.bianca_available', 'on') %}
-                                                            {% set is_washing = state_attr('sensor.bianca_machine_state') in ['Работает', 'Пауза'] %}
-                                                            {% set is_idle = state_attr('sensor.bianca_machine_state') == 'Бездействие' %}
-                                                            {% set remote_enabled = is_state('sensor.bianca_remote_control', 'Вкл') %}
-                                                            
-                                                            visibility: visible;
-                                                            
-                                                            {% if is_idle and remote_enabled %}
+                                                            {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                                   and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                            {% if machine_ready %}
                                                                 {% set select_val = states('select.bianca_aqua_plus') %}
-                                                                {% set select_options = state_attr('select.bianca_aqua_plus', 'options') %}
-                                                                {% set has_yes = 'Есть' in select_options %}
-                                                                
-                                                                {% if has_yes %}
+                                                                {% set has_option = 'Есть' in state_attr('select.bianca_aqua_plus', 'options') %}
+                                                                visibility: visible;
+                                                                {% if has_option %}
                                                                     pointer-events: auto;
                                                                     --card-mod-icon-color: {{ 'cyan' if select_val == 'Есть' else 'grey' }};
                                                                 {% else %}
@@ -1303,6 +1262,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                                 {% endif %}
                                                             {% else %}
                                                                 {% set sensor_val = states('sensor.bianca_aqua_plus') %}
+                                                                visibility: visible;
                                                                 pointer-events: none;
                                                                 --card-mod-icon-color: {{ 'cyan' if sensor_val == 'Включен' else 'grey' }};
                                                             {% endif %}
@@ -1313,7 +1273,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 `
                                             }
                                         },
-                                        // ========== ИКОНКА ZOOM ==========
+                                        // ========== ИКОНКА ZOOM (БЕЗ ИЗМЕНЕНИЙ, КАК В ВЕРСИИ 1.0.26) ==========
                                         {
                                             type: "icon",
                                             icon: "bianca:zoom",
@@ -1334,31 +1294,24 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                 style: `
                                                     :host {
                                                         {% if is_state('binary_sensor.bianca_available', 'on') %}
-                                                            {% set is_washing = state_attr('sensor.bianca_machine_state') in ['Работает', 'Пауза'] %}
-                                                            {% set is_idle = state_attr('sensor.bianca_machine_state') == 'Бездействие' %}
-                                                            {% set remote_enabled = is_state('sensor.bianca_remote_control', 'Вкл') %}
-                                                            
-                                                            visibility: visible;
-                                                            
-                                                            {% if is_idle and remote_enabled %}
-                                                                {% set select_val = states('select.bianca_zoom') %}
-                                                                {% set select_options = state_attr('select.bianca_zoom', 'options') %}
-                                                                {% set has_yes = 'Есть' in select_options %}
-                                                                
-                                                                {% if has_yes %}
-                                                                    pointer-events: auto;
-                                                                    --card-mod-icon-color: {{ 'cyan' if select_val == 'Есть' else 'grey' }};
-                                                                {% else %}
-                                                                    pointer-events: none;
-                                                                    --card-mod-icon-color: grey;
-                                                                {% endif %}
+                                                            {% set machine_ready = is_state('sensor.bianca_machine_state', 'Бездействие') 
+                                                                   and is_state('sensor.bianca_remote_control', 'Вкл') %}
+                                                            {% if machine_ready %}
+                                                                {% set zoom_val = states('select.bianca_zoom') %}
                                                             {% else %}
-                                                                {% set sensor_val = states('sensor.bianca_zoom') %}
-                                                                pointer-events: none;
-                                                                --card-mod-icon-color: {{ 'cyan' if sensor_val == 'Включен' else 'grey' }};
+                                                                {% set zoom_val = states('sensor.bianca_zoom') %}
+                                                            {% endif %}
+                                                            visibility: visible;
+                                                            {% if machine_ready %}
+                                                            pointer-events: auto;
+                                                            --card-mod-icon-color: {{ 'cyan' if zoom_val == 'Есть' else 'grey' }};
+                                                            {% else %}
+                                                            pointer-events: none;
+                                                            --card-mod-icon-color: {{ 'cyan' if zoom_val == 'Включен' else 'grey' }};
                                                             {% endif %}
                                                         {% else %}
-                                                            visibility: hidden;
+                                                            --card-mod-icon-color: grey;
+                                                            pointer-events: none;
                                                         {% endif %}
                                                     }
                                                 `
