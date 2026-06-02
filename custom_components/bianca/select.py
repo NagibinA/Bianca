@@ -1,11 +1,11 @@
 """
 Select platform for Bianca integration.
-Version: 1.0.27
+Version: 1.0.28
 
-ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.27):
-- Убрано физическое удаление сущностей при пересоздании селектов
-- Селекты теперь обновляются через async_update_options без удаления
-- Это предотвращает потерю селектов при смене режимов
+ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.28):
+- Добавлен атрибут has_yes в extra_state_attributes для каждого селекта
+- Атрибут показывает, есть ли у селекта опция "Есть" или "Включен"
+- Используется в дашборде для определения цветовой подсветки иконок
 """
 
 from __future__ import annotations
@@ -212,11 +212,6 @@ async def update_select_options(
 ) -> None:
     """
     Обновляет опции существующего селекта без удаления сущности.
-    
-    ИЗМЕНЕНИЕ В ВЕРСИИ 1.0.27:
-    Вместо удаления и пересоздания сущности, мы находим существующую
-    и обновляем её опции через async_update_options.
-    Это предотвращает потерю селектов при смене режимов.
     """
     entity_registry = er.async_get(hass)
     
@@ -242,10 +237,6 @@ async def update_select_options(
 async def recreate_all_selects(hass: HomeAssistant, entry: ConfigEntry, program: str) -> None:
     """
     Обновляет все зависимые селекты при смене программы.
-    
-    ИЗМЕНЕНИЕ В ВЕРСИИ 1.0.27:
-    Теперь не удаляет сущности, а только обновляет их опции.
-    Это предотвращает потерю селектов при смене режимов.
     """
     
     # Получаем текущую температуру для гигиены
@@ -356,6 +347,20 @@ class BiancaBaseSelect(SelectEntity):
             "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
         }
 
+    @property
+    def extra_state_attributes(self):
+        """
+        Return additional attributes.
+        
+        ИЗМЕНЕНИЕ В ВЕРСИИ 1.0.28:
+        Добавлен атрибут has_yes, который показывает,
+        есть ли у селекта опция "Есть" или "Включен".
+        Используется в дашборде для определения цветовой подсветки иконок.
+        """
+        return {
+            "has_yes": "Есть" in self._attr_options or "Включен" in self._attr_options
+        }
+
     async def async_select_option(self, option: str) -> None:
         """Update the current selected option."""
         self._attr_current_option = option
@@ -364,9 +369,6 @@ class BiancaBaseSelect(SelectEntity):
     async def async_update_options(self, options: list[str], current_option: str = None) -> None:
         """
         Update available options dynamically without recreating the entity.
-        
-        ИЗМЕНЕНИЕ В ВЕРСИИ 1.0.27:
-        Теперь обновляет опции существующего селекта без удаления.
         """
         self._attr_options = options
         if current_option and current_option in options:
