@@ -1,4 +1,4 @@
-"""The Bianca integration - Version 2.1.0."""
+"""The Bianca integration - Version 2.1.1."""
 
 from __future__ import annotations
 
@@ -94,7 +94,96 @@ class BiancaAddProgramFullView(HomeAssistantView):
             )
 
 
+class BiancaAddMultipleProgramsView(HomeAssistantView):
+    """Эндпоинт для массового добавления программ."""
+    
+    url = "/api/bianca/add_multiple_programs"
+    name = "api:bianca:add_multiple_programs"
+    requires_auth = False
 
+    async def post(self, request):
+        hass = request.app["hass"]
+        data = await request.json()
+        
+        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        
+        # Извлекаем список программ из разных форматов
+        programs_to_add = []
+        
+        if "programs" in data:
+            if isinstance(data["programs"], dict):
+                # Формат: {"programs": {"17": {...}, "18": {...}}}
+                for prog_id, prog_data in data["programs"].items():
+                    prog_data["id"] = prog_id
+                    programs_to_add.append(prog_data)
+            elif isinstance(data["programs"], list):
+                # Формат: {"programs": [{"id": "17", ...}, ...]}
+                programs_to_add = data["programs"]
+        else:
+            # Если передан прямой объект программы с ключом id
+            if "id" in data:
+                programs_to_add = [data]
+        
+        if not programs_to_add:
+            return web.json_response({
+                "success": False,
+                "error": "Не найден список программ в запросе"
+            }, status=400)
+        
+        added = []
+        skipped = []
+        errors = []
+        
+        try:
+            def read_file():
+                if os.path.exists(config_path):
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        return json.load(f)
+                return {"programs": {}}
+            
+            programs_data = await asyncio.to_thread(read_file)
+            
+            for prog in programs_to_add:
+                prog_id = str(prog.get("id", ""))
+                name = prog.get("name", "")
+                pr_code = prog.get("pr_code", 0)
+                pr_str = prog.get("pr_str", "")
+                options = prog.get("options", {})
+                mutual_exclusion = prog.get("mutual_exclusion", [])
+                
+                if not prog_id or not name:
+                    errors.append(f"Пропущена программа: нет ID или name")
+                    continue
+                
+                if prog_id in programs_data["programs"]:
+                    skipped.append(f"{prog_id} - {name}")
+                    continue
+                
+                programs_data["programs"][prog_id] = {
+                    "name": name,
+                    "pr_code": int(pr_code),
+                    "pr_str": pr_str,
+                    "options": options,
+                    "mutual_exclusion": mutual_exclusion
+                }
+                added.append(f"{prog_id} - {name}")
+            
+            def write_file():
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(programs_data, f, ensure_ascii=False, indent=2)
+            
+            await asyncio.to_thread(write_file)
+            
+            return web.json_response({
+                "success": True,
+                "added": added,
+                "skipped": skipped,
+                "errors": errors,
+                "message": f"Добавлено: {len(added)}, Пропущено (уже есть): {len(skipped)}, Ошибок: {len(errors)}"
+            })
+            
+        except Exception as e:
+            return web.json_response({"success": False, "error": str(e)}, status=500)
 
 
 class BiancaGetProgramsView(HomeAssistantView):
@@ -141,7 +230,7 @@ class BiancaGetProgramView(HomeAssistantView):
     name = "api:bianca:get_program"
     requires_auth = False
 
-    async def get(self, request, program_id):  # <-- ДОБАВЛЕН program_id
+    async def get(self, request, program_id):
         hass = request.app["hass"]
         
         config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
@@ -181,6 +270,7 @@ class BiancaGetProgramView(HomeAssistantView):
         except Exception as e:
             _LOGGER.error(f"Error in get_program: {e}")
             return web.json_response({"success": False, "error": str(e)}, status=500)
+
 
 class BiancaUpdateProgramView(HomeAssistantView):
     """Эндпоинт для обновления программы."""
@@ -346,6 +436,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     # Регистрация API эндпоинтов
     hass.http.register_view(BiancaAddProgramFullView)
+    hass.http.register_view(BiancaAddMultipleProgramsView)
     hass.http.register_view(BiancaGetProgramsView)
     hass.http.register_view(BiancaGetProgramView)
     hass.http.register_view(BiancaUpdateProgramView)
