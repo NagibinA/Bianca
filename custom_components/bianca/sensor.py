@@ -1,22 +1,4 @@
-"""
-SENSOR PLATFORM FOR BIANCA INTEGRATION
-Version: 1.0.26
-Date: 2026-06-02
-
-Changes in this version:
-- RemTime: value is in SECONDS (divide by 60 for minutes, 3600 for hours)
-- DelVal: value is in MINUTES (divide by 60 for hours)
-- DelayCountdownSensor shows when MachMd = 5 (countdown)
-- RemainingTimeSensor shows when MachMd = 2 or 3 (running/paused)
-- Temperature sensor returns integer without °C symbol
-- Program phase "Последнее полоскание" shortened to "Посл. полоскание"
-
-ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ (1.0.26):
-- Исправлен метод available - теперь сенсоры становятся недоступными когда устройство оффлайн
-- Изменён unique_id - добавлен префикс "sensor_" для избежания конфликта с селектами
-- Убран device_class у температурного сенсора (не используется)
-- Удалён сенсор BiancaDelayStartSensor (sensor.bianca_delay_start) - не используется в дашборде
-"""
+"""Sensor platform for Bianca integration - Version 2.1.0."""
 
 from __future__ import annotations
 
@@ -68,7 +50,7 @@ async def async_setup_entry(
         BiancaTemperatureSensor(coordinator, entry, hass),
         BiancaSpinSpeedSensor(coordinator, entry, hass),
         BiancaRemainingTimeSensor(coordinator, entry, hass),
-        BiancaDelayCountdownSensor(coordinator, entry, hass),
+        BiancaDelayStartSensor(coordinator, entry, hass),
         BiancaLanguageSensor(coordinator, entry, hass),
         BiancaSteamSensor(coordinator, entry, hass),
         BiancaPreWashSensor(coordinator, entry, hass),
@@ -99,13 +81,11 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         state_class: SensorStateClass | None = None,
         unit: str | None = None,
     ) -> None:
-        """Initialize the sensor."""
         super().__init__(coordinator)
         self._key = key
         self._entry = entry
         self._hass = hass
         self.entity_id = f"sensor.bianca_{entity_id_key}"
-        # ИЗМЕНЕНИЕ: добавлен префикс "sensor_" для уникальности (чтобы не конфликтовать с select)
         self._attr_unique_id = f"{entry.entry_id}_sensor_{entity_id_key}"
         self._attr_name = f"Bianca {display_name}"
         self._attr_icon = icon
@@ -115,20 +95,10 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        return {
-            "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
-        }
+        return {"identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])}}
 
     @property
     def available(self) -> bool:
-        """
-        Возвращает доступен ли сенсор.
-        
-        ИЗМЕНЕНИЕ: теперь сенсор доступен ТОЛЬКО если:
-        1. Устройство доступно по пингу (coordinator.device_available)
-        2. И есть данные от координатора (coordinator.data is not None)
-        """
         if not self.coordinator.device_available:
             return False
         if self.coordinator.data is None:
@@ -137,7 +107,6 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self):
-        """Return the state of the sensor."""
         if not self.coordinator.device_available:
             return None
         if self.coordinator.data is None:
@@ -156,33 +125,26 @@ class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
         entry: ConfigEntry,
         hass: HomeAssistant,
     ) -> None:
-        """Initialize the sensor."""
         super().__init__(coordinator)
         self._entry = entry
         self._hass = hass
         self.entity_id = "sensor.bianca_api_response"
-        # ИЗМЕНЕНИЕ: добавлен префикс "sensor_" для уникальности
         self._attr_unique_id = f"{entry.entry_id}_sensor_api_response"
         self._attr_name = "Bianca Статус API"
         self._attr_icon = "mdi:api"
 
     @property
     def device_info(self):
-        """Return device info."""
-        return {
-            "identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])},
-        }
+        return {"identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])}}
 
     @property
     def available(self) -> bool:
-        """Return if sensor is available."""
         if not self.coordinator.device_available:
             return False
         return True
 
     @property
     def native_value(self) -> str:
-        """Return API response status."""
         return self.coordinator.api_response_status
 
 
@@ -290,20 +252,10 @@ class BiancaTemperatureSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(
             coordinator, entry, hass, "Temp", "temperature", "Температура стирки", "mdi:thermometer",
-            device_class=None,
+            device_class=SensorDeviceClass.TEMPERATURE,
             state_class=SensorStateClass.MEASUREMENT,
-            unit=None
+            unit=UnitOfTemperature.CELSIUS
         )
-
-    @property
-    def native_value(self):
-        value = super().native_value
-        if value is None:
-            return None
-        try:
-            return int(float(value))
-        except (ValueError, TypeError):
-            return value
 
 
 class BiancaSpinSpeedSensor(BiancaBaseSensor):
@@ -326,8 +278,6 @@ class BiancaSpinSpeedSensor(BiancaBaseSensor):
 
 
 class BiancaRemainingTimeSensor(BiancaBaseSensor):
-    """Remaining time sensor - RemTime comes in SECONDS."""
-
     def __init__(self, coordinator, entry, hass):
         super().__init__(
             coordinator, entry, hass, "RemTime", "remaining_time", "Оставшееся время", "mdi:timer-outline",
@@ -336,10 +286,8 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
 
     @property
     def native_value(self):
-        if not self.coordinator.device_available:
-            return "00:00"
         if self.coordinator.data is None:
-            return "00:00"
+            return None
         machine_state = self.coordinator.data.get("MachMd")
         if machine_state not in ["2", "3"]:
             return "00:00"
@@ -357,34 +305,30 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
             return "00:00"
 
 
-class BiancaDelayCountdownSensor(BiancaBaseSensor):
-    """Delay countdown sensor - shows countdown when MachMd = 5. DelVal comes in MINUTES."""
-
+class BiancaDelayStartSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(
-            coordinator, entry, hass, "DelVal", "delay_countdown", "Обратный отсчет", "mdi:timer-outline",
+            coordinator, entry, hass, "DelVal", "delay_start", "Отложенный старт", "mdi:timer-outline",
             unit=None
         )
 
     @property
     def native_value(self):
-        if not self.coordinator.device_available:
-            return ""
         if self.coordinator.data is None:
             return ""
         machine_state = self.coordinator.data.get("MachMd")
-        if machine_state != "5":
+        if machine_state != "4":
             return ""
         value = self.coordinator.data.get("DelVal")
         if value is None:
             return ""
         try:
-            minutes = int(value)
-            if minutes <= 0:
+            seconds = int(value)
+            if seconds <= 0:
                 return ""
-            hours = minutes // 60
-            mins = minutes % 60
-            return f"{hours:02d}:{mins:02d}"
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            return f"{hours:02d}:{minutes:02d}"
         except (ValueError, TypeError):
             return ""
 
