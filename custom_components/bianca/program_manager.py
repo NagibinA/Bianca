@@ -1,11 +1,13 @@
-"""Program manager for Bianca integration - Version 2.2.0."""
+"""Program manager for Bianca integration - Version 2.3.0."""
 
+import json
+import os
 import logging
 from typing import Any, Dict, List, Optional
 
 from homeassistant.core import HomeAssistant
 
-from .const import load_programs_config, PROGRAMS_NEXT_ID
+from .const import DOMAIN, PROGRAMS_FILE, PROGRAMS_NEXT_ID
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,23 +18,31 @@ class ProgramManager:
     def __init__(self, hass: HomeAssistant):
         """Initialize the program manager."""
         self.hass = hass
-        self.config = load_programs_config(hass)
+        self.config_path = hass.config.path(f"custom_components/{DOMAIN}/{PROGRAMS_FILE}")
+        self.config = self._load_config()
         self.programs = self.config.get("programs", {})
         self.next_id = self.config.get(PROGRAMS_NEXT_ID, 1)
         self._current_program_id = None
 
-    def _save_config(self):
-        """Save current config to file."""
-        import json
-        import os
-        from .const import PROGRAMS_FILE, DOMAIN
+    def _load_config(self) -> dict:
+        """Загружает конфигурацию из файла."""
+        if not os.path.exists(self.config_path):
+            return {"programs": {}, PROGRAMS_NEXT_ID: 1}
         
-        config_path = self.hass.config.path(f"custom_components/{DOMAIN}/{PROGRAMS_FILE}")
+        try:
+            with open(self.config_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            _LOGGER.error(f"Failed to load programs config: {e}")
+            return {"programs": {}, PROGRAMS_NEXT_ID: 1}
+
+    def _save_config(self):
+        """Сохраняет конфигурацию в файл."""
         self.config[PROGRAMS_NEXT_ID] = self.next_id
         self.config["programs"] = self.programs
         
         try:
-            with open(config_path, "w", encoding="utf-8") as f:
+            with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, ensure_ascii=False, indent=2)
         except Exception as e:
             _LOGGER.error(f"Failed to save programs config: {e}")
@@ -51,6 +61,13 @@ class ProgramManager:
         """Get program ID and configuration by name."""
         for prog_id, prog in self.programs.items():
             if prog.get("name") == name:
+                return int(prog_id), prog
+        return None, None
+
+    def get_program_by_pr(self, pr: int) -> Optional[tuple[int, Dict[str, Any]]]:
+        """Get program ID and configuration by Pr value."""
+        for prog_id, prog in self.programs.items():
+            if prog.get("Pr") == pr:
                 return int(prog_id), prog
         return None, None
 
