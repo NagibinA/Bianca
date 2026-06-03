@@ -317,18 +317,18 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
         if self.coordinator.data is None:
             return ""
         machine_state = self.coordinator.data.get("MachMd")
-        if machine_state != "4":
+        if machine_state != "5":
             return ""
         value = self.coordinator.data.get("DelVal")
         if value is None:
             return ""
         try:
-            seconds = int(value)
-            if seconds <= 0:
+            minutes = int(value)
+            if minutes <= 0:
                 return ""
-            hours = seconds // 3600
-            minutes = (seconds % 3600) // 60
-            return f"{hours:02d}:{minutes:02d}"
+            hours = minutes // 60
+            mins = minutes % 60
+            return f"{hours:02d}:{mins:02d}"
         except (ValueError, TypeError):
             return ""
 
