@@ -299,25 +299,6 @@
             border-radius: 8px;
             border: 1px solid #e9ecef;
         }
-        .entry-id-info {
-            background: #e9ecef;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .entry-id-code {
-            font-family: monospace;
-            font-size: 12px;
-            background: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-        }
     </style>
 </head>
 <body>
@@ -327,11 +308,6 @@
         <div class="info">
             📝 Здесь вы можете добавлять, редактировать и удалять программы стирки.<br>
             🔑 <strong>Pr</strong> - номер программы (PrNm), <strong>PrCode</strong> - код программы.
-        </div>
-        
-        <div class="entry-id-info" id="entryIdInfo">
-            <span>🔄 ID интеграции: <span id="entryIdDisplay">не определён</span></span>
-            <button type="button" class="btn-secondary" onclick="changeEntryId()" style="margin: 0; padding: 5px 10px;">✏️ Изменить ID</button>
         </div>
         
         <div class="flex">
@@ -668,40 +644,6 @@
         let editMode = false;
         let editProgramId = null;
         let allPrograms = [];
-        let entryId = null;
-        
-        // Инициализация ID интеграции
-        function initEntryId() {
-            const savedId = localStorage.getItem('bianca_entry_id');
-            if (savedId) {
-                entryId = savedId;
-                document.getElementById('entryIdDisplay').textContent = entryId;
-                loadPrograms();
-            } else {
-                document.getElementById('entryIdDisplay').textContent = 'не определён';
-                changeEntryId();
-            }
-        }
-        
-        function changeEntryId() {
-            const newId = prompt(
-                'Введите ID интеграции Bianca.\n\n' +
-                'Как найти:\n' +
-                '1. Перейдите в Настройки → Устройства и сервисы\n' +
-                '2. Нажмите на интеграцию "Bianca"\n' +
-                '3. Посмотрите на URL в адресной строке:\n' +
-                '   config_entry=01KT2N38HZ39RCQNXW0T6B0J8F\n' +
-                '4. Скопируйте этот ID (часть после config_entry=)',
-                entryId || ''
-            );
-            
-            if (newId && newId.trim()) {
-                entryId = newId.trim();
-                localStorage.setItem('bianca_entry_id', entryId);
-                document.getElementById('entryIdDisplay').textContent = entryId;
-                loadPrograms();
-            }
-        }
         
         function showMessage(text, type) {
             const msgDiv = document.getElementById('message');
@@ -838,15 +780,8 @@
         }
         
         async function loadPrograms() {
-            if (!entryId) {
-                document.getElementById('programsContainer').innerHTML = '<div style="color: red; text-align: center;">ID интеграции не определён</div>';
-                return;
-            }
-            
-            document.getElementById('programsContainer').innerHTML = '<div class="loading">Загрузка...</div>';
-            
             try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_programs?entry_id=${entryId}`);
+                const response = await fetch(`${API_BASE}/api/bianca/get_programs`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -896,10 +831,8 @@
         }
         
         async function exportProgramToFile(programId) {
-            if (!entryId) return;
-            
             try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}?entry_id=${entryId}`);
+                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -932,10 +865,8 @@
         }
         
         async function loadProgramToEdit(programId) {
-            if (!entryId) return;
-            
             try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}?entry_id=${entryId}`);
+                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -1001,8 +932,6 @@
         }
         
         async function deleteProgram(programId, programName) {
-            if (!entryId) return;
-            
             if (confirm(`Удалить программу "${programName}"?`)) {
                 try {
                     const response = await fetch(`${API_BASE}/api/bianca/delete_program`, {
@@ -1010,7 +939,7 @@
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ program_id: programId, entry_id: entryId })
+                        body: JSON.stringify({ program_id: programId })
                     });
                     
                     const result = await response.json();
@@ -1094,10 +1023,6 @@
                 return;
             }
             
-            if (!entryId) return;
-            
-            programs.entry_id = entryId;
-            
             const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
                 method: 'POST',
                 headers: {
@@ -1146,11 +1071,8 @@
                         return;
                     }
                     
-                    if (!entryId) return;
-                    
                     const programsData = {
-                        "programs": [program],
-                        "entry_id": entryId
+                        "programs": [program]
                     };
                     
                     const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
@@ -1273,8 +1195,7 @@
                 PrCode: prCode,
                 PrStr: prStr,
                 options: options,
-                mutual_exclusion: mutualExclusions,
-                entry_id: entryId
+                mutual_exclusion: mutualExclusions
             };
             
             if (editMode) {
@@ -1316,7 +1237,7 @@
         
         initSelectedDisplays();
         renderMutualList();
-        initEntryId();
+        loadPrograms();
     </script>
 </body>
 </html>
