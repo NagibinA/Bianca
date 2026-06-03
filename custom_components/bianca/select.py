@@ -207,7 +207,7 @@ class BiancaOptionSelect(SelectEntity):
         icons = {
             "temperature": "mdi:thermometer",
             "spin": "bianca:spin",
-            "soil": "phu:duco-2",
+            "soil": "bianca:duco-2",
             "steam": "bianca:steam",
             "pre_wash": "bianca:pre-wash",
             "hygiene": "bianca:hygiene-wash",
