@@ -1,4 +1,4 @@
-"""The Bianca integration - Version 2.1.1."""
+"""The Bianca integration - Version 2.2.0."""
 
 from __future__ import annotations
 
@@ -37,61 +37,36 @@ class BiancaAddProgramFullView(HomeAssistantView):
         hass = request.app["hass"]
         data = await request.json()
         
-        program_id = data.get("program_id")
         name = data.get("name")
-        pr_code = data.get("pr_code")
-        pr_str = data.get("pr_str")
+        pr = data.get("Pr")
+        pr_code = data.get("PrCode")
+        pr_str = data.get("PrStr")
         options = data.get("options", {})
         mutual_exclusion = data.get("mutual_exclusion", [])
         
-        if not all([program_id, name, pr_code, pr_str]):
+        if not all([name, pr, pr_code, pr_str]):
             return web.json_response(
                 {"success": False, "error": "Не все поля заполнены"},
                 status=400
             )
         
-        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        program_manager: ProgramManager = hass.data[DOMAIN][data.get("entry_id")]["program_manager"]
         
-        try:
-            def read_file():
-                if os.path.exists(config_path):
-                    with open(config_path, "r", encoding="utf-8") as f:
-                        return json.load(f)
-                return {"programs": {}}
-            
-            programs_data = await asyncio.to_thread(read_file)
-            
-            if str(program_id) in programs_data.get("programs", {}):
+        # Проверяем, не существует ли уже программа с таким же Pr
+        for prog_id, prog in program_manager.programs.items():
+            if prog.get("Pr") == pr:
                 return web.json_response(
-                    {"success": False, "error": f"Программа с ID {program_id} уже существует"},
+                    {"success": False, "error": f"Программа с Pr={pr} уже существует"},
                     status=400
                 )
-            
-            new_program = {
-                "name": name,
-                "pr_code": int(pr_code),
-                "pr_str": pr_str,
-                "options": options,
-                "mutual_exclusion": mutual_exclusion
-            }
-            
-            programs_data["programs"][str(program_id)] = new_program
-            
-            def write_file():
-                with open(config_path, "w", encoding="utf-8") as f:
-                    json.dump(programs_data, f, ensure_ascii=False, indent=2)
-            
-            await asyncio.to_thread(write_file)
-            
-            return web.json_response(
-                {"success": True, "message": f"Программа '{name}' (ID: {program_id}) добавлена! Перезапустите Home Assistant."}
-            )
-            
-        except Exception as e:
-            return web.json_response(
-                {"success": False, "error": str(e)},
-                status=500
-            )
+        
+        prog_id = program_manager.add_program(name, pr, pr_code, pr_str, options, mutual_exclusion)
+        
+        return web.json_response({
+            "success": True,
+            "message": f"Программа '{name}' (ID: {prog_id}) добавлена! Перезапустите Home Assistant.",
+            "program_id": prog_id
+        })
 
 
 class BiancaAddMultipleProgramsView(HomeAssistantView):
@@ -104,24 +79,21 @@ class BiancaAddMultipleProgramsView(HomeAssistantView):
     async def post(self, request):
         hass = request.app["hass"]
         data = await request.json()
+        entry_id = data.get("entry_id")
         
-        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        program_manager: ProgramManager = hass.data[DOMAIN][entry_id]["program_manager"]
         
         # Извлекаем список программ из разных форматов
         programs_to_add = []
         
         if "programs" in data:
             if isinstance(data["programs"], dict):
-                # Формат: {"programs": {"17": {...}, "18": {...}}}
-                for prog_id, prog_data in data["programs"].items():
-                    prog_data["id"] = prog_id
+                for prog_data in data["programs"].values():
                     programs_to_add.append(prog_data)
             elif isinstance(data["programs"], list):
-                # Формат: {"programs": [{"id": "17", ...}, ...]}
                 programs_to_add = data["programs"]
         else:
-            # Если передан прямой объект программы с ключом id
-            if "id" in data:
+            if "name" in data and "Pr" in data:
                 programs_to_add = [data]
         
         if not programs_to_add:
@@ -134,56 +106,44 @@ class BiancaAddMultipleProgramsView(HomeAssistantView):
         skipped = []
         errors = []
         
-        try:
-            def read_file():
-                if os.path.exists(config_path):
-                    with open(config_path, "r", encoding="utf-8") as f:
-                        return json.load(f)
-                return {"programs": {}}
+        for prog in programs_to_add:
+            name = prog.get("name")
+            pr = prog.get("Pr")
+            pr_code = prog.get("PrCode", 0)
+            pr_str = prog.get("PrStr", "")
+            options = prog.get("options", {})
+            mutual_exclusion = prog.get("mutual_exclusion", [])
             
-            programs_data = await asyncio.to_thread(read_file)
+            if not name or pr is None:
+                errors.append(f"Пропущена программа: нет name или Pr")
+                continue
             
-            for prog in programs_to_add:
-                prog_id = str(prog.get("id", ""))
-                name = prog.get("name", "")
-                pr_code = prog.get("pr_code", 0)
-                pr_str = prog.get("pr_str", "")
-                options = prog.get("options", {})
-                mutual_exclusion = prog.get("mutual_exclusion", [])
-                
-                if not prog_id or not name:
-                    errors.append(f"Пропущена программа: нет ID или name")
-                    continue
-                
-                if prog_id in programs_data["programs"]:
-                    skipped.append(f"{prog_id} - {name}")
-                    continue
-                
-                programs_data["programs"][prog_id] = {
-                    "name": name,
-                    "pr_code": int(pr_code),
-                    "pr_str": pr_str,
-                    "options": options,
-                    "mutual_exclusion": mutual_exclusion
-                }
-                added.append(f"{prog_id} - {name}")
+            # Проверяем, не существует ли уже программа с таким же Pr
+            exists = False
+            for prog_id, p in program_manager.programs.items():
+                if p.get("Pr") == pr:
+                    skipped.append(f"{pr} - {name}")
+                    exists = True
+                    break
             
-            def write_file():
-                with open(config_path, "w", encoding="utf-8") as f:
-                    json.dump(programs_data, f, ensure_ascii=False, indent=2)
+            if exists:
+                continue
             
-            await asyncio.to_thread(write_file)
-            
-            return web.json_response({
-                "success": True,
-                "added": added,
-                "skipped": skipped,
-                "errors": errors,
-                "message": f"Добавлено: {len(added)}, Пропущено (уже есть): {len(skipped)}, Ошибок: {len(errors)}"
-            })
-            
-        except Exception as e:
-            return web.json_response({"success": False, "error": str(e)}, status=500)
+            try:
+                program_manager.add_program(name, pr, pr_code, pr_str, options, mutual_exclusion)
+                added.append(f"{pr} - {name}")
+            except Exception as e:
+                errors.append(f"{pr} - {name}: {e}")
+        
+        program_manager._save_config()
+        
+        return web.json_response({
+            "success": True,
+            "added": added,
+            "skipped": skipped,
+            "errors": errors,
+            "message": f"Добавлено: {len(added)}, Пропущено (Pr уже есть): {len(skipped)}, Ошибок: {len(errors)}"
+        })
 
 
 class BiancaGetProgramsView(HomeAssistantView):
@@ -195,32 +155,24 @@ class BiancaGetProgramsView(HomeAssistantView):
 
     async def get(self, request):
         hass = request.app["hass"]
-        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        entry_id = request.query.get("entry_id")
         
-        try:
-            def read_file():
-                if not os.path.exists(config_path):
-                    return None
-                with open(config_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            
-            programs_data = await asyncio.to_thread(read_file)
-            
-            if programs_data is None:
-                return web.json_response({"success": True, "programs": []})
-            
-            programs_list = []
-            for prog_id, prog in programs_data.get("programs", {}).items():
-                programs_list.append({
-                    "id": prog_id,
-                    "name": prog.get("name", prog_id),
-                    "pr_code": prog.get("pr_code", 0),
-                    "pr_str": prog.get("pr_str", "")
-                })
-            
-            return web.json_response({"success": True, "programs": programs_list})
-        except Exception as e:
-            return web.json_response({"success": False, "error": str(e)}, status=500)
+        if not entry_id:
+            return web.json_response({"success": False, "error": "entry_id required"}, status=400)
+        
+        program_manager: ProgramManager = hass.data[DOMAIN][entry_id]["program_manager"]
+        
+        programs_list = []
+        for prog_id, prog in program_manager.programs.items():
+            programs_list.append({
+                "id": int(prog_id),
+                "name": prog.get("name", ""),
+                "Pr": prog.get("Pr", 0),
+                "PrCode": prog.get("PrCode", 0),
+                "PrStr": prog.get("PrStr", "")
+            })
+        
+        return web.json_response({"success": True, "programs": programs_list, "next_id": program_manager.next_id})
 
 
 class BiancaGetProgramView(HomeAssistantView):
@@ -232,44 +184,29 @@ class BiancaGetProgramView(HomeAssistantView):
 
     async def get(self, request, program_id):
         hass = request.app["hass"]
+        entry_id = request.query.get("entry_id")
         
-        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        if not entry_id:
+            return web.json_response({"success": False, "error": "entry_id required"}, status=400)
         
-        try:
-            import os
-            if not os.path.exists(config_path):
-                return web.json_response({
-                    "success": False, 
-                    "error": f"File not found: {config_path}"
-                }, status=404)
-            
-            import json
-            with open(config_path, "r", encoding="utf-8") as f:
-                programs_data = json.load(f)
-            
-            if str(program_id) not in programs_data.get("programs", {}):
-                return web.json_response({
-                    "success": False, 
-                    "error": f"Program {program_id} not found"
-                }, status=404)
-            
-            program = programs_data["programs"][str(program_id)]
-            
-            return web.json_response({
-                "success": True,
-                "program": {
-                    "id": program_id,
-                    "name": program.get("name", ""),
-                    "pr_code": program.get("pr_code", 0),
-                    "pr_str": program.get("pr_str", ""),
-                    "options": program.get("options", {}),
-                    "mutual_exclusion": program.get("mutual_exclusion", [])
-                }
-            })
-            
-        except Exception as e:
-            _LOGGER.error(f"Error in get_program: {e}")
-            return web.json_response({"success": False, "error": str(e)}, status=500)
+        program_manager: ProgramManager = hass.data[DOMAIN][entry_id]["program_manager"]
+        
+        program = program_manager.get_program(int(program_id))
+        if not program:
+            return web.json_response({"success": False, "error": f"Program {program_id} not found"}, status=404)
+        
+        return web.json_response({
+            "success": True,
+            "program": {
+                "id": int(program_id),
+                "name": program.get("name", ""),
+                "Pr": program.get("Pr", 0),
+                "PrCode": program.get("PrCode", 0),
+                "PrStr": program.get("PrStr", ""),
+                "options": program.get("options", {}),
+                "mutual_exclusion": program.get("mutual_exclusion", [])
+            }
+        })
 
 
 class BiancaUpdateProgramView(HomeAssistantView):
@@ -285,54 +222,38 @@ class BiancaUpdateProgramView(HomeAssistantView):
         
         program_id = data.get("program_id")
         name = data.get("name")
-        pr_code = data.get("pr_code")
-        pr_str = data.get("pr_str")
+        pr = data.get("Pr")
+        pr_code = data.get("PrCode")
+        pr_str = data.get("PrStr")
         options = data.get("options", {})
         mutual_exclusion = data.get("mutual_exclusion", [])
+        entry_id = data.get("entry_id")
         
-        if not all([program_id, name, pr_code, pr_str]):
+        if not all([program_id, name, pr, pr_code, pr_str]):
             return web.json_response(
                 {"success": False, "error": "Не все поля заполнены"},
                 status=400
             )
         
-        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        program_manager: ProgramManager = hass.data[DOMAIN][entry_id]["program_manager"]
         
-        try:
-            def read_file():
-                if not os.path.exists(config_path):
-                    return None
-                with open(config_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            
-            programs_data = await asyncio.to_thread(read_file)
-            
-            if programs_data is None:
-                return web.json_response({"success": False, "error": "Файл programs.json не найден"}, status=404)
-            
-            if str(program_id) not in programs_data.get("programs", {}):
-                return web.json_response({"success": False, "error": f"Программа с ID {program_id} не найдена"}, status=404)
-            
-            programs_data["programs"][str(program_id)] = {
-                "name": name,
-                "pr_code": int(pr_code),
-                "pr_str": pr_str,
-                "options": options,
-                "mutual_exclusion": mutual_exclusion
-            }
-            
-            def write_file():
-                with open(config_path, "w", encoding="utf-8") as f:
-                    json.dump(programs_data, f, ensure_ascii=False, indent=2)
-            
-            await asyncio.to_thread(write_file)
-            
-            return web.json_response({
-                "success": True,
-                "message": f"Программа '{name}' (ID: {program_id}) обновлена! Перезапустите Home Assistant."
-            })
-        except Exception as e:
-            return web.json_response({"success": False, "error": str(e)}, status=500)
+        # Проверяем, не занят ли Pr другой программой
+        for pid, prog in program_manager.programs.items():
+            if int(pid) != program_id and prog.get("Pr") == pr:
+                return web.json_response(
+                    {"success": False, "error": f"Программа с Pr={pr} уже существует"},
+                    status=400
+                )
+        
+        success = program_manager.update_program(program_id, name, pr, pr_code, pr_str, options, mutual_exclusion)
+        
+        if not success:
+            return web.json_response({"success": False, "error": "Program not found"}, status=404)
+        
+        return web.json_response({
+            "success": True,
+            "message": f"Программа '{name}' обновлена! Перезапустите Home Assistant."
+        })
 
 
 class BiancaDeleteProgramView(HomeAssistantView):
@@ -347,6 +268,7 @@ class BiancaDeleteProgramView(HomeAssistantView):
         data = await request.json()
         
         program_id = data.get("program_id")
+        entry_id = data.get("entry_id")
         
         if not program_id:
             return web.json_response(
@@ -354,38 +276,19 @@ class BiancaDeleteProgramView(HomeAssistantView):
                 status=400
             )
         
-        config_path = hass.config.path(f"custom_components/{DOMAIN}/programs.json")
+        program_manager: ProgramManager = hass.data[DOMAIN][entry_id]["program_manager"]
         
-        try:
-            def read_file():
-                if not os.path.exists(config_path):
-                    return None
-                with open(config_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            
-            programs_data = await asyncio.to_thread(read_file)
-            
-            if programs_data is None:
-                return web.json_response({"success": False, "error": "Файл programs.json не найден"}, status=404)
-            
-            if str(program_id) not in programs_data.get("programs", {}):
-                return web.json_response({"success": False, "error": f"Программа с ID {program_id} не найдена"}, status=404)
-            
-            program_name = programs_data["programs"][str(program_id)].get("name", program_id)
-            del programs_data["programs"][str(program_id)]
-            
-            def write_file():
-                with open(config_path, "w", encoding="utf-8") as f:
-                    json.dump(programs_data, f, ensure_ascii=False, indent=2)
-            
-            await asyncio.to_thread(write_file)
-            
-            return web.json_response({
-                "success": True,
-                "message": f"Программа '{program_name}' (ID: {program_id}) удалена! Перезапустите Home Assistant."
-            })
-        except Exception as e:
-            return web.json_response({"success": False, "error": str(e)}, status=500)
+        program = program_manager.get_program(program_id)
+        if not program:
+            return web.json_response({"success": False, "error": f"Программа с ID {program_id} не найдена"}, status=404)
+        
+        program_name = program.get("name", program_id)
+        program_manager.delete_program(program_id)
+        
+        return web.json_response({
+            "success": True,
+            "message": f"Программа '{program_name}' удалена! Перезапустите Home Assistant."
+        })
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -399,6 +302,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if entry.entry_id not in hass.data[DOMAIN]:
         hass.data[DOMAIN][entry.entry_id] = {}
     hass.data[DOMAIN][entry.entry_id]["available"] = False
+    hass.data[DOMAIN][entry.entry_id]["entry_id"] = entry.entry_id
     
     # Инициализируем ProgramManager
     program_manager = ProgramManager(hass)
@@ -446,10 +350,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_start_washing(call):
         """Handle start washing service."""
         program_select = hass.states.get("select.bianca_program")
-        program_name = program_select.state if program_select else "Хлопок: Интенсивная стирка"
+        program_name = program_select.state if program_select else None
         
-        program_id, program = program_manager.get_program_by_name(program_name)
-        if not program_id:
+        # Находим программу по имени
+        program_id = None
+        program = None
+        for pid, prog in program_manager.programs.items():
+            if prog.get("name") == program_name:
+                program_id = int(pid)
+                program = prog
+                break
+        
+        if program_id is None:
             _LOGGER.error(f"Unknown program: {program_name}")
             return
         
@@ -490,9 +402,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "23 часа 30 мин": 47, "24 часа": 48
         }.get(delay_str, 0)
         
-        PrNm = int(program_id)
-        PrCode = program.get("pr_code", 0)
-        PrStr = program_manager.get_pr_str(program_id)
+        PrNm = program.get("Pr", 0)
+        PrCode = program.get("PrCode", 0)
+        PrStr = program.get("PrStr", "test")
         TmpTgt = values["temperature"].replace("°C", "")
         SLevTgt = {"Нет": 0, "Мало": 1, "Нормально": 2, "Очень": 3}.get(values["soil"], 0)
         SpdTgt = {
