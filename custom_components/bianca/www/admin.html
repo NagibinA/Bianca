@@ -292,6 +292,13 @@
             border-radius: 8px;
             border: 1px solid #e9ecef;
         }
+        .import-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
     </style>
 </head>
 <body>
@@ -299,7 +306,8 @@
         <h1>Bianca - Управление программами</h1>
         
         <div class="info">
-            📝 Здесь вы можете добавлять, редактировать и удалять программы стирки.
+            📝 Здесь вы можете добавлять, редактировать и удалять программы стирки.<br>
+            🔑 ID программы генерируется автоматически. <strong>Pr</strong> - номер программы (PrNm), <strong>PrCode</strong> - код программы.
         </div>
         
         <div class="flex">
@@ -317,20 +325,20 @@
                 
                 <form id="addProgramForm">
                     <div class="form-group">
-                        <label>ID программы (PrNm):</label>
-                        <input type="number" id="program_id" required placeholder="Пример: 17">
-                        <div id="idError" style="color: red; font-size: 12px; display: none;">Программа с таким ID уже существует</div>
-                    </div>
-                    <div class="form-group">
                         <label>Название программы:</label>
                         <input type="text" id="program_name" required placeholder="Пример: Джинсы">
+                    </div>
+                    <div class="form-group">
+                        <label>Pr (номер программы):</label>
+                        <input type="number" id="pr_value" required placeholder="Пример: 17">
+                        <div id="prError" style="color: red; font-size: 12px; display: none;">Программа с таким Pr уже существует</div>
                     </div>
                     <div class="form-group">
                         <label>PrCode:</label>
                         <input type="number" id="pr_code" required placeholder="Пример: 15">
                     </div>
                     <div class="form-group">
-                        <label>Текст на дисплее (английский):</label>
+                        <label>PrStr (текст на дисплее, английский):</label>
                         <input type="text" id="pr_str" required placeholder="Пример: Jeans">
                     </div>
                     
@@ -608,14 +616,25 @@
             <h2>📦 Массовое добавление программ</h2>
             <div class="info">
                 Вставьте JSON с программами в формате:<br>
-                <code>{"programs": {"17": {"name": "Джинсы", "pr_code": 15, "pr_str": "Jeans", "options": {...}}}}</code><br>
-                или<br>
-                <code>{"programs": [{"id": "17", "name": "Джинсы", "pr_code": 15, "pr_str": "Jeans", "options": {...}}]}</code>
+                <code>{"programs": [{"name": "Джинсы", "Pr": 17, "PrCode": 15, "PrStr": "Jeans", "options": {...}}]}</code>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button type="button" class="btn-secondary" onclick="insertExampleJson()">📋 Вставить пример JSON</button>
             </div>
             <div class="form-group">
-                <textarea id="batchJson" rows="12" placeholder='{"programs": {"17": {"name": "Джинсы", "pr_code": 15, "pr_str": "Jeans", "options": {"temperature": {"values": ["0°C","20°C","30°C","40°C"], "default": "40°C"}, "spin": {"values": ["0 об/мин"], "default": "0 об/мин"}, "soil": {"values": ["Нет"], "default": "Нет"}, "steam": {"values": ["Без пара"], "default": "Без пара"}, "pre_wash": {"values": ["Нет"], "default": "Нет"}, "hygiene": {"values": ["Нет"], "default": "Нет"}, "anti_crease": {"values": ["Нет"], "default": "Нет"}, "night_spin": {"values": ["Нет"], "default": "Нет"}, "extra_rinse": {"values": ["Нет"], "default": "Нет"}, "aqua_plus": {"values": ["Нет"], "default": "Нет"}, "zoom": {"values": ["Нет"], "default": "Нет"}}, "mutual_exclusion": []}}}'></textarea>
+                <textarea id="batchJson" rows="12"></textarea>
             </div>
             <button type="button" class="btn-primary" onclick="batchAddPrograms()" style="margin-top: 0;">📦 Добавить программы из JSON</button>
+        </div>
+        
+        <!-- Импорт из файла -->
+        <div class="import-section">
+            <h2>📄 Импорт программы из JSON файла</h2>
+            <div class="info">
+                Выберите JSON файл с программой (экспортированный из списка)
+            </div>
+            <input type="file" id="programFileInput" accept=".json" style="margin-bottom: 10px;">
+            <button type="button" class="btn-primary" onclick="importProgramFromFile()" style="margin-top: 0;">📥 Импортировать из файла</button>
         </div>
     </div>
     
@@ -625,6 +644,29 @@
         let editMode = false;
         let editProgramId = null;
         let allPrograms = [];
+        let entryId = null;
+        
+        // Получаем entry_id из URL
+        async function getEntryId() {
+            // Пытаемся получить из localStorage или через API
+            if (entryId) return entryId;
+            
+            // Получаем список интеграций
+            try {
+                const response = await fetch(`${API_BASE}/api/config/config_entries/flow`);
+                // Это сложно, поэтому пока используем заглушку
+                // В реальности entry_id нужно получать из контекста
+                entryId = localStorage.getItem('bianca_entry_id');
+                if (!entryId) {
+                    entryId = prompt('Введите ID интеграции Bianca (можно найти в URL при редактировании устройства)');
+                    localStorage.setItem('bianca_entry_id', entryId);
+                }
+                return entryId;
+            } catch (e) {
+                console.error('Error getting entry_id:', e);
+                return null;
+            }
+        }
         
         function showMessage(text, type) {
             const msgDiv = document.getElementById('message');
@@ -633,7 +675,7 @@
             msgDiv.style.display = 'block';
             setTimeout(() => {
                 msgDiv.style.display = 'none';
-            }, 5000);
+            }, 8000);
         }
         
         function updateSelectedDisplay(checkboxGroupId, displayId) {
@@ -751,23 +793,24 @@
             updateSelectedDisplay(checkboxGroupId, checkboxGroupId.replace('_checkboxes', '_selected'));
         }
         
-        function checkIdExists() {
-            const programId = document.getElementById('program_id').value;
-            const errorDiv = document.getElementById('idError');
-            
-            if (editMode && programId == editProgramId) {
-                errorDiv.style.display = 'none';
-                return false;
+        async function checkPrExists(pr, excludeId = null) {
+            for (const prog of allPrograms) {
+                if (prog.Pr === pr && (excludeId === null || prog.id !== excludeId)) {
+                    return true;
+                }
             }
-            
-            const exists = allPrograms.some(p => p.id == programId);
-            errorDiv.style.display = exists ? 'block' : 'none';
-            return exists;
+            return false;
         }
         
         async function loadPrograms() {
+            const eId = await getEntryId();
+            if (!eId) {
+                document.getElementById('programsContainer').innerHTML = '<div style="color: red; text-align: center;">Не удалось определить ID интеграции</div>';
+                return;
+            }
+            
             try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_programs`);
+                const response = await fetch(`${API_BASE}/api/bianca/get_programs?entry_id=${eId}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -791,15 +834,16 @@
             
             let html = '';
             allPrograms.forEach(prog => {
-                const isActive = editMode && editProgramId == prog.id;
+                const isActive = editMode && editProgramId === prog.id;
                 html += `
-                    <div class="program-item ${isActive ? 'active' : ''}" onclick="loadProgramToEdit('${prog.id}')">
+                    <div class="program-item ${isActive ? 'active' : ''}" onclick="loadProgramToEdit(${prog.id})">
                         <div class="program-info">
                             <div class="program-name">${escapeHtml(prog.name)}</div>
-                            <div class="program-id">ID: ${prog.id} | PrCode: ${prog.pr_code}</div>
+                            <div class="program-id">ID: ${prog.id} | Pr: ${prog.Pr} | PrCode: ${prog.PrCode}</div>
                         </div>
                         <div class="program-actions">
-                            <button class="btn-secondary" onclick="event.stopPropagation(); deleteProgram('${prog.id}', '${escapeHtml(prog.name)}')" style="background: #dc3545;">🗑️</button>
+                            <button class="btn-secondary" onclick="event.stopPropagation(); exportProgramToFile(${prog.id})" style="background: #17a2b8;" title="Сохранить в файл">💾</button>
+                            <button class="btn-danger" onclick="event.stopPropagation(); deleteProgram(${prog.id}, '${escapeHtml(prog.name)}')" title="Удалить">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -813,25 +857,61 @@
             return div.innerHTML;
         }
         
-        async function loadProgramToEdit(programId) {
+        async function exportProgramToFile(programId) {
+            const eId = await getEntryId();
             try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}`);
+                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}?entry_id=${eId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const exportData = {
+                        "name": result.program.name,
+                        "Pr": result.program.Pr,
+                        "PrCode": result.program.PrCode,
+                        "PrStr": result.program.PrStr,
+                        "options": result.program.options,
+                        "mutual_exclusion": result.program.mutual_exclusion
+                    };
+                    
+                    const jsonStr = JSON.stringify(exportData, null, 2);
+                    const blob = new Blob([jsonStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `bianca_program_${result.program.Pr}_${result.program.name.replace(/[^a-zа-яё0-9]/gi, '_')}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showMessage(`Программа "${result.program.name}" сохранена в файл`, 'success');
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Ошибка: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadProgramToEdit(programId) {
+            const eId = await getEntryId();
+            try {
+                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}?entry_id=${eId}`);
                 const result = await response.json();
                 
                 if (result.success) {
                     const prog = result.program;
                     editMode = true;
-                    editProgramId = programId;
+                    editProgramId = prog.id;
                     
                     document.getElementById('formTitle').innerHTML = '✏️ Редактирование программы <span class="edit-mode-badge">Режим редактирования</span>';
                     document.getElementById('submitBtn').innerHTML = '💾 Сохранить изменения';
                     document.getElementById('cancelEditBtn').style.display = 'inline-block';
                     
-                    document.getElementById('program_id').value = prog.id;
-                    document.getElementById('program_id').disabled = true;
                     document.getElementById('program_name').value = prog.name;
-                    document.getElementById('pr_code').value = prog.pr_code;
-                    document.getElementById('pr_str').value = prog.pr_str;
+                    document.getElementById('pr_value').value = prog.Pr;
+                    document.getElementById('pr_code').value = prog.PrCode;
+                    document.getElementById('pr_str').value = prog.PrStr;
+                    document.getElementById('pr_value').disabled = false;
                     
                     if (prog.options) {
                         setSelectedValues('temp_checkboxes', prog.options.temperature?.values || []);
@@ -881,14 +961,15 @@
         }
         
         async function deleteProgram(programId, programName) {
-            if (confirm(`Удалить программу "${programName}" (ID: ${programId})?`)) {
+            if (confirm(`Удалить программу "${programName}"?`)) {
+                const eId = await getEntryId();
                 try {
                     const response = await fetch(`${API_BASE}/api/bianca/delete_program`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ program_id: programId })
+                        body: JSON.stringify({ program_id: programId, entry_id: eId })
                     });
                     
                     const result = await response.json();
@@ -896,7 +977,7 @@
                     if (result.success) {
                         showMessage(result.message, 'success');
                         await loadPrograms();
-                        if (editMode && editProgramId == programId) {
+                        if (editMode && editProgramId === programId) {
                             cancelEdit();
                         }
                     } else {
@@ -914,10 +995,11 @@
             document.getElementById('formTitle').innerHTML = '➕ Добавление программы';
             document.getElementById('submitBtn').innerHTML = '✅ Добавить программу';
             document.getElementById('cancelEditBtn').style.display = 'none';
-            document.getElementById('program_id').disabled = false;
             document.getElementById('addProgramForm').reset();
-            document.getElementById('idError').style.display = 'none';
+            document.getElementById('prError').style.display = 'none';
+            document.getElementById('pr_value').disabled = false;
             
+            // Сбрасываем чекбоксы
             document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach((cb, idx) => {
                 const group = cb.closest('.checkbox-group');
                 const firstCheckbox = group.querySelector('input[type="checkbox"]');
@@ -927,6 +1009,34 @@
             mutualExclusions = [];
             renderMutualList();
             initSelectedDisplays();
+        }
+        
+        function insertExampleJson() {
+            const exampleJson = {
+                "programs": [
+                    {
+                        "name": "Джинсы",
+                        "Pr": 17,
+                        "PrCode": 15,
+                        "PrStr": "Jeans",
+                        "options": {
+                            "temperature": {"values": ["0°C", "20°C", "30°C", "40°C"], "default": "40°C"},
+                            "spin": {"values": ["0 об/мин", "400 об/мин", "600 об/мин", "800 об/мин", "1000 об/мин"], "default": "1000 об/мин"},
+                            "soil": {"values": ["Нет"], "default": "Нет"},
+                            "steam": {"values": ["Без пара"], "default": "Без пара"},
+                            "pre_wash": {"values": ["Нет"], "default": "Нет"},
+                            "hygiene": {"values": ["Нет"], "default": "Нет"},
+                            "anti_crease": {"values": ["Нет"], "default": "Нет"},
+                            "night_spin": {"values": ["Нет"], "default": "Нет"},
+                            "extra_rinse": {"values": ["Нет"], "default": "Нет"},
+                            "aqua_plus": {"values": ["Нет"], "default": "Нет"},
+                            "zoom": {"values": ["Нет"], "default": "Нет"}
+                        },
+                        "mutual_exclusion": []
+                    }
+                ]
+            };
+            document.getElementById('batchJson').value = JSON.stringify(exampleJson, null, 2);
         }
         
         async function batchAddPrograms() {
@@ -944,12 +1054,20 @@
                 return;
             }
             
+            const eId = await getEntryId();
+            if (!eId) {
+                showMessage('Не удалось определить ID интеграции', 'error');
+                return;
+            }
+            
+            programs.entry_id = eId;
+            
             const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: jsonText
+                body: JSON.stringify(programs)
             });
             
             const result = await response.json();
@@ -960,7 +1078,7 @@
                     message += '\n\n✅ Добавлены:\n' + result.added.join('\n');
                 }
                 if (result.skipped && result.skipped.length) {
-                    message += '\n\n⚠️ Пропущены (уже есть):\n' + result.skipped.join('\n');
+                    message += '\n\n⚠️ Пропущены (Pr уже есть):\n' + result.skipped.join('\n');
                 }
                 if (result.errors && result.errors.length) {
                     message += '\n\n❌ Ошибки:\n' + result.errors.join('\n');
@@ -973,12 +1091,87 @@
             }
         }
         
+        async function importProgramFromFile() {
+            const fileInput = document.getElementById('programFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showMessage('Выберите JSON файл', 'warning');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const program = JSON.parse(e.target.result);
+                    
+                    if (!program.name || program.Pr === undefined) {
+                        showMessage('❌ В файле отсутствует name или Pr', 'error');
+                        return;
+                    }
+                    
+                    const eId = await getEntryId();
+                    if (!eId) {
+                        showMessage('Не удалось определить ID интеграции', 'error');
+                        return;
+                    }
+                    
+                    const programsData = {
+                        "programs": [program],
+                        "entry_id": eId
+                    };
+                    
+                    const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(programsData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        let message = result.message;
+                        if (result.added && result.added.length) {
+                            message += '\n\n✅ Добавлена: ' + result.added.join('\n');
+                        }
+                        if (result.skipped && result.skipped.length) {
+                            message += '\n\n⚠️ Пропущена (Pr уже есть): ' + result.skipped.join('\n');
+                        }
+                        showMessage(message, 'success');
+                        await loadPrograms();
+                        fileInput.value = '';
+                    } else {
+                        showMessage(result.error, 'error');
+                    }
+                } catch (error) {
+                    showMessage('Ошибка парсинга JSON: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+        
         document.getElementById('addProgramForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            if (!editMode && checkIdExists()) {
-                showMessage('Программа с таким ID уже существует', 'error');
-                return;
+            const name = document.getElementById('program_name').value;
+            const pr = parseInt(document.getElementById('pr_value').value);
+            const prCode = parseInt(document.getElementById('pr_code').value);
+            const prStr = document.getElementById('pr_str').value;
+            
+            if (!editMode) {
+                const exists = await checkPrExists(pr);
+                if (exists) {
+                    showMessage('Программа с таким Pr уже существует', 'error');
+                    return;
+                }
+            } else {
+                const exists = await checkPrExists(pr, editProgramId);
+                if (exists) {
+                    showMessage('Программа с таким Pr уже существует', 'error');
+                    return;
+                }
             }
             
             const options = {};
@@ -1043,13 +1236,25 @@
             };
             
             const data = {
-                program_id: document.getElementById('program_id').value,
-                name: document.getElementById('program_name').value,
-                pr_code: document.getElementById('pr_code').value,
-                pr_str: document.getElementById('pr_str').value,
+                name: name,
+                Pr: pr,
+                PrCode: prCode,
+                PrStr: prStr,
                 options: options,
                 mutual_exclusion: mutualExclusions
             };
+            
+            const eId = await getEntryId();
+            if (!eId) {
+                showMessage('Не удалось определить ID интеграции', 'error');
+                return;
+            }
+            
+            data.entry_id = eId;
+            
+            if (editMode) {
+                data.program_id = editProgramId;
+            }
             
             const endpoint = editMode ? '/api/bianca/update_program' : '/api/bianca/add_program_full';
             
@@ -1076,9 +1281,11 @@
             }
         });
         
-        document.getElementById('program_id').addEventListener('input', () => {
+        document.getElementById('pr_value').addEventListener('input', async () => {
             if (!editMode) {
-                checkIdExists();
+                const pr = parseInt(document.getElementById('pr_value').value);
+                const exists = await checkPrExists(pr);
+                document.getElementById('prError').style.display = exists ? 'block' : 'none';
             }
         });
         
