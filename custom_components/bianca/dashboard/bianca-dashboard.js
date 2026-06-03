@@ -1,17 +1,8 @@
 /**
  * BIANCA DASHBOARD STRATEGY
- * Version: 2.1.0
- * Date: 2026-06-02
+ * Version: 2.3.0
+ * Date: 2026-06-03
  * 
- * Changes in this version:
- * - Добавлена кнопка управления программами (открывает admin.html)
- * - Кнопки расположены: Database-plus → Set → Play → Stop
- * - Полностью переработана логика отображения иконок опций
- * - Режим стирки: показываем значения от API, иконки НЕ кликабельны
- * - Режим бездействия + remote_control = Выкл: показываем значения от API, иконки НЕ кликабельны
- * - Режим бездействия + remote_control = Вкл: показываем значения от селектов, иконки кликабельны
- * - Нет связи (ping = off): иконки скрыты
- * - Иконка Пар и Zoom работают как в версии 1.0.26
  */
 
 class BiancaDashboardStrategy extends HTMLElement {
@@ -152,9 +143,9 @@ class BiancaDashboardStrategy extends HTMLElement {
                                             type: "icon",
                                             icon: "mdi:database-plus",
                                             style: { 
-                                                left: "28%", 
-                                                top: "25%", 
-                                                "--mdc-icon-size": "32px",
+                                                left: "16%", 
+                                                top: "89%", 
+                                                "--mdc-icon-size": "46px",
                                                 "transform": "translate(0%, 0%)",
                                                 "color": "grey"
                                             },
@@ -167,7 +158,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                     :host {
                                                         {% if is_state('binary_sensor.bianca_available', 'on') %}
                                                             pointer-events: auto;
-                                                            --card-mod-icon-color: white;
+                                                            --card-mod-icon-color: green;
                                                         {% else %}
                                                             pointer-events: none;
                                                             --card-mod-icon-color: grey;
@@ -1422,26 +1413,6 @@ class BiancaDashboardStrategy extends HTMLElement {
                                             }
                                         }
                                     ]
-                                },
-                                // ========== КАРТОЧКА СОСТОЯНИЯ ==========
-                                {
-                                    type: "entities",
-                                    title: "Состояние",
-                                    entities: [
-                                        { entity: "binary_sensor.bianca_available", name: "Доступность" },
-                                        "sensor.bianca_machine_state",
-                                        "sensor.bianca_error",
-                                        "sensor.bianca_remote_control"
-                                    ],
-                                    card_mod: {
-                                        style: `
-                                            :host {
-                                                {% if not is_state('binary_sensor.bianca_available', 'on') %}
-                                                display: none;
-                                                {% endif %}
-                                            }
-                                        `
-                                    }
                                 },
                                 // ========== КАРТОЧКА ПАРАМЕТРОВ ==========
                                 {
