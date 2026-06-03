@@ -133,7 +133,7 @@ class BiancaDelayStartSelect(SelectEntity):
         self.entity_id = "select.bianca_delay_start"
         self._attr_name = "Bianca Отложенный старт"
         self._attr_unique_id = f"{entry.entry_id}_delay_start"
-        self._attr_icon = "mdi:timer-outline"
+        self._attr_icon = "bianca:delay"
         self._attr_entity_category = EntityCategory.CONFIG
         
         self._attr_options = [
@@ -206,16 +206,16 @@ class BiancaOptionSelect(SelectEntity):
     def _get_option_icon(self, option_key: str) -> str:
         icons = {
             "temperature": "mdi:thermometer",
-            "spin": "mdi:rotate-right",
-            "soil": "mdi:water-percent",
-            "steam": "mdi:water-vapor",
-            "pre_wash": "mdi:soap",
-            "hygiene": "mdi:sterling",
-            "anti_crease": "mdi:iron",
-            "night_spin": "mdi:weather-night",
-            "extra_rinse": "mdi:water",
-            "aqua_plus": "mdi:water-plus",
-            "zoom": "mdi:arrow-expand-all",
+            "spin": "bianca:spin",
+            "soil": "phu:duco-2",
+            "steam": "bianca:steam",
+            "pre_wash": "bianca:pre-wash",
+            "hygiene": "bianca:hygiene-wash",
+            "anti_crease": "bianca:anti-crease",
+            "night_spin": "bianca:night-spin",
+            "extra_rinse": "bianca:rinsing",
+            "aqua_plus": "bianca:extra-water",
+            "zoom": "bianca:zoom",
         }
         return icons.get(option_key, "mdi:help-circle")
 
