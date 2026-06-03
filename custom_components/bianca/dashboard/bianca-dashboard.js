@@ -120,7 +120,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                         // ========== ОБРАТНЫЙ ОТСЧЕТ (ОТЛОЖЕННЫЙ СТАРТ) ==========
                                         {
                                             type: "state-label",
-                                            entity: "sensor.bianca_delay_countdown",
+                                            entity: "sensor.bianca_delay_start",
                                             style: { 
                                                 left: "45%", 
                                                 top: "33%", 
@@ -153,8 +153,8 @@ class BiancaDashboardStrategy extends HTMLElement {
                                             icon: "mdi:database-plus",
                                             style: { 
                                                 left: "28%", 
-                                                top: "23.6%", 
-                                                "--mdc-icon-size": "52px",
+                                                top: "25%", 
+                                                "--mdc-icon-size": "32px",
                                                 "transform": "translate(0%, 0%)",
                                                 "color": "grey"
                                             },
