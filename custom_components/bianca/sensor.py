@@ -252,11 +252,20 @@ class BiancaTemperatureSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(
             coordinator, entry, hass, "Temp", "temperature", "Температура стирки", "mdi:thermometer",
-            device_class=SensorDeviceClass.TEMPERATURE,
+            device_class=None,
             state_class=SensorStateClass.MEASUREMENT,
-            unit=UnitOfTemperature.CELSIUS
+            unit=None
         )
 
+    @property
+    def native_value(self):
+        value = super().native_value
+        if value is None:
+            return None
+        try:
+            return int(float(value))
+        except (ValueError, TypeError):
+            return value
 
 class BiancaSpinSpeedSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
