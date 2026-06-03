@@ -70,14 +70,6 @@ class BiancaAddProgramFullView(HomeAssistantView):
                 status=404
             )
         
-        # Проверяем, не существует ли уже программа с таким же Pr
-        for prog_id, prog in program_manager.programs.items():
-            if prog.get("Pr") == pr:
-                return web.json_response(
-                    {"success": False, "error": f"Программа с Pr={pr} уже существует"},
-                    status=400
-                )
-        
         prog_id = program_manager.add_program(name, pr, pr_code, pr_str, options, mutual_exclusion)
         
         return web.json_response({
@@ -140,16 +132,9 @@ class BiancaAddMultipleProgramsView(HomeAssistantView):
                 errors.append(f"Пропущена программа: нет name или Pr")
                 continue
             
-            # Проверяем, не существует ли уже программа с таким же Pr
-            exists = False
-            for prog_id, p in program_manager.programs.items():
-                if p.get("Pr") == pr:
-                    skipped.append(f"{pr} - {name}")
-                    exists = True
-                    break
-            
-            if exists:
-                continue
+            # Проверяем, не существует ли уже программа с таким же ID
+            # ID генерируется автоматически, поэтому проверка не нужна
+            # Просто добавляем программу
             
             try:
                 program_manager.add_program(name, pr, pr_code, pr_str, options, mutual_exclusion)
@@ -164,7 +149,7 @@ class BiancaAddMultipleProgramsView(HomeAssistantView):
             "added": added,
             "skipped": skipped,
             "errors": errors,
-            "message": f"Добавлено: {len(added)}, Пропущено (Pr уже есть): {len(skipped)}, Ошибок: {len(errors)}"
+            "message": f"Добавлено: {len(added)}, Пропущено: {len(skipped)}, Ошибок: {len(errors)}"
         })
 
 
@@ -256,13 +241,7 @@ class BiancaUpdateProgramView(HomeAssistantView):
         if not program_manager:
             return web.json_response({"success": False, "error": "Интеграция Bianca не найдена"}, status=404)
         
-        # Проверяем, не занят ли Pr другой программой
-        for pid, prog in program_manager.programs.items():
-            if int(pid) != program_id and prog.get("Pr") == pr:
-                return web.json_response(
-                    {"success": False, "error": f"Программа с Pr={pr} уже существует"},
-                    status=400
-                )
+        # Проверка на уникальность Pr УДАЛЕНА - Pr может повторяться
         
         success = program_manager.update_program(program_id, name, pr, pr_code, pr_str, options, mutual_exclusion)
         
