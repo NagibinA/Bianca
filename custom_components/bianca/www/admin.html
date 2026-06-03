@@ -299,6 +299,11 @@
             border-radius: 8px;
             border: 1px solid #e9ecef;
         }
+        .note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -307,7 +312,7 @@
         
         <div class="info">
             📝 Здесь вы можете добавлять, редактировать и удалять программы стирки.<br>
-            🔑 <strong>Pr</strong> - номер программы (PrNm), <strong>PrCode</strong> - код программы.
+            🔑 <strong>Pr</strong> - номер программы (PrNm), <strong>PrCode</strong> - код программы.<br>
         </div>
         
         <div class="flex">
@@ -331,7 +336,6 @@
                     <div class="form-group">
                         <label>Pr (номер программы):</label>
                         <input type="number" id="pr_value" required placeholder="Пример: 17">
-                        <div id="prError" style="color: red; font-size: 12px; display: none;">Программа с таким Pr уже существует</div>
                     </div>
                     <div class="form-group">
                         <label>PrCode:</label>
@@ -359,14 +363,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="temp_default">
-                                <option value="0°C">0°C</option>
-                                <option value="20°C">20°C</option>
-                                <option value="30°C">30°C</option>
-                                <option value="40°C">40°C</option>
-                                <option value="60°C">60°C</option>
-                                <option value="90°C">90°C</option>
-                            </select>
+                            <select id="temp_default"></select>
                         </div>
                         <div id="temp_selected" class="selected-values">Выбрано: <span></span></div>
                     </div>
@@ -390,20 +387,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="spin_default">
-                                <option value="0 об/мин">0 об/мин</option>
-                                <option value="400 об/мин">400 об/мин</option>
-                                <option value="500 об/мин">500 об/мин</option>
-                                <option value="600 об/мин">600 об/мин</option>
-                                <option value="700 об/мин">700 об/мин</option>
-                                <option value="800 об/мин">800 об/мин</option>
-                                <option value="900 об/мин">900 об/мин</option>
-                                <option value="1000 об/мин">1000 об/мин</option>
-                                <option value="1100 об/мин">1100 об/мин</option>
-                                <option value="1200 об/мин">1200 об/мин</option>
-                                <option value="1300 об/мин">1300 об/мин</option>
-                                <option value="1400 об/мин">1400 об/мин</option>
-                            </select>
+                            <select id="spin_default"></select>
                         </div>
                         <div id="spin_selected" class="selected-values">Выбрано: <span></span></div>
                     </div>
@@ -419,12 +403,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="soil_default">
-                                <option value="Нет">Нет</option>
-                                <option value="Мало">Мало</option>
-                                <option value="Нормально">Нормально</option>
-                                <option value="Очень">Очень</option>
-                            </select>
+                            <select id="soil_default"></select>
                         </div>
                         <div id="soil_selected" class="selected-values">Выбрано: <span></span></div>
                     </div>
@@ -438,10 +417,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="steam_default">
-                                <option value="Без пара">Без пара</option>
-                                <option value="С паром">С паром</option>
-                            </select>
+                            <select id="steam_default"></select>
                         </div>
                         <div id="steam_selected" class="selected-values">Выбрано: <span></span></div>
                     </div>
@@ -455,10 +431,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="prewash_default">
-                                <option value="Нет">Нет</option>
-                                <option value="Есть">Есть</option>
-                            </select>
+                            <select id="prewash_default"></select>
                         </div>
                         <div id="prewash_selected" class="selected-values">Выбрано: <span></span></div>
                     </div>
@@ -472,10 +445,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="hygiene_default">
-                                <option value="Нет">Нет</option>
-                                <option value="Есть">Есть</option>
-                            </select>
+                            <select id="hygiene_default"></select>
                         </div>
                         <div id="hygiene_selected" class="selected-values">Выбрано: <span></span></div>
                         <div class="note">ℹ️ Если есть "Есть", добавится зависимость от температуры ≥60°C</div>
@@ -490,10 +460,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="anticrease_default">
-                                <option value="Нет">Нет</option>
-                                <option value="Есть">Есть</option>
-                            </select>
+                            <select id="anticrease_default"></select>
                         </div>
                         <div id="anticrease_selected" class="selected-values">Выбрано: <span></span></div>
                     </div>
@@ -507,10 +474,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="nightspin_default">
-                                <option value="Нет">Нет</option>
-                                <option value="Есть">Есть</option>
-                            </select>
+                            <select id="nightspin_default"></select>
                         </div>
                         <div id="nightspin_selected" class="selected-values">Выбрано: <span></span></div>
                     </div>
@@ -526,12 +490,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="rinses_default">
-                                <option value="Нет">Нет</option>
-                                <option value="1 полоскание">1 полоскание</option>
-                                <option value="2 полоскания">2 полоскания</option>
-                                <option value="3 полоскания">3 полоскания</option>
-                            </select>
+                            <select id="rinses_default"></select>
                         </div>
                         <div id="rinses_selected" class="selected-values">Выбрано: <span></span></div>
                     </div>
@@ -545,10 +504,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="aquaplus_default">
-                                <option value="Нет">Нет</option>
-                                <option value="Есть">Есть</option>
-                            </select>
+                            <select id="aquaplus_default"></select>
                         </div>
                         <div id="aquaplus_selected" class="selected-values">Выбрано: <span></span></div>
                     </div>
@@ -562,10 +518,7 @@
                         </div>
                         <div class="default-select">
                             <label>По умолчанию:</label>
-                            <select id="zoom_default">
-                                <option value="Нет">Нет</option>
-                                <option value="Есть">Есть</option>
-                            </select>
+                            <select id="zoom_default"></select>
                         </div>
                         <div id="zoom_selected" class="selected-values">Выбрано: <span></span></div>
                     </div>
@@ -645,6 +598,21 @@
         let editProgramId = null;
         let allPrograms = [];
         
+        // Конфигурация опций: id чекбоксов, id select, id отображения
+        const optionConfigs = [
+            { checkboxesId: 'temp_checkboxes', selectId: 'temp_default', displayId: 'temp_selected' },
+            { checkboxesId: 'spin_checkboxes', selectId: 'spin_default', displayId: 'spin_selected' },
+            { checkboxesId: 'soil_checkboxes', selectId: 'soil_default', displayId: 'soil_selected' },
+            { checkboxesId: 'steam_checkboxes', selectId: 'steam_default', displayId: 'steam_selected' },
+            { checkboxesId: 'prewash_checkboxes', selectId: 'prewash_default', displayId: 'prewash_selected' },
+            { checkboxesId: 'hygiene_checkboxes', selectId: 'hygiene_default', displayId: 'hygiene_selected' },
+            { checkboxesId: 'anticrease_checkboxes', selectId: 'anticrease_default', displayId: 'anticrease_selected' },
+            { checkboxesId: 'nightspin_checkboxes', selectId: 'nightspin_default', displayId: 'nightspin_selected' },
+            { checkboxesId: 'rinses_checkboxes', selectId: 'rinses_default', displayId: 'rinses_selected' },
+            { checkboxesId: 'aquaplus_checkboxes', selectId: 'aquaplus_default', displayId: 'aquaplus_selected' },
+            { checkboxesId: 'zoom_checkboxes', selectId: 'zoom_default', displayId: 'zoom_selected' }
+        ];
+        
         function showMessage(text, type) {
             const msgDiv = document.getElementById('message');
             msgDiv.textContent = text;
@@ -652,131 +620,100 @@
             msgDiv.style.display = 'block';
             setTimeout(() => {
                 msgDiv.style.display = 'none';
-            }, 8000);
+            }, 5000);
         }
         
-        function updateSelectedDisplay(checkboxGroupId, displayId) {
-            const checkboxes = document.querySelectorAll(`#${checkboxGroupId} input[type="checkbox"]`);
+        function updateDefaultSelectOptions(checkboxesId, selectId) {
+            const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
+            const selectedValues = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            const select = document.getElementById(selectId);
+            
+            if (!select) return;
+            
+            // Сохраняем текущее значение
+            const currentValue = select.value;
+            
+            // Очищаем select
+            select.innerHTML = '';
+            
+            // Если ничего не выбрано, добавляем заглушку
+            if (selectedValues.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '— сначала выберите значения —';
+                select.appendChild(option);
+                select.disabled = true;
+                return;
+            }
+            
+            select.disabled = false;
+            
+            // Добавляем только выбранные значения
+            selectedValues.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                select.appendChild(option);
+            });
+            
+            // Если текущее значение все еще доступно - оставляем, иначе берем первое
+            if (selectedValues.includes(currentValue)) {
+                select.value = currentValue;
+            } else if (selectedValues.length > 0) {
+                select.value = selectedValues[0];
+            }
+        }
+        
+        function updateSelectedDisplay(checkboxesId, displayId, selectId) {
+            const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
             const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
             const displaySpan = document.querySelector(`#${displayId} span`);
             if (displaySpan) {
                 displaySpan.textContent = selected.length ? selected.join(', ') : 'нет';
             }
+            // Обновляем выпадающий список значений по умолчанию
+            if (selectId) {
+                updateDefaultSelectOptions(checkboxesId, selectId);
+            }
         }
         
-        function initSelectedDisplays() {
-            updateSelectedDisplay('temp_checkboxes', 'temp_selected');
-            updateSelectedDisplay('spin_checkboxes', 'spin_selected');
-            updateSelectedDisplay('soil_checkboxes', 'soil_selected');
-            updateSelectedDisplay('steam_checkboxes', 'steam_selected');
-            updateSelectedDisplay('prewash_checkboxes', 'prewash_selected');
-            updateSelectedDisplay('hygiene_checkboxes', 'hygiene_selected');
-            updateSelectedDisplay('anticrease_checkboxes', 'anticrease_selected');
-            updateSelectedDisplay('nightspin_checkboxes', 'nightspin_selected');
-            updateSelectedDisplay('rinses_checkboxes', 'rinses_selected');
-            updateSelectedDisplay('aquaplus_checkboxes', 'aquaplus_selected');
-            updateSelectedDisplay('zoom_checkboxes', 'zoom_selected');
-        }
-        
-        document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', () => {
-                const groupId = cb.closest('.checkbox-group').id;
-                const card = cb.closest('.option-card');
-                const displaySpan = card.querySelector('.selected-values span');
-                const checkboxes = document.querySelectorAll(`#${groupId} input[type="checkbox"]`);
-                const selected = Array.from(checkboxes).filter(c => c.checked).map(c => c.value);
-                if (displaySpan) {
-                    displaySpan.textContent = selected.length ? selected.join(', ') : 'нет';
-                }
+        function initOptionListeners() {
+            // Для каждой опции добавляем слушатели на чекбоксы
+            optionConfigs.forEach(config => {
+                const checkboxes = document.querySelectorAll(`#${config.checkboxesId} input[type="checkbox"]`);
+                checkboxes.forEach(cb => {
+                    cb.removeEventListener('change', () => {});
+                    cb.addEventListener('change', () => {
+                        updateSelectedDisplay(config.checkboxesId, config.displayId, config.selectId);
+                    });
+                });
+                // Инициализируем отображение
+                updateSelectedDisplay(config.checkboxesId, config.displayId, config.selectId);
             });
-        });
-        
-        function addMutualExclusion() {
-            const opt1 = document.getElementById('mutual_option1').value;
-            const opt2 = document.getElementById('mutual_option2').value;
-            
-            if (!opt1 || !opt2) {
-                showMessage('Выберите обе опции', 'warning');
-                return;
-            }
-            
-            if (opt1 === opt2) {
-                showMessage('Нельзя добавить взаимоисключение опции с самой собой', 'error');
-                return;
-            }
-            
-            const exists = mutualExclusions.some(m => 
-                (m[0] === opt1 && m[1] === opt2) || 
-                (m[0] === opt2 && m[1] === opt1)
-            );
-            
-            if (exists) {
-                showMessage('Такое взаимоисключение уже добавлено', 'warning');
-                return;
-            }
-            
-            mutualExclusions.push([opt1, opt2]);
-            renderMutualList();
-            
-            document.getElementById('mutual_option1').value = '';
-            document.getElementById('mutual_option2').value = '';
         }
         
-        function removeMutualExclusion(index) {
-            mutualExclusions.splice(index, 1);
-            renderMutualList();
-        }
-        
-        function renderMutualList() {
-            const container = document.getElementById('mutualList');
-            if (mutualExclusions.length === 0) {
-                container.innerHTML = '<div style="color: #999; text-align: center;">Нет добавленных взаимоисключений</div>';
-                return;
-            }
-            
-            const optionNames = {
-                'anti_crease': 'Антисминание',
-                'night_spin': 'Ночная стирка',
-                'pre_wash': 'Предстирка',
-                'hygiene': 'Гигиена',
-                'aqua_plus': 'Акваплюс',
-                'zoom': 'Zoom',
-                'steam': 'Пар',
-                'extra_rinse': 'Полоскания'
-            };
-            
-            let html = '';
-            mutualExclusions.forEach((mutual, index) => {
-                html += `
-                    <div class="mutual-item">
-                        <span>${optionNames[mutual[0]] || mutual[0]} ↔ ${optionNames[mutual[1]] || mutual[1]}</span>
-                        <button type="button" class="remove-mutual" onclick="removeMutualExclusion(${index})">✖ Удалить</button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-        
-        function getSelectedValues(checkboxGroupId) {
-            const checkboxes = document.querySelectorAll(`#${checkboxGroupId} input[type="checkbox"]`);
-            return Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-        }
-        
-        function setSelectedValues(checkboxGroupId, values) {
-            const checkboxes = document.querySelectorAll(`#${checkboxGroupId} input[type="checkbox"]`);
+        function setOptionValues(checkboxesId, selectId, values, defaultValue) {
+            const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
             checkboxes.forEach(cb => {
                 cb.checked = values.includes(cb.value);
             });
-            updateSelectedDisplay(checkboxGroupId, checkboxGroupId.replace('_checkboxes', '_selected'));
+            updateSelectedDisplay(checkboxesId, checkboxesId.replace('_checkboxes', '_selected'), selectId);
+            
+            // Устанавливаем значение по умолчанию после обновления списка
+            setTimeout(() => {
+                const select = document.getElementById(selectId);
+                if (select && defaultValue && select.querySelector(`option[value="${defaultValue}"]`)) {
+                    select.value = defaultValue;
+                }
+            }, 50);
         }
         
-        async function checkPrExists(pr, excludeId = null) {
-            for (const prog of allPrograms) {
-                if (prog.Pr === pr && (excludeId === null || prog.id !== excludeId)) {
-                    return true;
-                }
-            }
-            return false;
+        function getOptionValues(checkboxesId, selectId) {
+            const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
+            const values = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            const select = document.getElementById(selectId);
+            const defaultValue = select && select.value ? select.value : (values[0] || '');
+            return { values, default: defaultValue };
         }
         
         async function loadPrograms() {
@@ -882,41 +819,19 @@
                     document.getElementById('pr_value').value = prog.Pr;
                     document.getElementById('pr_code').value = prog.PrCode;
                     document.getElementById('pr_str').value = prog.PrStr;
-                    document.getElementById('pr_value').disabled = false;
                     
                     if (prog.options) {
-                        setSelectedValues('temp_checkboxes', prog.options.temperature?.values || []);
-                        document.getElementById('temp_default').value = prog.options.temperature?.default || '0°C';
-                        
-                        setSelectedValues('spin_checkboxes', prog.options.spin?.values || []);
-                        document.getElementById('spin_default').value = prog.options.spin?.default || '0 об/мин';
-                        
-                        setSelectedValues('soil_checkboxes', prog.options.soil?.values || []);
-                        document.getElementById('soil_default').value = prog.options.soil?.default || 'Нет';
-                        
-                        setSelectedValues('steam_checkboxes', prog.options.steam?.values || []);
-                        document.getElementById('steam_default').value = prog.options.steam?.default || 'Без пара';
-                        
-                        setSelectedValues('prewash_checkboxes', prog.options.pre_wash?.values || []);
-                        document.getElementById('prewash_default').value = prog.options.pre_wash?.default || 'Нет';
-                        
-                        setSelectedValues('hygiene_checkboxes', prog.options.hygiene?.values || []);
-                        document.getElementById('hygiene_default').value = prog.options.hygiene?.default || 'Нет';
-                        
-                        setSelectedValues('anticrease_checkboxes', prog.options.anti_crease?.values || []);
-                        document.getElementById('anticrease_default').value = prog.options.anti_crease?.default || 'Нет';
-                        
-                        setSelectedValues('nightspin_checkboxes', prog.options.night_spin?.values || []);
-                        document.getElementById('nightspin_default').value = prog.options.night_spin?.default || 'Нет';
-                        
-                        setSelectedValues('rinses_checkboxes', prog.options.extra_rinse?.values || []);
-                        document.getElementById('rinses_default').value = prog.options.extra_rinse?.default || 'Нет';
-                        
-                        setSelectedValues('aquaplus_checkboxes', prog.options.aqua_plus?.values || []);
-                        document.getElementById('aquaplus_default').value = prog.options.aqua_plus?.default || 'Нет';
-                        
-                        setSelectedValues('zoom_checkboxes', prog.options.zoom?.values || []);
-                        document.getElementById('zoom_default').value = prog.options.zoom?.default || 'Нет';
+                        setOptionValues('temp_checkboxes', 'temp_default', prog.options.temperature?.values || [], prog.options.temperature?.default || '');
+                        setOptionValues('spin_checkboxes', 'spin_default', prog.options.spin?.values || [], prog.options.spin?.default || '');
+                        setOptionValues('soil_checkboxes', 'soil_default', prog.options.soil?.values || [], prog.options.soil?.default || '');
+                        setOptionValues('steam_checkboxes', 'steam_default', prog.options.steam?.values || [], prog.options.steam?.default || '');
+                        setOptionValues('prewash_checkboxes', 'prewash_default', prog.options.pre_wash?.values || [], prog.options.pre_wash?.default || '');
+                        setOptionValues('hygiene_checkboxes', 'hygiene_default', prog.options.hygiene?.values || [], prog.options.hygiene?.default || '');
+                        setOptionValues('anticrease_checkboxes', 'anticrease_default', prog.options.anti_crease?.values || [], prog.options.anti_crease?.default || '');
+                        setOptionValues('nightspin_checkboxes', 'nightspin_default', prog.options.night_spin?.values || [], prog.options.night_spin?.default || '');
+                        setOptionValues('rinses_checkboxes', 'rinses_default', prog.options.extra_rinse?.values || [], prog.options.extra_rinse?.default || '');
+                        setOptionValues('aquaplus_checkboxes', 'aquaplus_default', prog.options.aqua_plus?.values || [], prog.options.aqua_plus?.default || '');
+                        setOptionValues('zoom_checkboxes', 'zoom_default', prog.options.zoom?.values || [], prog.options.zoom?.default || '');
                     }
                     
                     mutualExclusions = prog.mutual_exclusion || [];
@@ -966,18 +881,86 @@
             document.getElementById('submitBtn').innerHTML = '✅ Добавить программу';
             document.getElementById('cancelEditBtn').style.display = 'none';
             document.getElementById('addProgramForm').reset();
-            document.getElementById('prError').style.display = 'none';
-            document.getElementById('pr_value').disabled = false;
             
-            document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach((cb, idx) => {
-                const group = cb.closest('.checkbox-group');
-                const firstCheckbox = group.querySelector('input[type="checkbox"]');
-                cb.checked = (cb === firstCheckbox);
+            // Сбрасываем чекбоксы: оставляем только первый вариант по умолчанию
+            optionConfigs.forEach(config => {
+                const checkboxes = document.querySelectorAll(`#${config.checkboxesId} input[type="checkbox"]`);
+                if (checkboxes.length > 0) {
+                    checkboxes.forEach((cb, idx) => {
+                        cb.checked = (idx === 0);
+                    });
+                    updateSelectedDisplay(config.checkboxesId, config.displayId, config.selectId);
+                }
             });
             
             mutualExclusions = [];
             renderMutualList();
-            initSelectedDisplays();
+        }
+        
+        function addMutualExclusion() {
+            const opt1 = document.getElementById('mutual_option1').value;
+            const opt2 = document.getElementById('mutual_option2').value;
+            
+            if (!opt1 || !opt2) {
+                showMessage('Выберите обе опции', 'warning');
+                return;
+            }
+            
+            if (opt1 === opt2) {
+                showMessage('Нельзя добавить взаимоисключение опции с самой собой', 'error');
+                return;
+            }
+            
+            const exists = mutualExclusions.some(m => 
+                (m[0] === opt1 && m[1] === opt2) || 
+                (m[0] === opt2 && m[1] === opt1)
+            );
+            
+            if (exists) {
+                showMessage('Такое взаимоисключение уже добавлено', 'warning');
+                return;
+            }
+            
+            mutualExclusions.push([opt1, opt2]);
+            renderMutualList();
+            
+            document.getElementById('mutual_option1').value = '';
+            document.getElementById('mutual_option2').value = '';
+        }
+        
+        function removeMutualExclusion(index) {
+            mutualExclusions.splice(index, 1);
+            renderMutualList();
+        }
+        
+        function renderMutualList() {
+            const container = document.getElementById('mutualList');
+            if (mutualExclusions.length === 0) {
+                container.innerHTML = '<div style="color: #999; text-align: center;">Нет добавленных взаимоисключений</div>';
+                return;
+            }
+            
+            const optionNames = {
+                'anti_crease': 'Антисминание',
+                'night_spin': 'Ночная стирка',
+                'pre_wash': 'Предстирка',
+                'hygiene': 'Гигиена',
+                'aqua_plus': 'Акваплюс',
+                'zoom': 'Zoom',
+                'steam': 'Пар',
+                'extra_rinse': 'Полоскания'
+            };
+            
+            let html = '';
+            mutualExclusions.forEach((mutual, index) => {
+                html += `
+                    <div class="mutual-item">
+                        <span>${optionNames[mutual[0]] || mutual[0]} ↔ ${optionNames[mutual[1]] || mutual[1]}</span>
+                        <button type="button" class="remove-mutual" onclick="removeMutualExclusion(${index})">✖ Удалить</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
         }
         
         function insertExampleJson() {
@@ -1039,7 +1022,7 @@
                     message += '\n\n✅ Добавлены:\n' + result.added.join('\n');
                 }
                 if (result.skipped && result.skipped.length) {
-                    message += '\n\n⚠️ Пропущены (Pr уже есть):\n' + result.skipped.join('\n');
+                    message += '\n\n⚠️ Пропущены (уже существуют):\n' + result.skipped.join('\n');
                 }
                 if (result.errors && result.errors.length) {
                     message += '\n\n❌ Ошибки:\n' + result.errors.join('\n');
@@ -1091,7 +1074,7 @@
                             message += '\n\n✅ Добавлена: ' + result.added.join('\n');
                         }
                         if (result.skipped && result.skipped.length) {
-                            message += '\n\n⚠️ Пропущена (Pr уже есть): ' + result.skipped.join('\n');
+                            message += '\n\n⚠️ Пропущена (уже существует): ' + result.skipped.join('\n');
                         }
                         showMessage(message, 'success');
                         await loadPrograms();
@@ -1114,80 +1097,43 @@
             const prCode = parseInt(document.getElementById('pr_code').value);
             const prStr = document.getElementById('pr_str').value;
             
-            if (!editMode) {
-                const exists = await checkPrExists(pr);
-                if (exists) {
-                    showMessage('Программа с таким Pr уже существует', 'error');
-                    return;
-                }
-            } else {
-                const exists = await checkPrExists(pr, editProgramId);
-                if (exists) {
-                    showMessage('Программа с таким Pr уже существует', 'error');
-                    return;
-                }
-            }
-            
             const options = {};
             
-            options.temperature = {
-                values: getSelectedValues('temp_checkboxes'),
-                default: document.getElementById('temp_default').value
-            };
+            const tempOpt = getOptionValues('temp_checkboxes', 'temp_default');
+            options.temperature = { values: tempOpt.values, default: tempOpt.default };
             
-            options.spin = {
-                values: getSelectedValues('spin_checkboxes'),
-                default: document.getElementById('spin_default').value
-            };
+            const spinOpt = getOptionValues('spin_checkboxes', 'spin_default');
+            options.spin = { values: spinOpt.values, default: spinOpt.default };
             
-            options.soil = {
-                values: getSelectedValues('soil_checkboxes'),
-                default: document.getElementById('soil_default').value
-            };
+            const soilOpt = getOptionValues('soil_checkboxes', 'soil_default');
+            options.soil = { values: soilOpt.values, default: soilOpt.default };
             
-            options.steam = {
-                values: getSelectedValues('steam_checkboxes'),
-                default: document.getElementById('steam_default').value
-            };
+            const steamOpt = getOptionValues('steam_checkboxes', 'steam_default');
+            options.steam = { values: steamOpt.values, default: steamOpt.default };
             
-            options.pre_wash = {
-                values: getSelectedValues('prewash_checkboxes'),
-                default: document.getElementById('prewash_default').value
-            };
+            const prewashOpt = getOptionValues('prewash_checkboxes', 'prewash_default');
+            options.pre_wash = { values: prewashOpt.values, default: prewashOpt.default };
             
-            const hygieneValues = getSelectedValues('hygiene_checkboxes');
-            options.hygiene = {
-                values: hygieneValues,
-                default: document.getElementById('hygiene_default').value
-            };
-            if (hygieneValues.includes('Есть')) {
+            const hygieneOpt = getOptionValues('hygiene_checkboxes', 'hygiene_default');
+            options.hygiene = { values: hygieneOpt.values, default: hygieneOpt.default };
+            if (hygieneOpt.values.includes('Есть')) {
                 options.hygiene.depends_on = { "option": "temperature", "condition": ">=60" };
             }
             
-            options.anti_crease = {
-                values: getSelectedValues('anticrease_checkboxes'),
-                default: document.getElementById('anticrease_default').value
-            };
+            const anticreaseOpt = getOptionValues('anticrease_checkboxes', 'anticrease_default');
+            options.anti_crease = { values: anticreaseOpt.values, default: anticreaseOpt.default };
             
-            options.night_spin = {
-                values: getSelectedValues('nightspin_checkboxes'),
-                default: document.getElementById('nightspin_default').value
-            };
+            const nightspinOpt = getOptionValues('nightspin_checkboxes', 'nightspin_default');
+            options.night_spin = { values: nightspinOpt.values, default: nightspinOpt.default };
             
-            options.extra_rinse = {
-                values: getSelectedValues('rinses_checkboxes'),
-                default: document.getElementById('rinses_default').value
-            };
+            const rinsesOpt = getOptionValues('rinses_checkboxes', 'rinses_default');
+            options.extra_rinse = { values: rinsesOpt.values, default: rinsesOpt.default };
             
-            options.aqua_plus = {
-                values: getSelectedValues('aquaplus_checkboxes'),
-                default: document.getElementById('aquaplus_default').value
-            };
+            const aquaplusOpt = getOptionValues('aquaplus_checkboxes', 'aquaplus_default');
+            options.aqua_plus = { values: aquaplusOpt.values, default: aquaplusOpt.default };
             
-            options.zoom = {
-                values: getSelectedValues('zoom_checkboxes'),
-                default: document.getElementById('zoom_default').value
-            };
+            const zoomOpt = getOptionValues('zoom_checkboxes', 'zoom_default');
+            options.zoom = { values: zoomOpt.values, default: zoomOpt.default };
             
             const data = {
                 name: name,
@@ -1227,15 +1173,8 @@
             }
         });
         
-        document.getElementById('pr_value').addEventListener('input', async () => {
-            if (!editMode) {
-                const pr = parseInt(document.getElementById('pr_value').value);
-                const exists = await checkPrExists(pr);
-                document.getElementById('prError').style.display = exists ? 'block' : 'none';
-            }
-        });
-        
-        initSelectedDisplays();
+        // Инициализация
+        initOptionListeners();
         renderMutualList();
         loadPrograms();
     </script>
