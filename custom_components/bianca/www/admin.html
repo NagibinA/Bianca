@@ -299,6 +299,25 @@
             border-radius: 8px;
             border: 1px solid #e9ecef;
         }
+        .entry-id-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .entry-id-code {
+            font-family: monospace;
+            font-size: 12px;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -307,7 +326,12 @@
         
         <div class="info">
             📝 Здесь вы можете добавлять, редактировать и удалять программы стирки.<br>
-            🔑 ID программы генерируется автоматически. <strong>Pr</strong> - номер программы (PrNm), <strong>PrCode</strong> - код программы.
+            🔑 <strong>Pr</strong> - номер программы (PrNm), <strong>PrCode</strong> - код программы.
+        </div>
+        
+        <div class="entry-id-info" id="entryIdInfo">
+            <span>🔄 ID интеграции: <span id="entryIdDisplay">не определён</span></span>
+            <button type="button" class="btn-secondary" onclick="changeEntryId()" style="margin: 0; padding: 5px 10px;">✏️ Изменить ID</button>
         </div>
         
         <div class="flex">
@@ -646,25 +670,36 @@
         let allPrograms = [];
         let entryId = null;
         
-        // Получаем entry_id из URL
-        async function getEntryId() {
-            // Пытаемся получить из localStorage или через API
-            if (entryId) return entryId;
+        // Инициализация ID интеграции
+        function initEntryId() {
+            const savedId = localStorage.getItem('bianca_entry_id');
+            if (savedId) {
+                entryId = savedId;
+                document.getElementById('entryIdDisplay').textContent = entryId;
+                loadPrograms();
+            } else {
+                document.getElementById('entryIdDisplay').textContent = 'не определён';
+                changeEntryId();
+            }
+        }
+        
+        function changeEntryId() {
+            const newId = prompt(
+                'Введите ID интеграции Bianca.\n\n' +
+                'Как найти:\n' +
+                '1. Перейдите в Настройки → Устройства и сервисы\n' +
+                '2. Нажмите на интеграцию "Bianca"\n' +
+                '3. Посмотрите на URL в адресной строке:\n' +
+                '   config_entry=01KT2N38HZ39RCQNXW0T6B0J8F\n' +
+                '4. Скопируйте этот ID (часть после config_entry=)',
+                entryId || ''
+            );
             
-            // Получаем список интеграций
-            try {
-                const response = await fetch(`${API_BASE}/api/config/config_entries/flow`);
-                // Это сложно, поэтому пока используем заглушку
-                // В реальности entry_id нужно получать из контекста
-                entryId = localStorage.getItem('bianca_entry_id');
-                if (!entryId) {
-                    entryId = prompt('Введите ID интеграции Bianca (можно найти в URL при редактировании устройства)');
-                    localStorage.setItem('bianca_entry_id', entryId);
-                }
-                return entryId;
-            } catch (e) {
-                console.error('Error getting entry_id:', e);
-                return null;
+            if (newId && newId.trim()) {
+                entryId = newId.trim();
+                localStorage.setItem('bianca_entry_id', entryId);
+                document.getElementById('entryIdDisplay').textContent = entryId;
+                loadPrograms();
             }
         }
         
@@ -803,14 +838,15 @@
         }
         
         async function loadPrograms() {
-            const eId = await getEntryId();
-            if (!eId) {
-                document.getElementById('programsContainer').innerHTML = '<div style="color: red; text-align: center;">Не удалось определить ID интеграции</div>';
+            if (!entryId) {
+                document.getElementById('programsContainer').innerHTML = '<div style="color: red; text-align: center;">ID интеграции не определён</div>';
                 return;
             }
             
+            document.getElementById('programsContainer').innerHTML = '<div class="loading">Загрузка...</div>';
+            
             try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_programs?entry_id=${eId}`);
+                const response = await fetch(`${API_BASE}/api/bianca/get_programs?entry_id=${entryId}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -818,9 +854,11 @@
                     renderProgramsList();
                 } else {
                     showMessage(result.error, 'error');
+                    document.getElementById('programsContainer').innerHTML = '<div style="color: red; text-align: center;">Ошибка: ' + result.error + '</div>';
                 }
             } catch (error) {
                 showMessage('Ошибка загрузки программ: ' + error.message, 'error');
+                document.getElementById('programsContainer').innerHTML = '<div style="color: red; text-align: center;">Ошибка соединения</div>';
             }
         }
         
@@ -858,9 +896,10 @@
         }
         
         async function exportProgramToFile(programId) {
-            const eId = await getEntryId();
+            if (!entryId) return;
+            
             try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}?entry_id=${eId}`);
+                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}?entry_id=${entryId}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -893,9 +932,10 @@
         }
         
         async function loadProgramToEdit(programId) {
-            const eId = await getEntryId();
+            if (!entryId) return;
+            
             try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}?entry_id=${eId}`);
+                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}?entry_id=${entryId}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -961,15 +1001,16 @@
         }
         
         async function deleteProgram(programId, programName) {
+            if (!entryId) return;
+            
             if (confirm(`Удалить программу "${programName}"?`)) {
-                const eId = await getEntryId();
                 try {
                     const response = await fetch(`${API_BASE}/api/bianca/delete_program`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ program_id: programId, entry_id: eId })
+                        body: JSON.stringify({ program_id: programId, entry_id: entryId })
                     });
                     
                     const result = await response.json();
@@ -999,7 +1040,6 @@
             document.getElementById('prError').style.display = 'none';
             document.getElementById('pr_value').disabled = false;
             
-            // Сбрасываем чекбоксы
             document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach((cb, idx) => {
                 const group = cb.closest('.checkbox-group');
                 const firstCheckbox = group.querySelector('input[type="checkbox"]');
@@ -1054,13 +1094,9 @@
                 return;
             }
             
-            const eId = await getEntryId();
-            if (!eId) {
-                showMessage('Не удалось определить ID интеграции', 'error');
-                return;
-            }
+            if (!entryId) return;
             
-            programs.entry_id = eId;
+            programs.entry_id = entryId;
             
             const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
                 method: 'POST',
@@ -1110,15 +1146,11 @@
                         return;
                     }
                     
-                    const eId = await getEntryId();
-                    if (!eId) {
-                        showMessage('Не удалось определить ID интеграции', 'error');
-                        return;
-                    }
+                    if (!entryId) return;
                     
                     const programsData = {
                         "programs": [program],
-                        "entry_id": eId
+                        "entry_id": entryId
                     };
                     
                     const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
@@ -1241,16 +1273,9 @@
                 PrCode: prCode,
                 PrStr: prStr,
                 options: options,
-                mutual_exclusion: mutualExclusions
+                mutual_exclusion: mutualExclusions,
+                entry_id: entryId
             };
-            
-            const eId = await getEntryId();
-            if (!eId) {
-                showMessage('Не удалось определить ID интеграции', 'error');
-                return;
-            }
-            
-            data.entry_id = eId;
             
             if (editMode) {
                 data.program_id = editProgramId;
@@ -1291,7 +1316,7 @@
         
         initSelectedDisplays();
         renderMutualList();
-        loadPrograms();
+        initEntryId();
     </script>
 </body>
 </html>
