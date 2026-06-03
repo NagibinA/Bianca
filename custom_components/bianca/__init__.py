@@ -1,4 +1,4 @@
-"""The Bianca integration - Version 2.2.0."""
+"""The Bianca integration - Version 2.3.0."""
 
 from __future__ import annotations
 
@@ -26,6 +26,19 @@ from .program_manager import ProgramManager
 _LOGGER = logging.getLogger(__name__)
 
 
+def get_program_manager(hass) -> ProgramManager:
+    """Получает ProgramManager из первой найденной конфигурации Bianca."""
+    entries = hass.config_entries.async_entries(DOMAIN)
+    if not entries:
+        return None
+    
+    entry_id = entries[0].entry_id
+    if DOMAIN not in hass.data or entry_id not in hass.data[DOMAIN]:
+        return None
+    
+    return hass.data[DOMAIN][entry_id].get("program_manager")
+
+
 class BiancaAddProgramFullView(HomeAssistantView):
     """Эндпоинт для добавления программы со всеми опциями и взаимоисключениями."""
     
@@ -50,7 +63,12 @@ class BiancaAddProgramFullView(HomeAssistantView):
                 status=400
             )
         
-        program_manager: ProgramManager = hass.data[DOMAIN][data.get("entry_id")]["program_manager"]
+        program_manager = get_program_manager(hass)
+        if not program_manager:
+            return web.json_response(
+                {"success": False, "error": "Интеграция Bianca не найдена"},
+                status=404
+            )
         
         # Проверяем, не существует ли уже программа с таким же Pr
         for prog_id, prog in program_manager.programs.items():
@@ -79,9 +97,13 @@ class BiancaAddMultipleProgramsView(HomeAssistantView):
     async def post(self, request):
         hass = request.app["hass"]
         data = await request.json()
-        entry_id = data.get("entry_id")
         
-        program_manager: ProgramManager = hass.data[DOMAIN][entry_id]["program_manager"]
+        program_manager = get_program_manager(hass)
+        if not program_manager:
+            return web.json_response(
+                {"success": False, "error": "Интеграция Bianca не найдена"},
+                status=404
+            )
         
         # Извлекаем список программ из разных форматов
         programs_to_add = []
@@ -155,12 +177,10 @@ class BiancaGetProgramsView(HomeAssistantView):
 
     async def get(self, request):
         hass = request.app["hass"]
-        entry_id = request.query.get("entry_id")
         
-        if not entry_id:
-            return web.json_response({"success": False, "error": "entry_id required"}, status=400)
-        
-        program_manager: ProgramManager = hass.data[DOMAIN][entry_id]["program_manager"]
+        program_manager = get_program_manager(hass)
+        if not program_manager:
+            return web.json_response({"success": False, "error": "Интеграция Bianca не найдена"}, status=404)
         
         programs_list = []
         for prog_id, prog in program_manager.programs.items():
@@ -184,12 +204,10 @@ class BiancaGetProgramView(HomeAssistantView):
 
     async def get(self, request, program_id):
         hass = request.app["hass"]
-        entry_id = request.query.get("entry_id")
         
-        if not entry_id:
-            return web.json_response({"success": False, "error": "entry_id required"}, status=400)
-        
-        program_manager: ProgramManager = hass.data[DOMAIN][entry_id]["program_manager"]
+        program_manager = get_program_manager(hass)
+        if not program_manager:
+            return web.json_response({"success": False, "error": "Интеграция Bianca не найдена"}, status=404)
         
         program = program_manager.get_program(int(program_id))
         if not program:
@@ -227,7 +245,6 @@ class BiancaUpdateProgramView(HomeAssistantView):
         pr_str = data.get("PrStr")
         options = data.get("options", {})
         mutual_exclusion = data.get("mutual_exclusion", [])
-        entry_id = data.get("entry_id")
         
         if not all([program_id, name, pr, pr_code, pr_str]):
             return web.json_response(
@@ -235,7 +252,9 @@ class BiancaUpdateProgramView(HomeAssistantView):
                 status=400
             )
         
-        program_manager: ProgramManager = hass.data[DOMAIN][entry_id]["program_manager"]
+        program_manager = get_program_manager(hass)
+        if not program_manager:
+            return web.json_response({"success": False, "error": "Интеграция Bianca не найдена"}, status=404)
         
         # Проверяем, не занят ли Pr другой программой
         for pid, prog in program_manager.programs.items():
@@ -268,7 +287,6 @@ class BiancaDeleteProgramView(HomeAssistantView):
         data = await request.json()
         
         program_id = data.get("program_id")
-        entry_id = data.get("entry_id")
         
         if not program_id:
             return web.json_response(
@@ -276,7 +294,9 @@ class BiancaDeleteProgramView(HomeAssistantView):
                 status=400
             )
         
-        program_manager: ProgramManager = hass.data[DOMAIN][entry_id]["program_manager"]
+        program_manager = get_program_manager(hass)
+        if not program_manager:
+            return web.json_response({"success": False, "error": "Интеграция Bianca не найдена"}, status=404)
         
         program = program_manager.get_program(program_id)
         if not program:
@@ -302,7 +322,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if entry.entry_id not in hass.data[DOMAIN]:
         hass.data[DOMAIN][entry.entry_id] = {}
     hass.data[DOMAIN][entry.entry_id]["available"] = False
-    hass.data[DOMAIN][entry.entry_id]["entry_id"] = entry.entry_id
     
     # Инициализируем ProgramManager
     program_manager = ProgramManager(hass)
