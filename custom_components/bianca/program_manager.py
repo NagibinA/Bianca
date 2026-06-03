@@ -1,11 +1,11 @@
-"""Program manager for Bianca integration."""
+"""Program manager for Bianca integration - Version 2.2.0."""
 
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from homeassistant.core import HomeAssistant
 
-from .const import load_programs_config, OPTION_TO_ENTITY, ENTITY_TO_OPTION
+from .const import load_programs_config, PROGRAMS_NEXT_ID
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,53 +18,120 @@ class ProgramManager:
         self.hass = hass
         self.config = load_programs_config(hass)
         self.programs = self.config.get("programs", {})
-        self._current_program = None
+        self.next_id = self.config.get(PROGRAMS_NEXT_ID, 1)
+        self._current_program_id = None
 
-    def get_program(self, program_id: str) -> Optional[Dict[str, Any]]:
+    def _save_config(self):
+        """Save current config to file."""
+        import json
+        import os
+        from .const import PROGRAMS_FILE, DOMAIN
+        
+        config_path = self.hass.config.path(f"custom_components/{DOMAIN}/{PROGRAMS_FILE}")
+        self.config[PROGRAMS_NEXT_ID] = self.next_id
+        self.config["programs"] = self.programs
+        
+        try:
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(self.config, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            _LOGGER.error(f"Failed to save programs config: {e}")
+
+    def get_next_id(self) -> int:
+        """Get next available program ID and increment."""
+        prog_id = self.next_id
+        self.next_id += 1
+        return prog_id
+
+    def get_program(self, program_id: int) -> Optional[Dict[str, Any]]:
         """Get program configuration by ID."""
         return self.programs.get(str(program_id))
 
-    def get_program_by_name(self, name: str) -> Optional[tuple[str, Dict[str, Any]]]:
+    def get_program_by_name(self, name: str) -> Optional[tuple[int, Dict[str, Any]]]:
         """Get program ID and configuration by name."""
         for prog_id, prog in self.programs.items():
             if prog.get("name") == name:
-                return prog_id, prog
+                return int(prog_id), prog
         return None, None
 
-    def get_program_options(self, program_id: str) -> Dict[str, Any]:
+    def get_all_programs(self) -> List[tuple[int, str]]:
+        """Get list of all programs (id, name)."""
+        return [(int(pid), prog.get("name", pid)) for pid, prog in self.programs.items()]
+
+    def add_program(self, name: str, pr: int, pr_code: int, pr_str: str, options: dict, mutual_exclusion: list) -> int:
+        """Add a new program and return its ID."""
+        prog_id = self.get_next_id()
+        self.programs[str(prog_id)] = {
+            "name": name,
+            "Pr": pr,
+            "PrCode": pr_code,
+            "PrStr": pr_str,
+            "options": options,
+            "mutual_exclusion": mutual_exclusion
+        }
+        self._save_config()
+        return prog_id
+
+    def update_program(self, program_id: int, name: str, pr: int, pr_code: int, pr_str: str, options: dict, mutual_exclusion: list) -> bool:
+        """Update an existing program."""
+        if str(program_id) not in self.programs:
+            return False
+        
+        self.programs[str(program_id)] = {
+            "name": name,
+            "Pr": pr,
+            "PrCode": pr_code,
+            "PrStr": pr_str,
+            "options": options,
+            "mutual_exclusion": mutual_exclusion
+        }
+        self._save_config()
+        return True
+
+    def delete_program(self, program_id: int) -> bool:
+        """Delete a program."""
+        if str(program_id) not in self.programs:
+            return False
+        
+        del self.programs[str(program_id)]
+        self._save_config()
+        return True
+
+    def get_pr_value(self, program_id: int) -> int:
+        """Get Pr (PrNm) value for a program."""
+        program = self.get_program(program_id)
+        return program.get("Pr", 0) if program else 0
+
+    def get_pr_code_value(self, program_id: int) -> int:
+        """Get PrCode value for a program."""
+        program = self.get_program(program_id)
+        return program.get("PrCode", 0) if program else 0
+
+    def get_pr_str_value(self, program_id: int) -> str:
+        """Get PrStr value for a program."""
+        program = self.get_program(program_id)
+        return program.get("PrStr", "test") if program else "test"
+
+    def get_program_options(self, program_id: int) -> Dict[str, Any]:
         """Get all options for a program."""
         program = self.get_program(program_id)
         if not program:
             return {}
         return program.get("options", {})
 
-    def get_option_values(self, program_id: str, option_name: str) -> List[str]:
+    def get_option_values(self, program_id: int, option_name: str) -> List[str]:
         """Get available values for a specific option in a program."""
         options = self.get_program_options(program_id)
         option = options.get(option_name, {})
         return option.get("values", [])
 
-    def get_option_default(self, program_id: str, option_name: str) -> str:
+    def get_option_default(self, program_id: int, option_name: str) -> str:
         """Get default value for a specific option in a program."""
         options = self.get_program_options(program_id)
         option = options.get(option_name, {})
         return option.get("default", "")
 
-    def get_pr_code(self, program_id: str) -> int:
-        """Get PrCode for a program."""
-        program = self.get_program(program_id)
-        if not program:
-            return 0
-        return program.get("pr_code", 0)
-
-    def get_pr_str(self, program_id: str) -> str:
-        """Get PrStr for a program (display text on machine)."""
-        program = self.get_program(program_id)
-        if not program:
-            return "test"
-        return program.get("pr_str", "test")
-
-    def is_option_available(self, program_id: str, option_name: str, context: Dict[str, str] = None) -> bool:
+    def is_option_available(self, program_id: int, option_name: str, context: Dict[str, str] = None) -> bool:
         """Check if an option is available for the program."""
         options = self.get_program_options(program_id)
         option = options.get(option_name, {})
@@ -73,7 +140,6 @@ class ProgramManager:
         if not values or (len(values) == 1 and values[0] == "Нет"):
             return False
         
-        # Проверяем зависимости
         depends_on = option.get("depends_on")
         if depends_on and context:
             dep_option = depends_on.get("option")
@@ -92,14 +158,8 @@ class ProgramManager:
         
         return True
 
-    def get_mutual_exclusions(self, program_id: str) -> List[List[str]]:
-        """
-        Get mutual exclusion rules for a program.
-        
-        Поддерживает два формата:
-        1. ["anti_crease", "night_spin"]  (простой массив)
-        2. {"options": ["anti_crease", "night_spin"], "type": "mutual"}  (старый формат)
-        """
+    def get_mutual_exclusions(self, program_id: int) -> List[List[str]]:
+        """Get mutual exclusion rules for a program."""
         program = self.get_program(program_id)
         if not program:
             return []
@@ -109,27 +169,20 @@ class ProgramManager:
         
         for exclusion in exclusions:
             if isinstance(exclusion, list):
-                # Простой формат: ["anti_crease", "night_spin"]
                 result.append(exclusion)
             elif isinstance(exclusion, dict):
-                # Старый формат: {"options": [...], "type": "mutual"}
                 options = exclusion.get("options", [])
                 if options:
                     result.append(options)
         
         return result
 
-    def check_mutual_exclusion(self, program_id: str, option_name: str, value: str, current_state: Dict[str, str]) -> Dict[str, str]:
-        """
-        Check mutual exclusion and return options to disable.
-        
-        Returns a dictionary of {option_key: "Нет"} for options that should be disabled.
-        """
+    def check_mutual_exclusion(self, program_id: int, option_name: str, value: str, current_state: Dict[str, str]) -> Dict[str, str]:
+        """Check mutual exclusion and return options to disable."""
         result = {}
         exclusions = self.get_mutual_exclusions(program_id)
         
         for exclusion in exclusions:
-            # exclusion — это список опций, например ["anti_crease", "night_spin"]
             if option_name in exclusion and value == "Есть":
                 for opt in exclusion:
                     if opt != option_name:
@@ -138,15 +191,11 @@ class ProgramManager:
         return result
 
     @property
-    def current_program(self) -> Optional[str]:
+    def current_program_id(self) -> Optional[int]:
         """Get current program ID."""
-        return self._current_program
+        return self._current_program_id
 
-    @current_program.setter
-    def current_program(self, program_id: str):
+    @current_program_id.setter
+    def current_program_id(self, program_id: int):
         """Set current program ID."""
-        self._current_program = str(program_id)
-
-    def get_all_programs(self) -> List[tuple[str, str]]:
-        """Get list of all programs (id, name)."""
-        return [(pid, prog.get("name", pid)) for pid, prog in self.programs.items()]
+        self._current_program_id = program_id
