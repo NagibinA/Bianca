@@ -930,7 +930,7 @@ class BiancaDashboardStrategy extends HTMLElement {
                                         // ========== ИКОНКА УРОВНЯ ЗАГРЯЗНЕНИЯ ==========
                                         {
                                             type: "icon",
-                                            icon: "phu:duco-1",
+                                            icon: "bianca:duco-1",
                                             style: { 
                                                 left: "25%", 
                                                 top: "44.2%", 
@@ -959,13 +959,13 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                             {% if machine_ready %}
                                                             pointer-events: auto;
                                                             {% if soil_val == 'Мало' %}
-                                                            --card-mod-icon: phu:duco-1;
+                                                            --card-mod-icon: bianca:duco-1;
                                                             --card-mod-icon-color: cyan;
                                                             {% elif soil_val == 'Нормально' %}
-                                                            --card-mod-icon: phu:duco-2;
+                                                            --card-mod-icon: bianca:duco-2;
                                                             --card-mod-icon-color: cyan;
                                                             {% elif soil_val == 'Очень' %}
-                                                            --card-mod-icon: phu:duco-3;
+                                                            --card-mod-icon: bianca:duco-3;
                                                             --card-mod-icon-color: cyan;
                                                             {% else %}
                                                             --card-mod-icon-color: grey;
@@ -973,13 +973,13 @@ class BiancaDashboardStrategy extends HTMLElement {
                                                             {% else %}
                                                             pointer-events: none;
                                                             {% if soil_val == 'Мало' %}
-                                                            --card-mod-icon: phu:duco-1;
+                                                            --card-mod-icon: bianca:duco-1;
                                                             --card-mod-icon-color: cyan;
                                                             {% elif soil_val == 'Нормально' %}
-                                                            --card-mod-icon: phu:duco-2;
+                                                            --card-mod-icon: bianca:duco-2;
                                                             --card-mod-icon-color: cyan;
                                                             {% elif soil_val == 'Очень' %}
-                                                            --card-mod-icon: phu:duco-3;
+                                                            --card-mod-icon: bianca:duco-3;
                                                             --card-mod-icon-color: cyan;
                                                             {% else %}
                                                             --card-mod-icon-color: grey;
