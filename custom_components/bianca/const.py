@@ -1,4 +1,4 @@
-"""Constants for the Bianca integration - Version 2.2.0."""
+"""Constants for the Bianca integration - Version 2.3.0."""
 
 import json
 import os
@@ -8,7 +8,7 @@ from typing import Any
 DOMAIN = "bianca"
 CONF_INTEGRATION_TITLE = "Bianca"
 DEFAULT_SCAN_INTERVAL = 30
-VERSION = "2.2.0"
+VERSION = "2.3.0"
 
 CONF_IP_ADDRESS = "ip_address"
 
@@ -119,19 +119,3 @@ OPTION_VALUE_TO_CODE = {
 }
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def load_programs_config(hass) -> dict[str, Any]:
-    """Загружает конфигурацию программ из JSON файла (синхронно)."""
-    config_path = hass.config.path(f"custom_components/{DOMAIN}/{PROGRAMS_FILE}")
-    
-    if not os.path.exists(config_path):
-        _LOGGER.error(f"Programs config file not found: {config_path}")
-        return {"programs": {}, PROGRAMS_NEXT_ID: 1}
-    
-    try:
-        with open(config_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        _LOGGER.error(f"Failed to load programs config: {e}")
-        return {"programs": {}, PROGRAMS_NEXT_ID: 1}
