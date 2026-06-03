@@ -1,4 +1,4 @@
-"""Select platform for Bianca integration - Version 2.1.0."""
+"""Select platform for Bianca integration - Version 2.2.0."""
 
 from __future__ import annotations
 
@@ -31,12 +31,14 @@ async def async_setup_entry(
     program_manager = ProgramManager(hass)
     hass.data[DOMAIN][entry.entry_id]["program_manager"] = program_manager
     
-    default_program_id = "1"
-    default_program = program_manager.get_program(default_program_id)
-    
-    if not default_program:
-        _LOGGER.error("Failed to load default program configuration")
+    # Получаем первую программу для установки опций по умолчанию
+    programs = program_manager.get_all_programs()
+    if not programs:
+        _LOGGER.error("No programs found in configuration")
         return
+    
+    default_program_id, default_program_name = programs[0]
+    default_program = program_manager.get_program(default_program_id)
     
     program_select = BiancaProgramSelect(entry, hass, program_manager)
     
@@ -80,7 +82,7 @@ class BiancaProgramSelect(SelectEntity):
         
         programs = program_manager.get_all_programs()
         self._attr_options = [name for _, name in programs]
-        self._program_map = {name: pid for pid, name in programs}
+        self._program_map = {name: prog_id for prog_id, name in programs}
         self._attr_current_option = self._attr_options[0] if self._attr_options else None
 
     @property
@@ -93,10 +95,10 @@ class BiancaProgramSelect(SelectEntity):
         
         program_id = self._program_map.get(option)
         if program_id:
-            self._program_manager.current_program = program_id
+            self._program_manager.current_program_id = program_id
             await self._update_all_selects(program_id)
 
-    async def _update_all_selects(self, program_id: str):
+    async def _update_all_selects(self, program_id: int):
         selects = self._hass.data[DOMAIN][self._entry.entry_id].get("selects", {})
         
         temp_select = self._hass.states.get("select.bianca_temperature")
@@ -229,7 +231,7 @@ class BiancaOptionSelect(SelectEntity):
         self._attr_current_option = option
         self.async_write_ha_state()
         
-        program_id = self._program_manager.current_program
+        program_id = self._program_manager.current_program_id
         if program_id:
             current_state = self._get_current_state()
             to_disable = self._program_manager.check_mutual_exclusion(
@@ -252,7 +254,7 @@ class BiancaOptionSelect(SelectEntity):
                 state[opt_key] = select.current_option
         return state
 
-    async def _update_hygiene(self, program_id: str, temperature: str):
+    async def _update_hygiene(self, program_id: int, temperature: str):
         selects = self._hass.data[DOMAIN][self._entry.entry_id].get("selects", {})
         hygiene_select = selects.get("hygiene")
         
