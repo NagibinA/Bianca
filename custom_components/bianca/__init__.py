@@ -1,4 +1,4 @@
-"""The Bianca integration - Version 2.3.0."""
+"""The Bianca integration - Version 2.3.2."""
 
 from __future__ import annotations
 
@@ -132,10 +132,6 @@ class BiancaAddMultipleProgramsView(HomeAssistantView):
                 errors.append(f"Пропущена программа: нет name или Pr")
                 continue
             
-            # Проверяем, не существует ли уже программа с таким же ID
-            # ID генерируется автоматически, поэтому проверка не нужна
-            # Просто добавляем программу
-            
             try:
                 program_manager.add_program(name, pr, pr_code, pr_str, options, mutual_exclusion)
                 added.append(f"{pr} - {name}")
@@ -240,8 +236,6 @@ class BiancaUpdateProgramView(HomeAssistantView):
         program_manager = get_program_manager(hass)
         if not program_manager:
             return web.json_response({"success": False, "error": "Интеграция Bianca не найдена"}, status=404)
-        
-        # Проверка на уникальность Pr УДАЛЕНА - Pr может повторяться
         
         success = program_manager.update_program(program_id, name, pr, pr_code, pr_str, options, mutual_exclusion)
         
@@ -510,7 +504,7 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         except Exception:
             return
     
-    machine_image_src = hass.config.path(f"custom_components/{DOMAIN}/brand/original.png")
+    machine_image_src = hass.config.path(f"custom_components/{DOMAIN}/original.png")
     machine_image_dest = hass.config.path("www/community/bianca/original.png")
     if os.path.exists(machine_image_src):
         try:
@@ -519,7 +513,7 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         except Exception:
             pass
     
-    dashboard_js_src = hass.config.path(f"custom_components/{DOMAIN}/dashboard/bianca-dashboard.js")
+    dashboard_js_src = hass.config.path(f"custom_components/{DOMAIN}/bianca-dashboard.js")
     dashboard_js_dest = hass.config.path("www/community/bianca/bianca-dashboard.js")
     if os.path.exists(dashboard_js_src):
         try:
@@ -529,7 +523,19 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         except Exception:
             pass
     
-    admin_html_src = hass.config.path(f"custom_components/{DOMAIN}/www/admin.html")
+    # Добавляем копирование упрощённого дашборда
+    simple_js_src = hass.config.path(f"custom_components/{DOMAIN}/bianca-simple.js")
+    simple_js_dest = hass.config.path("www/community/bianca/bianca-simple.js")
+    if os.path.exists(simple_js_src):
+        try:
+            if need_copy or not os.path.exists(simple_js_dest):
+                os.makedirs(www_dir, exist_ok=True)
+                await asyncio.to_thread(shutil.copy2, simple_js_src, simple_js_dest)
+                _LOGGER.info("Copied bianca-simple.js to %s", simple_js_dest)
+        except Exception as e:
+            _LOGGER.error("Failed to copy bianca-simple.js: %s", e)
+    
+    admin_html_src = hass.config.path(f"custom_components/{DOMAIN}/admin.html")
     admin_html_dest = hass.config.path("www/community/bianca/admin.html")
     if os.path.exists(admin_html_src):
         try:
@@ -540,10 +546,12 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         except Exception as e:
             _LOGGER.error("Failed to copy admin HTML: %s", e)
     
+    # Регистрируем JS файлы
     if "bianca_assets_registered" not in hass.data:
         try:
             add_extra_js_url(hass, "/local/community/bianca/bianca-icons.js")
             add_extra_js_url(hass, "/local/community/bianca/bianca-dashboard.js")
+            add_extra_js_url(hass, "/local/community/bianca/bianca-simple.js")
         except Exception:
             return
     
