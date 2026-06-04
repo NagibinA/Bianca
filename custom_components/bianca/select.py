@@ -28,7 +28,10 @@ async def async_setup_entry(
     hass.data[DOMAIN].setdefault(entry.entry_id, {})
     hass.data[DOMAIN][entry.entry_id]["async_add_entities"] = async_add_entities
     
-    program_manager = ProgramManager(hass)
+    # Создаём ProgramManager через executor (блокирующий I/O)
+    def create_program_manager():
+        return ProgramManager(hass)
+    program_manager = await hass.async_add_executor_job(create_program_manager)
     hass.data[DOMAIN][entry.entry_id]["program_manager"] = program_manager
     
     # Получаем первую программу для установки опций по умолчанию
