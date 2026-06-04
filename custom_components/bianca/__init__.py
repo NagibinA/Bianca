@@ -513,7 +513,8 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         except Exception:
             pass
     
-    dashboard_js_src = hass.config.path(f"custom_components/{DOMAIN}/bianca-dashboard.js")
+    # ПРАВИЛЬНЫЕ ПУТИ ДЛЯ ФАЙЛОВ ИЗ ПАПКИ dashboard
+    dashboard_js_src = hass.config.path(f"custom_components/{DOMAIN}/dashboard/bianca-dashboard.js")
     dashboard_js_dest = hass.config.path("www/community/bianca/bianca-dashboard.js")
     if os.path.exists(dashboard_js_src):
         try:
@@ -523,8 +524,8 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         except Exception:
             pass
     
-    # Копирование упрощённого дашборда
-    simple_js_src = hass.config.path(f"custom_components/{DOMAIN}/bianca-simple.js")
+    # ПРАВИЛЬНЫЙ ПУТЬ ДЛЯ SIMPLE ДАШБОРДА
+    simple_js_src = hass.config.path(f"custom_components/{DOMAIN}/dashboard/bianca-simple.js")
     simple_js_dest = hass.config.path("www/community/bianca/bianca-simple.js")
     if os.path.exists(simple_js_src):
         try:
