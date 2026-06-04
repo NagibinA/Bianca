@@ -523,7 +523,7 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         except Exception:
             pass
     
-    # Добавляем копирование упрощённого дашборда
+    # Копирование упрощённого дашборда
     simple_js_src = hass.config.path(f"custom_components/{DOMAIN}/bianca-simple.js")
     simple_js_dest = hass.config.path("www/community/bianca/bianca-simple.js")
     if os.path.exists(simple_js_src):
