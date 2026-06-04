@@ -4,7 +4,7 @@
 
 
 
-![Candy Bianca](/bianca.png)
+
 
 
 ## 📝 Описание
