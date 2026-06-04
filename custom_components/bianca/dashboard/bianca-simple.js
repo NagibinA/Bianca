@@ -1,4 +1,4 @@
-// BIANCA SIMPLE DASHBOARD STRATEGY - ТОЧНАЯ КОПИЯ ВАШЕГО YAML
+// BIANCA SIMPLE DASHBOARD STRATEGY - Version 2.4.0
 console.log("Loading bianca-simple.js");
 
 class BiancaSimpleDashboardStrategy extends HTMLElement {
