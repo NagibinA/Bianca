@@ -1,4 +1,4 @@
-"""Select platform for Bianca integration - Version 2.2.0."""
+"""Select platform for Bianca integration - Version 2.3.1."""
 
 from __future__ import annotations
 
@@ -101,8 +101,9 @@ class BiancaProgramSelect(SelectEntity):
     async def _update_all_selects(self, program_id: int):
         selects = self._hass.data[DOMAIN][self._entry.entry_id].get("selects", {})
         
-        temp_select = self._hass.states.get("select.bianca_temperature")
-        current_temperature = temp_select.state if temp_select else "60°C"
+        # Получаем контекст с текущей температурой для проверки зависимостей
+        temp_select = selects.get("temperature")
+        current_temperature = temp_select.current_option if temp_select else "60°C"
         context = {"temperature": current_temperature}
         
         skip_options = ["delay_start"]
@@ -118,10 +119,10 @@ class BiancaProgramSelect(SelectEntity):
             if not is_available or not values or (len(values) == 1 and values[0] == "Нет"):
                 select.update_options(["Нет"], "Нет", available=False)
             else:
-                current = select.current_option
-                if current not in values:
-                    current = default_value if default_value in values else values[0]
-                select.update_options(values, current, available=True)
+                # ВАЖНО: принудительно устанавливаем значение по умолчанию из новой программы
+                # вместо сохранения старого значения
+                new_value = default_value if default_value in values else values[0]
+                select.update_options(values, new_value, available=True)
 
 
 class BiancaDelayStartSelect(SelectEntity):
