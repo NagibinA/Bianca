@@ -22,6 +22,7 @@ from homeassistant.components.http import HomeAssistantView
 
 from .const import DOMAIN, API_ENDPOINT, DEFAULT_SCAN_INTERVAL, PLATFORMS, OPTION_VALUE_TO_CODE, VERSION
 from .program_manager import ProgramManager
+from .card_mod_installer import ensure_card_mod
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -289,6 +290,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ip_address = entry.data[CONF_IP_ADDRESS]
     device_name = entry.data.get("device_name", "Bianca")
     
+    # Установка Card Mod при необходимости
+    await ensure_card_mod(hass)
+    
     # Инициализируем хранилище
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
@@ -513,7 +517,6 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         except Exception:
             pass
     
-    # ПРАВИЛЬНЫЕ ПУТИ ДЛЯ ФАЙЛОВ ИЗ ПАПКИ dashboard
     dashboard_js_src = hass.config.path(f"custom_components/{DOMAIN}/dashboard/bianca-dashboard.js")
     dashboard_js_dest = hass.config.path("www/community/bianca/bianca-dashboard.js")
     if os.path.exists(dashboard_js_src):
@@ -524,7 +527,6 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         except Exception:
             pass
     
-    # ПРАВИЛЬНЫЙ ПУТЬ ДЛЯ SIMPLE ДАШБОРДА
     simple_js_src = hass.config.path(f"custom_components/{DOMAIN}/dashboard/bianca-simple.js")
     simple_js_dest = hass.config.path("www/community/bianca/bianca-simple.js")
     if os.path.exists(simple_js_src):
