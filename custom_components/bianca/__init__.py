@@ -1,4 +1,4 @@
-"""The Bianca integration - Version 2.3.2."""
+"""The Bianca integration - Version 2.4.0."""
 
 from __future__ import annotations
 
@@ -300,8 +300,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN][entry.entry_id] = {}
     hass.data[DOMAIN][entry.entry_id]["available"] = False
     
-    # Инициализируем ProgramManager
-    program_manager = ProgramManager(hass)
+    # Инициализируем ProgramManager через executor (блокирующий I/O)
+    def create_program_manager():
+        return ProgramManager(hass)
+    program_manager = await hass.async_add_executor_job(create_program_manager)
     hass.data[DOMAIN][entry.entry_id]["program_manager"] = program_manager
     
     # Регистрируем кастомные иконки и дашборд
@@ -475,7 +477,7 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         def read_manifest():
             with open(manifest_path, "r") as f:
                 return json.load(f)
-        manifest = await asyncio.to_thread(read_manifest)
+        manifest = await hass.async_add_executor_job(read_manifest)
         current_version = manifest.get("version", VERSION)
     except Exception:
         pass
@@ -488,7 +490,7 @@ async def async_register_assets(hass: HomeAssistant) -> None:
             def read_version():
                 with open(version_file_path, "r") as f:
                     return f.read().strip()
-            saved_version = await asyncio.to_thread(read_version)
+            saved_version = await hass.async_add_executor_job(read_version)
             if saved_version != current_version:
                 need_copy = True
         except Exception:
@@ -498,13 +500,12 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     
     if need_copy:
         try:
-            os.makedirs(www_dir, exist_ok=True)
-            await asyncio.to_thread(shutil.copy2, icons_path, www_icons_path)
-            
-            def write_version():
+            def copy_icons():
+                os.makedirs(www_dir, exist_ok=True)
+                shutil.copy2(icons_path, www_icons_path)
                 with open(version_file_path, "w") as f:
                     f.write(current_version)
-            await asyncio.to_thread(write_version)
+            await hass.async_add_executor_job(copy_icons)
         except Exception:
             return
     
@@ -513,7 +514,9 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     if os.path.exists(machine_image_src):
         try:
             if need_copy or not os.path.exists(machine_image_dest):
-                await asyncio.to_thread(shutil.copy2, machine_image_src, machine_image_dest)
+                def copy_image():
+                    shutil.copy2(machine_image_src, machine_image_dest)
+                await hass.async_add_executor_job(copy_image)
         except Exception:
             pass
     
@@ -522,8 +525,10 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     if os.path.exists(dashboard_js_src):
         try:
             if need_copy or not os.path.exists(dashboard_js_dest):
-                os.makedirs(www_dir, exist_ok=True)
-                await asyncio.to_thread(shutil.copy2, dashboard_js_src, dashboard_js_dest)
+                def copy_dashboard():
+                    os.makedirs(www_dir, exist_ok=True)
+                    shutil.copy2(dashboard_js_src, dashboard_js_dest)
+                await hass.async_add_executor_job(copy_dashboard)
         except Exception:
             pass
     
@@ -532,8 +537,10 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     if os.path.exists(simple_js_src):
         try:
             if need_copy or not os.path.exists(simple_js_dest):
-                os.makedirs(www_dir, exist_ok=True)
-                await asyncio.to_thread(shutil.copy2, simple_js_src, simple_js_dest)
+                def copy_simple():
+                    os.makedirs(www_dir, exist_ok=True)
+                    shutil.copy2(simple_js_src, simple_js_dest)
+                await hass.async_add_executor_job(copy_simple)
                 _LOGGER.info("Copied bianca-simple.js to %s", simple_js_dest)
         except Exception as e:
             _LOGGER.error("Failed to copy bianca-simple.js: %s", e)
@@ -543,8 +550,10 @@ async def async_register_assets(hass: HomeAssistant) -> None:
     if os.path.exists(admin_html_src):
         try:
             if need_copy or not os.path.exists(admin_html_dest):
-                os.makedirs(www_dir, exist_ok=True)
-                await asyncio.to_thread(shutil.copy2, admin_html_src, admin_html_dest)
+                def copy_admin():
+                    os.makedirs(www_dir, exist_ok=True)
+                    shutil.copy2(admin_html_src, admin_html_dest)
+                await hass.async_add_executor_job(copy_admin)
                 _LOGGER.info("Copied admin HTML to %s", admin_html_dest)
         except Exception as e:
             _LOGGER.error("Failed to copy admin HTML: %s", e)
