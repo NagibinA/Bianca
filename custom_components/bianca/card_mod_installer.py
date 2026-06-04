@@ -25,13 +25,12 @@ async def ensure_card_mod(hass):
     
     _LOGGER.info("Card Mod not found, installing...")
     
-    # Пытаемся установить
     success = await _install_card_mod(hass)
     
     if success:
         _LOGGER.info("Card Mod installed successfully")
     else:
-        _LOGGER.warning("Failed to install Card Mod. Install manually from HACS")
+        _LOGGER.warning("Failed to install Card Mod. Please install manually from HACS")
     
     return success
 
@@ -53,11 +52,12 @@ async def _is_card_mod_installed(hass):
     # 2. Проверка через configuration.yaml
     try:
         config_path = hass.config.path("configuration.yaml")
-        with open(config_path, 'r') as f:
-            content = f.read()
-            if "card-mod.js" in content:
-                _LOGGER.debug("Card Mod found in configuration.yaml")
-                return True
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                content = f.read()
+                if "card-mod.js" in content:
+                    _LOGGER.debug("Card Mod found in configuration.yaml")
+                    return True
     except Exception as e:
         _LOGGER.debug(f"Error checking configuration.yaml: {e}")
     
