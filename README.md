@@ -3,8 +3,6 @@
 Интеграция для управления стиральной машиной Candy Bianca через Home Assistant.
 
 
-![Candy Bianca](/bianca.png)
-
 
 
 ## 📝 Описание
