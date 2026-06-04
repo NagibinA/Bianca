@@ -581,6 +581,26 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Remove Bianca integration - cleanup www files."""
+    
+    www_bianca_dir = hass.config.path("www/community/bianca")
+    
+    def remove_files():
+        if os.path.exists(www_bianca_dir):
+            # Удаляем только файлы интеграции, НЕ трогаем bianca-icons.js
+            files_to_remove = ["version.txt", "bianca-dashboard.js", "bianca-simple.js"]
+            for filename in files_to_remove:
+                file_path = os.path.join(www_bianca_dir, filename)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    _LOGGER.debug(f"Removed {file_path}")
+    
+    await hass.async_add_executor_job(remove_files)
+    
+    _LOGGER.debug("Bianca files cleaned up, bianca-icons.js preserved")
+
+
 class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the device."""
 
