@@ -1,4 +1,4 @@
-"""Select platform for Bianca integration - Version 2.3.1."""
+"""Select platform for Bianca integration - Version 2.4.0."""
 
 from __future__ import annotations
 
@@ -119,8 +119,7 @@ class BiancaProgramSelect(SelectEntity):
             if not is_available or not values or (len(values) == 1 and values[0] == "Нет"):
                 select.update_options(["Нет"], "Нет", available=False)
             else:
-                # ВАЖНО: принудительно устанавливаем значение по умолчанию из новой программы
-                # вместо сохранения старого значения
+                # Принудительно устанавливаем значение по умолчанию из новой программы
                 new_value = default_value if default_value in values else values[0]
                 select.update_options(values, new_value, available=True)
 
