@@ -2,8 +2,9 @@
 
 Интеграция для управления стиральной машиной Candy Bianca через Home Assistant.
 
-![Candy Bianca](/bianca.png)
-
+|Dashboard  Bianca | Dashboard  Bianca Simple |
+|--------|----------|
+| ![Candy Bianca](/bianca.png) | ![Candy Bianca](/bianca-simple.png) |
 
 ## 📝 Описание
 
@@ -137,7 +138,10 @@
 
 ---
 ## 📁 Конфигурация программ
+
 Интеграция включает Web страницу для управления программами стирки.
+
+---
 ![Candy Bianca](/bianca-edit.png)
 ### 🛠 Как добавить новую программу или отредактировать существующую
 1. Нажмите иконку 🗄️➕ на дашборде
