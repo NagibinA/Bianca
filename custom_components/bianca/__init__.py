@@ -1,4 +1,4 @@
-"""The Bianca integration - Version 2.4.0."""
+"""The Bianca integration - Version 2.4.2."""
 
 from __future__ import annotations
 
