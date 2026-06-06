@@ -5,7 +5,7 @@
       "name": "Хлопок: Интенсивная стирка",
       "Pr": 1,
       "PrCode": 65,
-      "PrStr": "Cotton Intensive",
+      "PrStr": "Cotton%20Intensive",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C", "60°C", "90°C"],
@@ -288,7 +288,7 @@
       "name": "Perfect 20°C",
       "Pr": 6,
       "PrCode": 11,
-      "PrStr": "Perfect 20",
+      "PrStr": "Perfect%2020",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C"],
@@ -394,7 +394,7 @@
       "name": "Слив + Отжим",
       "Pr": 8,
       "PrCode": 129,
-      "PrStr": "Drain Spin",
+      "PrStr": "Drain%20+%20Spin",
       "options": {
         "temperature": {
           "values": ["0°C"],
@@ -447,7 +447,7 @@
       "name": "Сохранить свежесть",
       "Pr": 13,
       "PrCode": 41,
-      "PrStr": "Fresh Care",
+      "PrStr": "Fresh%20Care",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C"],
@@ -500,7 +500,7 @@
       "name": "Perfect rapid 59 минут",
       "Pr": 15,
       "PrCode": 8,
-      "PrStr": "Rapid 59",
+      "PrStr": "Rapid%2059",
       "options": {
         "temperature": {
           "values": ["0°C", "20°C", "30°C", "40°C", "60°C"],
