@@ -1,4 +1,4 @@
-"""Card Mod installer for Bianca integration."""
+"""Card Mod installer for Bianca integration.  2.4.2"""
 
 import logging
 import os
