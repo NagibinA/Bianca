@@ -589,7 +589,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     def remove_files():
         if os.path.exists(www_bianca_dir):
             # Удаляем только файлы интеграции, НЕ трогаем bianca-icons.js
-            files_to_remove = ["version.txt", "bianca-dashboard.js", "bianca-simple.js"]
+            files_to_remove = ["version.txt", "bianca-dashboard.js", "bianca-simple.js", "admin.html"]
             for filename in files_to_remove:
                 file_path = os.path.join(www_bianca_dir, filename)
                 if os.path.exists(file_path):
