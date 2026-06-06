@@ -1,4 +1,4 @@
-"""Binary sensor for Bianca device availability via ping - Version 2.1.0."""
+"""Binary sensor for Bianca device availability via ping - Version 2.4.2."""
 
 from __future__ import annotations
 
