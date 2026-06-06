@@ -1,4 +1,4 @@
-"""Select platform for Bianca integration - Version 2.4.0."""
+"""Select platform for Bianca integration - Version 2.4.2."""
 
 from __future__ import annotations
 
