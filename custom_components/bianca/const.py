@@ -1,4 +1,4 @@
-"""Constants for the Bianca integration - Version 2.4.0."""
+"""Constants for the Bianca integration - Version 2.4.2."""
 
 import json
 import os
@@ -8,7 +8,7 @@ from typing import Any
 DOMAIN = "bianca"
 CONF_INTEGRATION_TITLE = "Bianca"
 DEFAULT_SCAN_INTERVAL = 30
-VERSION = "2.4.0"
+VERSION = "2.4.2"
 
 CONF_IP_ADDRESS = "ip_address"
 
