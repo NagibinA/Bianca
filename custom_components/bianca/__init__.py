@@ -545,7 +545,7 @@ async def async_register_assets(hass: HomeAssistant) -> None:
         except Exception as e:
             _LOGGER.error("Failed to copy bianca-simple.js: %s", e)
     
-    admin_html_src = hass.config.path(f"custom_components/{DOMAIN}/admin.html")
+    admin_html_src = hass.config.path(f"custom_components/{DOMAIN}/www/admin.html")
     admin_html_dest = hass.config.path("www/community/bianca/admin.html")
     if os.path.exists(admin_html_src):
         try:
