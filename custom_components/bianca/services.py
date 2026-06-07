@@ -5,7 +5,7 @@ import async_timeout
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
 
-from .const import OPTION_VALUE_TO_CODE
+from .const import DOMAIN, OPTION_VALUE_TO_CODE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -15,6 +15,19 @@ async def async_register_services(hass: HomeAssistant, program_manager):
     
     async def handle_start_washing(call):
         """Handle start washing service."""
+        
+        # Получаем entry_id
+        entry_id = None
+        for entry in hass.config_entries.async_entries(DOMAIN):
+            entry_id = entry.entry_id
+            break
+        
+        # Сохраняем user_id из контекста
+        user_id = call.context.user_id
+        if user_id and entry_id and DOMAIN in hass.data and entry_id in hass.data[DOMAIN]:
+            hass.data[DOMAIN][entry_id]["started_by_user"] = user_id
+            _LOGGER.debug(f"Washing started by user_id: {user_id}")
+        
         program_select = hass.states.get("select.bianca_program")
         program_name = program_select.state if program_select else None
         
@@ -69,7 +82,7 @@ async def async_register_services(hass: HomeAssistant, program_manager):
         }.get(delay_str, 0)
         
         ip_address = None
-        for entry in hass.config_entries.async_entries("bianca"):
+        for entry in hass.config_entries.async_entries(DOMAIN):
             ip_address = entry.data.get("ip_address")
             break
         
@@ -121,7 +134,7 @@ async def async_register_services(hass: HomeAssistant, program_manager):
     async def handle_stop_washing(call):
         """Handle stop washing service."""
         ip_address = None
-        for entry in hass.config_entries.async_entries("bianca"):
+        for entry in hass.config_entries.async_entries(DOMAIN):
             ip_address = entry.data.get("ip_address")
             break
         
