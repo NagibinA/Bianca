@@ -62,6 +62,7 @@
         .btn-example { background: #17a2b8; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .btn-example:hover { background: #138496; }
         .convert-info { font-size: 12px; color: #28a745; margin-top: 5px; }
+        .hex-preview { font-size: 11px; color: #666; margin-top: 5px; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -71,7 +72,7 @@
     <div class="info">
         📝 Здесь вы можете добавлять, редактировать и удалять программы стирки.<br>
         🔑 <strong>Pr</strong> - номер программы (PrNm), <strong>PrCode</strong> - код программы.<br>
-        🧹 <strong>PrStr</strong> - можно вводить русскими буквами! Они автоматически преобразуются в HEX-коды.<br>
+        🧹 <strong>Текст на дисплее</strong> - вводите русскими буквами! Они автоматически преобразуются в HEX-коды.<br>
         ⚠️ Отсутствующие буквы (Л, Й, Щ, Ъ, Ы, Ь, Э, Ю) заменяются на пробел (на дисплее +).
     </div>
 
@@ -100,9 +101,10 @@
                     <input type="number" id="pr_code" required placeholder="Пример: 15">
                 </div>
                 <div class="form-group">
-                    <label>PrStr (текст на дисплее):</label>
-                    <input type="text" id="pr_str" required placeholder="Пример: СТИРКА или Jeans">
+                    <label>Текст на дисплее (введите русскими буквами):</label>
+                    <input type="text" id="pr_str_raw" required placeholder="Пример: СТИРКА или Jeans">
                     <div class="convert-info" id="convertInfo"></div>
+                    <div class="hex-preview" id="hexPreview">HEX: </div>
                     <div class="example-buttons">
                         <button type="button" class="btn-example" onclick="setExample('СТИРКА')">СТИРКА</button>
                         <button type="button" class="btn-example" onclick="setExample('МОЛОКО')">МОЛОКО</button>
@@ -312,7 +314,6 @@
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit" class="btn-primary" id="submitBtn">✅ Добавить программу</button>
                     <button type="button" class="btn-secondary" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">❌ Отмена</button>
-                    <button type="button" class="btn-secondary" onclick="convertPrStr()">🔄 Конвертировать PrStr</button>
                 </div>
             </form>
 
@@ -324,7 +325,7 @@
         <h2>📦 Массовое добавление программ</h2>
         <div class="info">
             Вставьте JSON с программами в формате:<br>
-            <code>{"programs": [{"name": "Джинсы", "Pr": 17, "PrCode": 15, "PrStr": "Jeans", "options": {...}}]}</code>
+            <code>{"programs": [{"name": "Джинсы", "Pr": 17, "PrCode": 15, "PrStr": "Jeans", "PrStrRaw": "Джинсы", "options": {...}}]}</code>
         </div>
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <button type="button" class="btn-secondary" onclick="insertExampleJson()">📋 Вставить пример JSON</button>
@@ -383,28 +384,16 @@
         return result;
     }
 
-    function convertPrStr() {
-        const input = document.getElementById('pr_str');
-        const original = input.value;
-        const converted = convertRussianToHex(original);
-        if (original !== converted) {
-            input.value = converted;
-            const info = document.getElementById('convertInfo');
-            info.innerHTML = `🔁 Преобразовано: "${original}" → "${converted}"`;
-            info.style.color = '#28a745';
-            setTimeout(() => { info.innerHTML = ''; }, 3000);
-            showMessage(`Преобразовано: ${original} → ${converted}`, 'success');
-        } else {
-            const info = document.getElementById('convertInfo');
-            info.innerHTML = `✓ Строка не требует преобразования`;
-            info.style.color = '#28a745';
-            setTimeout(() => { info.innerHTML = ''; }, 2000);
-        }
+    function updateHexPreview() {
+        const input = document.getElementById('pr_str_raw');
+        const raw = input.value;
+        const hex = convertRussianToHex(raw);
+        document.getElementById('hexPreview').innerHTML = `HEX: ${hex || '(пусто)'}`;
     }
 
     function setExample(text) {
-        document.getElementById('pr_str').value = text;
-        convertPrStr();
+        document.getElementById('pr_str_raw').value = text;
+        updateHexPreview();
     }
 
     const API_BASE = window.location.origin;
@@ -607,8 +596,9 @@
                 document.getElementById('pr_value').value = prog.Pr;
                 document.getElementById('pr_code').value = prog.PrCode;
                 // Показываем PrStrRaw если есть, иначе PrStr
-                const prStrValue = prog.PrStrRaw || prog.PrStr;
-                document.getElementById('pr_str').value = prStrValue;
+                const prStrRawValue = prog.PrStrRaw || prog.PrStr;
+                document.getElementById('pr_str_raw').value = prStrRawValue;
+                updateHexPreview();
                 if (prog.options) {
                     setOptionValues('temp_checkboxes', 'temp_default', prog.options.temperature?.values || [], prog.options.temperature?.default || '');
                     setOptionValues('spin_checkboxes', 'spin_default', prog.options.spin?.values || [], prog.options.spin?.default || '');
@@ -662,6 +652,7 @@
         document.getElementById('submitBtn').innerHTML = '✅ Добавить программу';
         document.getElementById('cancelEditBtn').style.display = 'none';
         document.getElementById('addProgramForm').reset();
+        updateHexPreview();
         optionConfigs.forEach(config => {
             const checkboxes = document.querySelectorAll(`#${config.checkboxesId} input[type="checkbox"]`);
             if (checkboxes.length > 0) {
@@ -782,9 +773,9 @@
         const name = document.getElementById('program_name').value;
         const pr = parseInt(document.getElementById('pr_value').value);
         const prCode = parseInt(document.getElementById('pr_code').value);
-        const prStrRaw = document.getElementById('pr_str').value;
-        let prStr = convertRussianToHex(prStrRaw);
-        document.getElementById('pr_str').value = prStr;
+        const prStrRaw = document.getElementById('pr_str_raw').value;
+        const prStr = convertRussianToHex(prStrRaw);
+        
         const options = {};
         const tempOpt = getOptionValues('temp_checkboxes', 'temp_default');
         options.temperature = { values: tempOpt.values, default: tempOpt.default };
@@ -809,6 +800,7 @@
         options.aqua_plus = { values: aquaplusOpt.values, default: aquaplusOpt.default };
         const zoomOpt = getOptionValues('zoom_checkboxes', 'zoom_default');
         options.zoom = { values: zoomOpt.values, default: zoomOpt.default };
+        
         const data = { 
             name, 
             Pr: pr, 
@@ -836,7 +828,8 @@
     initOptionListeners();
     renderMutualList();
     loadPrograms();
-    document.getElementById('pr_str').addEventListener('blur', convertPrStr);
+    document.getElementById('pr_str_raw').addEventListener('input', updateHexPreview);
+    document.getElementById('pr_str_raw').addEventListener('blur', updateHexPreview);
 </script>
 </body>
 </html>
