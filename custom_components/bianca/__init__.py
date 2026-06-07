@@ -23,19 +23,6 @@ from .services import async_register_services
 _LOGGER = logging.getLogger(__name__)
 
 
-def get_program_manager(hass) -> ProgramManager:
-    """Получает ProgramManager из первой найденной конфигурации Bianca."""
-    entries = hass.config_entries.async_entries(DOMAIN)
-    if not entries:
-        return None
-    
-    entry_id = entries[0].entry_id
-    if DOMAIN not in hass.data or entry_id not in hass.data[DOMAIN]:
-        return None
-    
-    return hass.data[DOMAIN][entry_id].get("program_manager")
-
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Bianca from a config entry."""
     ip_address = entry.data[CONF_IP_ADDRESS]
