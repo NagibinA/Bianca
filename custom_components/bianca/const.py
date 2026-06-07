@@ -1,4 +1,4 @@
-"""Constants for the Bianca integration - Version 2.4.2."""
+"""Constants for the Bianca integration - Version 2.4.3."""
 
 import json
 import os
@@ -8,7 +8,7 @@ from typing import Any
 DOMAIN = "bianca"
 CONF_INTEGRATION_TITLE = "Bianca"
 DEFAULT_SCAN_INTERVAL = 30
-VERSION = "2.4.2"
+VERSION = "2.4.3"
 
 CONF_IP_ADDRESS = "ip_address"
 
@@ -69,10 +69,10 @@ PR_MAP = {
 # PrPh (program phase) mapping
 PRPH_MAP = {
     "0": "Остановлено",
-    "1": "Предварительная стирка",
+    "1": "Пред. стирка",
     "2": "Стирка",
     "3": "Полоскание",
-    "4": "Последнее полоскание",
+    "4": "Посл. полоскание",
     "5": "Конец",
     "7": "Ошибка",
     "8": "Пар",

@@ -1,4 +1,4 @@
-"""Select platform for Bianca integration - Version 2.4.2."""
+"""Select platform for Bianca integration - Version 2.4.3."""
 
 from __future__ import annotations
 
@@ -104,7 +104,6 @@ class BiancaProgramSelect(SelectEntity):
     async def _update_all_selects(self, program_id: int):
         selects = self._hass.data[DOMAIN][self._entry.entry_id].get("selects", {})
         
-        # Получаем контекст с текущей температурой для проверки зависимостей
         temp_select = selects.get("temperature")
         current_temperature = temp_select.current_option if temp_select else "60°C"
         context = {"temperature": current_temperature}
@@ -122,7 +121,6 @@ class BiancaProgramSelect(SelectEntity):
             if not is_available or not values or (len(values) == 1 and values[0] == "Нет"):
                 select.update_options(["Нет"], "Нет", available=False)
             else:
-                # Принудительно устанавливаем значение по умолчанию из новой программы
                 new_value = default_value if default_value in values else values[0]
                 select.update_options(values, new_value, available=True)
 
@@ -141,7 +139,7 @@ class BiancaDelayStartSelect(SelectEntity):
         
         self._attr_options = [
             "Нет", "30 мин", "1 час", "1 час 30 мин", "2 часа", "2 часа 30 мин",
-            "3 часа", "3 часа 30 мин", "4 часа", "4 час 30 мин", "5 часов", "5 часов 30 мин",
+            "3 часа", "3 часа 30 мин", "4 часа", "4 часа 30 мин", "5 часов", "5 часов 30 мин",
             "6 часов", "6 часов 30 мин", "7 часов", "7 часов 30 мин", "8 часов", "8 часов 30 мин",
             "9 часов", "9 часов 30 мин", "10 часов", "10 часов 30 мин", "11 часов", "11 часов 30 мин",
             "12 часов", "12 часов 30 мин", "13 часов", "13 часов 30 мин", "14 часов", "14 часов 30 мин",

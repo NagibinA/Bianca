@@ -1,4 +1,4 @@
-"""Card Mod installer for Bianca integration.  2.4.2"""
+"""Card Mod installer for Bianca integration."""
 
 import logging
 import os
@@ -11,7 +11,7 @@ _LOGGER = logging.getLogger(__name__)
 
 CARD_MOD_URL = "https://raw.githubusercontent.com/thomasloven/lovelace-card-mod/master/card-mod.js"
 CARD_MOD_FILE = "card-mod.js"
-CARD_MOD_PATH = "community/lovelace-card-mod"  # правильный путь без www/
+CARD_MOD_PATH = "community/lovelace-card-mod"
 
 
 async def ensure_card_mod(hass):
@@ -144,7 +144,7 @@ async def _install_card_mod(hass):
 async def _register_card_mod_resource(hass):
     """Регистрирует Card Mod как ресурс Lovelace через API."""
     
-    resource_url = f"/local/{CARD_MOD_PATH}/{CARD_MOD_FILE}"  # /local/community/lovelace-card-mod/card-mod.js
+    resource_url = f"/local/{CARD_MOD_PATH}/{CARD_MOD_FILE}"
     
     # Ждём готовности Lovelace
     for _ in range(10):

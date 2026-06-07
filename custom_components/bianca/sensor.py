@@ -1,4 +1,4 @@
-"""Sensor platform for Bianca integration - Version 2.4.2."""
+"""Sensor platform for Bianca integration - Version 2.4.3."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from .const import (
     LANG_MAP,
     SOIL_LEVEL_MAP,
 )
-from . import BiancaDataUpdateCoordinator
+from .coordinator import BiancaDataUpdateCoordinator
 
 
 async def async_setup_entry(

@@ -1,4 +1,4 @@
-"""Config flow for Bianca integration - Version 2.4.2."""
+"""Config flow for Bianca integration - Version 2.4.3."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Program manager for Bianca integration - Version 2.4.2."""
+"""Program manager for Bianca integration - Version 2.4.3."""
 
 import json
 import os
@@ -23,9 +23,12 @@ class ProgramManager:
         self.programs = self.config.get("programs", {})
         self.next_id = self.config.get(PROGRAMS_NEXT_ID, 1)
         self._current_program_id = None
+        
+        # Миграция: добавляем PrStrRaw для старых программ
+        self.migrate_add_pr_str_raw()
 
     def _load_config(self) -> dict:
-        """Загружает конфигурацию из файла."""
+        """Загружает конфигурацию из файла (синхронно, вызывается через executor)."""
         if not os.path.exists(self.config_path):
             return {"programs": {}, PROGRAMS_NEXT_ID: 1}
         
@@ -37,7 +40,7 @@ class ProgramManager:
             return {"programs": {}, PROGRAMS_NEXT_ID: 1}
 
     def _save_config(self):
-        """Сохраняет конфигурацию в файл."""
+        """Сохраняет конфигурацию в файл (синхронно, вызывается через executor)."""
         self.config[PROGRAMS_NEXT_ID] = self.next_id
         self.config["programs"] = self.programs
         
@@ -46,6 +49,19 @@ class ProgramManager:
                 json.dump(self.config, f, ensure_ascii=False, indent=2)
         except Exception as e:
             _LOGGER.error(f"Failed to save programs config: {e}")
+
+    def migrate_add_pr_str_raw(self):
+        """Миграция: добавляет поле PrStrRaw для существующих программ."""
+        modified = False
+        for prog_id, prog in self.programs.items():
+            if "PrStrRaw" not in prog:
+                prog["PrStrRaw"] = prog.get("PrStr", "")
+                modified = True
+                _LOGGER.debug(f"Added PrStrRaw for program {prog_id}")
+        
+        if modified:
+            self._save_config()
+            _LOGGER.info("Migrated programs.json: added PrStrRaw field")
 
     def get_next_id(self) -> int:
         """Get next available program ID and increment."""
@@ -75,7 +91,7 @@ class ProgramManager:
         """Get list of all programs (id, name)."""
         return [(int(pid), prog.get("name", pid)) for pid, prog in self.programs.items()]
 
-    def add_program(self, name: str, pr: int, pr_code: int, pr_str: str, options: dict, mutual_exclusion: list) -> int:
+    def add_program(self, name: str, pr: int, pr_code: int, pr_str: str, pr_str_raw: str, options: dict, mutual_exclusion: list) -> int:
         """Add a new program and return its ID."""
         prog_id = self.get_next_id()
         self.programs[str(prog_id)] = {
@@ -83,13 +99,14 @@ class ProgramManager:
             "Pr": pr,
             "PrCode": pr_code,
             "PrStr": pr_str,
+            "PrStrRaw": pr_str_raw,
             "options": options,
             "mutual_exclusion": mutual_exclusion
         }
         self._save_config()
         return prog_id
 
-    def update_program(self, program_id: int, name: str, pr: int, pr_code: int, pr_str: str, options: dict, mutual_exclusion: list) -> bool:
+    def update_program(self, program_id: int, name: str, pr: int, pr_code: int, pr_str: str, pr_str_raw: str, options: dict, mutual_exclusion: list) -> bool:
         """Update an existing program."""
         if str(program_id) not in self.programs:
             return False
@@ -99,6 +116,7 @@ class ProgramManager:
             "Pr": pr,
             "PrCode": pr_code,
             "PrStr": pr_str,
+            "PrStrRaw": pr_str_raw,
             "options": options,
             "mutual_exclusion": mutual_exclusion
         }
@@ -128,6 +146,11 @@ class ProgramManager:
         """Get PrStr value for a program."""
         program = self.get_program(program_id)
         return program.get("PrStr", "test") if program else "test"
+
+    def get_pr_str_raw_value(self, program_id: int) -> str:
+        """Get PrStrRaw value for a program."""
+        program = self.get_program(program_id)
+        return program.get("PrStrRaw", "") if program else ""
 
     def get_program_options(self, program_id: int) -> Dict[str, Any]:
         """Get all options for a program."""
