@@ -239,3 +239,16 @@ class ProgramManager:
     def current_program_id(self, program_id: int):
         """Set current program ID."""
         self._current_program_id = program_id
+
+
+def get_program_manager_from_hass(hass) -> Optional[ProgramManager]:
+    """Получает ProgramManager из первой найденной конфигурации Bianca."""
+    entries = hass.config_entries.async_entries(DOMAIN)
+    if not entries:
+        return None
+    
+    entry_id = entries[0].entry_id
+    if DOMAIN not in hass.data or entry_id not in hass.data[DOMAIN]:
+        return None
+    
+    return hass.data[DOMAIN][entry_id].get("program_manager")
