@@ -1,6 +1,7 @@
-"""Sensor platform for Bianca integration - Version 2.4.3."""
+"""Sensor platform for Bianca integration - Version 2.5.0."""
 
 from __future__ import annotations
+from datetime import timedelta
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -15,6 +16,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import (
     DOMAIN,
@@ -60,6 +62,7 @@ async def async_setup_entry(
         BiancaRinseSensor(coordinator, entry, hass),
         BiancaAquaPlusSensor(coordinator, entry, hass),
         BiancaZoomSensor(coordinator, entry, hass),
+        BiancaFinishTimeSensor(coordinator, entry, hass),
     ]
     
     async_add_entities(entities)
@@ -267,6 +270,7 @@ class BiancaTemperatureSensor(BiancaBaseSensor):
         except (ValueError, TypeError):
             return value
 
+
 class BiancaSpinSpeedSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(
@@ -451,3 +455,36 @@ class BiancaZoomSensor(BiancaBaseSensor):
     def native_value(self):
         value = super().native_value
         return "Включен" if value == "1" else "Выключен"
+
+
+class BiancaFinishTimeSensor(BiancaBaseSensor):
+    """Sensor for washing completion time."""
+
+    def __init__(self, coordinator, entry, hass):
+        super().__init__(
+            coordinator, entry, hass, "RemTime", "finish_time", 
+            "Время окончания", "mdi:timer-sand",
+            device_class=SensorDeviceClass.TIMESTAMP
+        )
+
+    @property
+    def native_value(self):
+        if self.coordinator.data is None:
+            return None
+        
+        machine_state = self.coordinator.data.get("MachMd")
+        if machine_state not in ["2", "3"]:
+            return None
+        
+        rem_time = self.coordinator.data.get("RemTime")
+        if rem_time is None:
+            return None
+        
+        try:
+            seconds = int(rem_time)
+            if seconds <= 0:
+                return None
+            finish_time = dt_util.now() + timedelta(seconds=seconds)
+            return finish_time.isoformat()
+        except (ValueError, TypeError):
+            return None
