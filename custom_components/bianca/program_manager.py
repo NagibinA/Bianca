@@ -1,4 +1,4 @@
-"""Program manager for Bianca integration - Version 2.4.3."""
+"""Program manager for Bianca integration - Version 2.5.0."""
 
 import json
 import os
