@@ -1,4 +1,4 @@
-"""The Bianca integration - Version 2.4.3."""
+"""The Bianca integration - Version 2.5.0."""
 
 from __future__ import annotations
 
@@ -50,6 +50,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = BiancaDataUpdateCoordinator(hass, ip_address, entry.entry_id)
     hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
     hass.data[DOMAIN][entry.entry_id]["ip_address"] = ip_address
+    hass.data[DOMAIN][entry.entry_id]["started_by_user"] = None
     
     # Пытаемся получить данные
     try:
