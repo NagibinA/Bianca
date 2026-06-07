@@ -5,1178 +5,838 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bianca - Управление программами</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1, h2, h3 {
-            color: #333;
-            margin-top: 0;
-        }
-        .flex {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-        }
-        .programs-list {
-            flex: 1;
-            min-width: 300px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-        }
-        .editor {
-            flex: 2;
-            min-width: 500px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-        input, select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
-            resize: vertical;
-        }
-        .option-card {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #e9ecef;
-        }
-        .option-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 5px;
-        }
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .checkbox-group label {
-            display: inline-flex;
-            align-items: center;
-            font-weight: normal;
-            margin: 0;
-            cursor: pointer;
-        }
-        .checkbox-group input {
-            width: auto;
-            margin-right: 5px;
-        }
-        .default-select {
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .default-select label {
-            margin: 0;
-            font-weight: normal;
-        }
-        .default-select select {
-            width: auto;
-            min-width: 150px;
-        }
-        .mutual-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-        .mutual-row select {
-            flex: 1;
-            min-width: 200px;
-        }
-        .btn-primary {
-            background: #4CAF50;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-            margin-top: 20px;
-        }
-        .btn-primary:hover {
-            background: #45a049;
-        }
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .btn-danger:hover {
-            background: #c82333;
-        }
-        .btn-add-mutual {
-            background: #6c757d;
-            width: auto;
-            margin-top: 0;
-            padding: 8px 15px;
-        }
-        .btn-add-mutual:hover {
-            background: #5a6268;
-        }
-        .message {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-            display: none;
-        }
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-        .info {
-            background: #d1ecf1;
-            color: #0c5460;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        hr {
-            margin: 20px 0;
-        }
-        .mutual-list {
-            margin-top: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-        }
-        .mutual-item {
-            background: white;
-            padding: 8px;
-            margin-bottom: 5px;
-            border-radius: 3px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #ddd;
-        }
-        .remove-mutual {
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            padding: 2px 8px;
-            cursor: pointer;
-            width: auto;
-            margin: 0;
-        }
-        .remove-mutual:hover {
-            background: #c82333;
-        }
-        .selected-values {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-        .selected-values span {
-            color: #28a745;
-            font-weight: bold;
-        }
-        .program-item {
-            background: white;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            border: 1px solid #ddd;
-            transition: all 0.2s;
-        }
-        .program-item:hover {
-            background: #e9ecef;
-            border-color: #4CAF50;
-        }
-        .program-item.active {
-            background: #d4edda;
-            border-color: #4CAF50;
-        }
-        .program-info {
-            flex: 1;
-        }
-        .program-name {
-            font-weight: bold;
-        }
-        .program-id {
-            font-size: 12px;
-            color: #666;
-        }
-        .program-actions {
-            display: flex;
-            gap: 8px;
-        }
-        .edit-mode-badge {
-            background: #ffc107;
-            color: #333;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-left: 10px;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-        .batch-section {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-        }
-        .import-section {
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-        }
-        .note {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2, h3 { color: #333; margin-top: 0; }
+        .flex { display: flex; gap: 30px; flex-wrap: wrap; }
+        .programs-list { flex: 1; min-width: 300px; background: #f8f9fa; border-radius: 8px; padding: 15px; }
+        .editor { flex: 2; min-width: 500px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: monospace; font-size: 12px; resize: vertical; }
+        .option-card { background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 20px; border: 1px solid #e9ecef; }
+        .option-title { font-weight: bold; margin-bottom: 10px; color: #333; border-bottom: 1px solid #dee2e6; padding-bottom: 5px; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
+        .checkbox-group label { display: inline-flex; align-items: center; font-weight: normal; margin: 0; cursor: pointer; }
+        .checkbox-group input { width: auto; margin-right: 5px; }
+        .default-select { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+        .default-select label { margin: 0; font-weight: normal; }
+        .default-select select { width: auto; min-width: 150px; }
+        .mutual-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .mutual-row select { flex: 1; min-width: 200px; }
+        .btn-primary { background: #4CAF50; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 20px; }
+        .btn-primary:hover { background: #45a049; }
+        .btn-secondary { background: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-danger { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-add-mutual { background: #6c757d; width: auto; margin-top: 0; padding: 8px 15px; }
+        .btn-add-mutual:hover { background: #5a6268; }
+        .message { margin-top: 20px; padding: 10px; border-radius: 5px; display: none; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .info { background: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 14px; }
+        hr { margin: 20px 0; }
+        .mutual-list { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; }
+        .mutual-item { background: white; padding: 8px; margin-bottom: 5px; border-radius: 3px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; }
+        .remove-mutual { background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 8px; cursor: pointer; width: auto; margin: 0; }
+        .remove-mutual:hover { background: #c82333; }
+        .selected-values { font-size: 12px; color: #666; margin-top: 5px; }
+        .selected-values span { color: #28a745; font-weight: bold; }
+        .program-item { background: white; padding: 12px; margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #ddd; transition: all 0.2s; }
+        .program-item:hover { background: #e9ecef; border-color: #4CAF50; }
+        .program-item.active { background: #d4edda; border-color: #4CAF50; }
+        .program-info { flex: 1; }
+        .program-name { font-weight: bold; }
+        .program-id { font-size: 12px; color: #666; }
+        .program-actions { display: flex; gap: 8px; }
+        .edit-mode-badge { background: #ffc107; color: #333; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+        .loading { text-align: center; padding: 20px; color: #666; }
+        .batch-section { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; }
+        .import-section { margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; }
+        .note { font-size: 12px; color: #666; margin-top: 5px; }
+        .example-buttons { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .btn-example { background: #17a2b8; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-example:hover { background: #138496; }
+        .convert-info { font-size: 12px; color: #28a745; margin-top: 5px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Bianca - Управление программами</h1>
-        
-        <div class="info">
-            📝 Здесь вы можете добавлять, редактировать и удалять программы стирки.<br>
-            🔑 <strong>Pr</strong> - номер программы (PrNm), <strong>PrCode</strong> - код программы.<br>
+<div class="container">
+    <h1>Bianca - Управление программами</h1>
+
+    <div class="info">
+        📝 Здесь вы можете добавлять, редактировать и удалять программы стирки.<br>
+        🔑 <strong>Pr</strong> - номер программы (PrNm), <strong>PrCode</strong> - код программы.<br>
+        🧹 <strong>PrStr</strong> - можно вводить русскими буквами! Они автоматически преобразуются в HEX-коды.<br>
+        ⚠️ Отсутствующие буквы (Л, Й, Щ, Ъ, Ы, Ь, Э, Ю) заменяются на пробел (на дисплее +).
+    </div>
+
+    <div class="flex">
+        <div class="programs-list">
+            <h3>📋 Существующие программы</h3>
+            <div id="programsContainer">
+                <div class="loading">Загрузка...</div>
+            </div>
         </div>
-        
-        <div class="flex">
-            <!-- Список программ -->
-            <div class="programs-list">
-                <h3>📋 Существующие программы</h3>
-                <div id="programsContainer">
-                    <div class="loading">Загрузка...</div>
+
+        <div class="editor">
+            <h2 id="formTitle">➕ Добавление программы</h2>
+
+            <form id="addProgramForm">
+                <div class="form-group">
+                    <label>Название программы:</label>
+                    <input type="text" id="program_name" required placeholder="Пример: Джинсы">
                 </div>
-            </div>
-            
-            <!-- Редактор -->
-            <div class="editor">
-                <h2 id="formTitle">➕ Добавление программы</h2>
-                
-                <form id="addProgramForm">
-                    <div class="form-group">
-                        <label>Название программы:</label>
-                        <input type="text" id="program_name" required placeholder="Пример: Джинсы">
+                <div class="form-group">
+                    <label>Pr (номер программы):</label>
+                    <input type="number" id="pr_value" required placeholder="Пример: 17">
+                </div>
+                <div class="form-group">
+                    <label>PrCode:</label>
+                    <input type="number" id="pr_code" required placeholder="Пример: 15">
+                </div>
+                <div class="form-group">
+                    <label>PrStr (текст на дисплее):</label>
+                    <input type="text" id="pr_str" required placeholder="Пример: СТИРКА или Jeans">
+                    <div class="convert-info" id="convertInfo"></div>
+                    <div class="example-buttons">
+                        <button type="button" class="btn-example" onclick="setExample('СТИРКА')">СТИРКА</button>
+                        <button type="button" class="btn-example" onclick="setExample('МОЛОКО')">МОЛОКО</button>
+                        <button type="button" class="btn-example" onclick="setExample('ХЛОПОК')">ХЛОПОК</button>
+                        <button type="button" class="btn-example" onclick="setExample('ШКОЛА')">ШКОЛА</button>
+                        <button type="button" class="btn-example" onclick="setExample('БЕЛЬЁ')">БЕЛЬЁ</button>
+                        <button type="button" class="btn-example" onclick="setExample('ПРИВЕТ')">ПРИВЕТ</button>
                     </div>
-                    <div class="form-group">
-                        <label>Pr (номер программы):</label>
-                        <input type="number" id="pr_value" required placeholder="Пример: 17">
+                </div>
+
+                <hr>
+
+                <h3>⚙️ Настройки опций</h3>
+
+                <div class="option-card">
+                    <div class="option-title">🌡️ Температура</div>
+                    <div class="checkbox-group" id="temp_checkboxes">
+                        <label><input type="checkbox" value="0°C"> 0°C</label>
+                        <label><input type="checkbox" value="20°C"> 20°C</label>
+                        <label><input type="checkbox" value="30°C"> 30°C</label>
+                        <label><input type="checkbox" value="40°C"> 40°C</label>
+                        <label><input type="checkbox" value="60°C"> 60°C</label>
+                        <label><input type="checkbox" value="90°C"> 90°C</label>
                     </div>
-                    <div class="form-group">
-                        <label>PrCode:</label>
-                        <input type="number" id="pr_code" required placeholder="Пример: 15">
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="temp_default"></select>
                     </div>
-                    <div class="form-group">
-                        <label>PrStr (текст на дисплее, английский):</label>
-                        <input type="text" id="pr_str" required placeholder="Пример: Jeans">
+                    <div id="temp_selected" class="selected-values">Выбрано: <span></span></div>
+                </div>
+
+                <div class="option-card">
+                    <div class="option-title">🔄 Скорость отжима</div>
+                    <div class="checkbox-group" id="spin_checkboxes">
+                        <label><input type="checkbox" value="0 об/мин"> 0 об/мин</label>
+                        <label><input type="checkbox" value="400 об/мин"> 400 об/мин</label>
+                        <label><input type="checkbox" value="500 об/мин"> 500 об/мин</label>
+                        <label><input type="checkbox" value="600 об/мин"> 600 об/мин</label>
+                        <label><input type="checkbox" value="700 об/мин"> 700 об/мин</label>
+                        <label><input type="checkbox" value="800 об/мин"> 800 об/мин</label>
+                        <label><input type="checkbox" value="900 об/мин"> 900 об/мин</label>
+                        <label><input type="checkbox" value="1000 об/мин"> 1000 об/мин</label>
+                        <label><input type="checkbox" value="1100 об/мин"> 1100 об/мин</label>
+                        <label><input type="checkbox" value="1200 об/мин"> 1200 об/мин</label>
+                        <label><input type="checkbox" value="1300 об/мин"> 1300 об/мин</label>
+                        <label><input type="checkbox" value="1400 об/мин"> 1400 об/мин</label>
                     </div>
-                    
-                    <hr>
-                    
-                    <h3>⚙️ Настройки опций</h3>
-                    
-                    <!-- Температура -->
-                    <div class="option-card">
-                        <div class="option-title">🌡️ Температура</div>
-                        <div class="checkbox-group" id="temp_checkboxes">
-                            <label><input type="checkbox" value="0°C"> 0°C</label>
-                            <label><input type="checkbox" value="20°C"> 20°C</label>
-                            <label><input type="checkbox" value="30°C"> 30°C</label>
-                            <label><input type="checkbox" value="40°C"> 40°C</label>
-                            <label><input type="checkbox" value="60°C"> 60°C</label>
-                            <label><input type="checkbox" value="90°C"> 90°C</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="temp_default"></select>
-                        </div>
-                        <div id="temp_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="spin_default"></select>
                     </div>
-                    
-                    <!-- Отжим -->
-                    <div class="option-card">
-                        <div class="option-title">🔄 Скорость отжима</div>
-                        <div class="checkbox-group" id="spin_checkboxes">
-                            <label><input type="checkbox" value="0 об/мин"> 0 об/мин</label>
-                            <label><input type="checkbox" value="400 об/мин"> 400 об/мин</label>
-                            <label><input type="checkbox" value="500 об/мин"> 500 об/мин</label>
-                            <label><input type="checkbox" value="600 об/мин"> 600 об/мин</label>
-                            <label><input type="checkbox" value="700 об/мин"> 700 об/мин</label>
-                            <label><input type="checkbox" value="800 об/мин"> 800 об/мин</label>
-                            <label><input type="checkbox" value="900 об/мин"> 900 об/мин</label>
-                            <label><input type="checkbox" value="1000 об/мин"> 1000 об/мин</label>
-                            <label><input type="checkbox" value="1100 об/мин"> 1100 об/мин</label>
-                            <label><input type="checkbox" value="1200 об/мин"> 1200 об/мин</label>
-                            <label><input type="checkbox" value="1300 об/мин"> 1300 об/мин</label>
-                            <label><input type="checkbox" value="1400 об/мин"> 1400 об/мин</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="spin_default"></select>
-                        </div>
-                        <div id="spin_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div id="spin_selected" class="selected-values">Выбрано: <span></span></div>
+                </div>
+
+                <div class="option-card">
+                    <div class="option-title">💧 Уровень загрязнения</div>
+                    <div class="checkbox-group" id="soil_checkboxes">
+                        <label><input type="checkbox" value="Нет"> Нет</label>
+                        <label><input type="checkbox" value="Мало"> Мало</label>
+                        <label><input type="checkbox" value="Нормально"> Нормально</label>
+                        <label><input type="checkbox" value="Очень"> Очень</label>
                     </div>
-                    
-                    <!-- Загрязнение -->
-                    <div class="option-card">
-                        <div class="option-title">💧 Уровень загрязнения</div>
-                        <div class="checkbox-group" id="soil_checkboxes">
-                            <label><input type="checkbox" value="Нет"> Нет</label>
-                            <label><input type="checkbox" value="Мало"> Мало</label>
-                            <label><input type="checkbox" value="Нормально"> Нормально</label>
-                            <label><input type="checkbox" value="Очень"> Очень</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="soil_default"></select>
-                        </div>
-                        <div id="soil_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="soil_default"></select>
                     </div>
-                    
-                    <!-- Пар -->
-                    <div class="option-card">
-                        <div class="option-title">💨 Пар</div>
-                        <div class="checkbox-group" id="steam_checkboxes">
-                            <label><input type="checkbox" value="Без пара"> Без пара</label>
-                            <label><input type="checkbox" value="С паром"> С паром</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="steam_default"></select>
-                        </div>
-                        <div id="steam_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div id="soil_selected" class="selected-values">Выбрано: <span></span></div>
+                </div>
+
+                <div class="option-card">
+                    <div class="option-title">💨 Пар</div>
+                    <div class="checkbox-group" id="steam_checkboxes">
+                        <label><input type="checkbox" value="Без пара"> Без пара</label>
+                        <label><input type="checkbox" value="С паром"> С паром</label>
                     </div>
-                    
-                    <!-- Предстирка -->
-                    <div class="option-card">
-                        <div class="option-title">🧼 Предварительная стирка</div>
-                        <div class="checkbox-group" id="prewash_checkboxes">
-                            <label><input type="checkbox" value="Нет"> Нет</label>
-                            <label><input type="checkbox" value="Есть"> Есть</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="prewash_default"></select>
-                        </div>
-                        <div id="prewash_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="steam_default"></select>
                     </div>
-                    
-                    <!-- Гигиена -->
-                    <div class="option-card">
-                        <div class="option-title">🦠 Гигиеническая стирка</div>
-                        <div class="checkbox-group" id="hygiene_checkboxes">
-                            <label><input type="checkbox" value="Нет"> Нет</label>
-                            <label><input type="checkbox" value="Есть"> Есть</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="hygiene_default"></select>
-                        </div>
-                        <div id="hygiene_selected" class="selected-values">Выбрано: <span></span></div>
-                        <div class="note">ℹ️ Если есть "Есть", добавится зависимость от температуры ≥60°C</div>
+                    <div id="steam_selected" class="selected-values">Выбрано: <span></span></div>
+                </div>
+
+                <div class="option-card">
+                    <div class="option-title">🧼 Предварительная стирка</div>
+                    <div class="checkbox-group" id="prewash_checkboxes">
+                        <label><input type="checkbox" value="Нет"> Нет</label>
+                        <label><input type="checkbox" value="Есть"> Есть</label>
                     </div>
-                    
-                    <!-- Антисминание -->
-                    <div class="option-card">
-                        <div class="option-title">↩️ Антисминание</div>
-                        <div class="checkbox-group" id="anticrease_checkboxes">
-                            <label><input type="checkbox" value="Нет"> Нет</label>
-                            <label><input type="checkbox" value="Есть"> Есть</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="anticrease_default"></select>
-                        </div>
-                        <div id="anticrease_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="prewash_default"></select>
                     </div>
-                    
-                    <!-- Ночная стирка -->
-                    <div class="option-card">
-                        <div class="option-title">🌙 Ночная стирка</div>
-                        <div class="checkbox-group" id="nightspin_checkboxes">
-                            <label><input type="checkbox" value="Нет"> Нет</label>
-                            <label><input type="checkbox" value="Есть"> Есть</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="nightspin_default"></select>
-                        </div>
-                        <div id="nightspin_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div id="prewash_selected" class="selected-values">Выбрано: <span></span></div>
+                </div>
+
+                <div class="option-card">
+                    <div class="option-title">🦠 Гигиеническая стирка</div>
+                    <div class="checkbox-group" id="hygiene_checkboxes">
+                        <label><input type="checkbox" value="Нет"> Нет</label>
+                        <label><input type="checkbox" value="Есть"> Есть</label>
                     </div>
-                    
-                    <!-- Полоскания -->
-                    <div class="option-card">
-                        <div class="option-title">💦 Дополнительные полоскания</div>
-                        <div class="checkbox-group" id="rinses_checkboxes">
-                            <label><input type="checkbox" value="Нет"> Нет</label>
-                            <label><input type="checkbox" value="1 полоскание"> 1 полоскание</label>
-                            <label><input type="checkbox" value="2 полоскания"> 2 полоскания</label>
-                            <label><input type="checkbox" value="3 полоскания"> 3 полоскания</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="rinses_default"></select>
-                        </div>
-                        <div id="rinses_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="hygiene_default"></select>
                     </div>
-                    
-                    <!-- Акваплюс -->
-                    <div class="option-card">
-                        <div class="option-title">💧 Акваплюс</div>
-                        <div class="checkbox-group" id="aquaplus_checkboxes">
-                            <label><input type="checkbox" value="Нет"> Нет</label>
-                            <label><input type="checkbox" value="Есть"> Есть</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="aquaplus_default"></select>
-                        </div>
-                        <div id="aquaplus_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div id="hygiene_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div class="note">ℹ️ Если есть "Есть", добавится зависимость от температуры ≥60°C</div>
+                </div>
+
+                <div class="option-card">
+                    <div class="option-title">↩️ Антисминание</div>
+                    <div class="checkbox-group" id="anticrease_checkboxes">
+                        <label><input type="checkbox" value="Нет"> Нет</label>
+                        <label><input type="checkbox" value="Есть"> Есть</label>
                     </div>
-                    
-                    <!-- Zoom -->
-                    <div class="option-card">
-                        <div class="option-title">🔍 Режим ZOOM</div>
-                        <div class="checkbox-group" id="zoom_checkboxes">
-                            <label><input type="checkbox" value="Нет"> Нет</label>
-                            <label><input type="checkbox" value="Есть"> Есть</label>
-                        </div>
-                        <div class="default-select">
-                            <label>По умолчанию:</label>
-                            <select id="zoom_default"></select>
-                        </div>
-                        <div id="zoom_selected" class="selected-values">Выбрано: <span></span></div>
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="anticrease_default"></select>
                     </div>
-                    
-                    <hr>
-                    
-                    <!-- Взаимоисключения -->
-                    <h3>🔄 Взаимоисключения</h3>
-                    <div class="mutual-row">
-                        <select id="mutual_option1">
-                            <option value="">Выберите опцию 1</option>
-                            <option value="anti_crease">Антисминание (anti_crease)</option>
-                            <option value="night_spin">Ночная стирка (night_spin)</option>
-                            <option value="pre_wash">Предварительная стирка (pre_wash)</option>
-                            <option value="hygiene">Гигиена (hygiene)</option>
-                            <option value="aqua_plus">Акваплюс (aqua_plus)</option>
-                            <option value="zoom">Zoom (zoom)</option>
-                            <option value="steam">Пар (steam)</option>
-                            <option value="extra_rinse">Полоскания (extra_rinse)</option>
-                        </select>
-                        <select id="mutual_option2">
-                            <option value="">Выберите опцию 2</option>
-                            <option value="anti_crease">Антисминание (anti_crease)</option>
-                            <option value="night_spin">Ночная стирка (night_spin)</option>
-                            <option value="pre_wash">Предварительная стирка (pre_wash)</option>
-                            <option value="hygiene">Гигиена (hygiene)</option>
-                            <option value="aqua_plus">Акваплюс (aqua_plus)</option>
-                            <option value="zoom">Zoom (zoom)</option>
-                            <option value="steam">Пар (steam)</option>
-                            <option value="extra_rinse">Полоскания (extra_rinse)</option>
-                        </select>
-                        <button type="button" class="btn-add-mutual" onclick="addMutualExclusion()">➕ Добавить пару</button>
+                    <div id="anticrease_selected" class="selected-values">Выбрано: <span></span></div>
+                </div>
+
+                <div class="option-card">
+                    <div class="option-title">🌙 Ночная стирка</div>
+                    <div class="checkbox-group" id="nightspin_checkboxes">
+                        <label><input type="checkbox" value="Нет"> Нет</label>
+                        <label><input type="checkbox" value="Есть"> Есть</label>
                     </div>
-                    <div id="mutualList" class="mutual-list"></div>
-                    
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button type="submit" class="btn-primary" id="submitBtn">✅ Добавить программу</button>
-                        <button type="button" class="btn-secondary" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">❌ Отмена</button>
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="nightspin_default"></select>
                     </div>
-                </form>
-                
-                <div id="message" class="message"></div>
-            </div>
-        </div>
-        
-        <!-- Массовое добавление -->
-        <div class="batch-section">
-            <h2>📦 Массовое добавление программ</h2>
-            <div class="info">
-                Вставьте JSON с программами в формате:<br>
-                <code>{"programs": [{"name": "Джинсы", "Pr": 17, "PrCode": 15, "PrStr": "Jeans", "options": {...}}]}</code>
-            </div>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button type="button" class="btn-secondary" onclick="insertExampleJson()">📋 Вставить пример JSON</button>
-            </div>
-            <div class="form-group">
-                <textarea id="batchJson" rows="12"></textarea>
-            </div>
-            <button type="button" class="btn-primary" onclick="batchAddPrograms()" style="margin-top: 0;">📦 Добавить программы из JSON</button>
-        </div>
-        
-        <!-- Импорт из файла -->
-        <div class="import-section">
-            <h2>📄 Импорт программы из JSON файла</h2>
-            <div class="info">
-                Выберите JSON файл с программой (экспортированный из списка)
-            </div>
-            <input type="file" id="programFileInput" accept=".json" style="margin-bottom: 10px;">
-            <button type="button" class="btn-primary" onclick="importProgramFromFile()" style="margin-top: 0;">📥 Импортировать из файла</button>
+                    <div id="nightspin_selected" class="selected-values">Выбрано: <span></span></div>
+                </div>
+
+                <div class="option-card">
+                    <div class="option-title">💦 Дополнительные полоскания</div>
+                    <div class="checkbox-group" id="rinses_checkboxes">
+                        <label><input type="checkbox" value="Нет"> Нет</label>
+                        <label><input type="checkbox" value="1 полоскание"> 1 полоскание</label>
+                        <label><input type="checkbox" value="2 полоскания"> 2 полоскания</label>
+                        <label><input type="checkbox" value="3 полоскания"> 3 полоскания</label>
+                    </div>
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="rinses_default"></select>
+                    </div>
+                    <div id="rinses_selected" class="selected-values">Выбрано: <span></span></div>
+                </div>
+
+                <div class="option-card">
+                    <div class="option-title">💧 Акваплюс</div>
+                    <div class="checkbox-group" id="aquaplus_checkboxes">
+                        <label><input type="checkbox" value="Нет"> Нет</label>
+                        <label><input type="checkbox" value="Есть"> Есть</label>
+                    </div>
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="aquaplus_default"></select>
+                    </div>
+                    <div id="aquaplus_selected" class="selected-values">Выбрано: <span></span></div>
+                </div>
+
+                <div class="option-card">
+                    <div class="option-title">🔍 Режим ZOOM</div>
+                    <div class="checkbox-group" id="zoom_checkboxes">
+                        <label><input type="checkbox" value="Нет"> Нет</label>
+                        <label><input type="checkbox" value="Есть"> Есть</label>
+                    </div>
+                    <div class="default-select">
+                        <label>По умолчанию:</label>
+                        <select id="zoom_default"></select>
+                    </div>
+                    <div id="zoom_selected" class="selected-values">Выбрано: <span></span></div>
+                </div>
+
+                <hr>
+
+                <h3>🔄 Взаимоисключения</h3>
+                <div class="mutual-row">
+                    <select id="mutual_option1">
+                        <option value="">Выберите опцию 1</option>
+                        <option value="anti_crease">Антисминание (anti_crease)</option>
+                        <option value="night_spin">Ночная стирка (night_spin)</option>
+                        <option value="pre_wash">Предварительная стирка (pre_wash)</option>
+                        <option value="hygiene">Гигиена (hygiene)</option>
+                        <option value="aqua_plus">Акваплюс (aqua_plus)</option>
+                        <option value="zoom">Zoom (zoom)</option>
+                        <option value="steam">Пар (steam)</option>
+                        <option value="extra_rinse">Полоскания (extra_rinse)</option>
+                    </select>
+                    <select id="mutual_option2">
+                        <option value="">Выберите опцию 2</option>
+                        <option value="anti_crease">Антисминание (anti_crease)</option>
+                        <option value="night_spin">Ночная стирка (night_spin)</option>
+                        <option value="pre_wash">Предварительная стирка (pre_wash)</option>
+                        <option value="hygiene">Гигиена (hygiene)</option>
+                        <option value="aqua_plus">Акваплюс (aqua_plus)</option>
+                        <option value="zoom">Zoom (zoom)</option>
+                        <option value="steam">Пар (steam)</option>
+                        <option value="extra_rinse">Полоскания (extra_rinse)</option>
+                    </select>
+                    <button type="button" class="btn-add-mutual" onclick="addMutualExclusion()">➕ Добавить пару</button>
+                </div>
+                <div id="mutualList" class="mutual-list"></div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn-primary" id="submitBtn">✅ Добавить программу</button>
+                    <button type="button" class="btn-secondary" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">❌ Отмена</button>
+                    <button type="button" class="btn-secondary" onclick="convertPrStr()">🔄 Конвертировать PrStr</button>
+                </div>
+            </form>
+
+            <div id="message" class="message"></div>
         </div>
     </div>
-    
-    <script>
-        const API_BASE = window.location.origin;
-        let mutualExclusions = [];
-        let editMode = false;
-        let editProgramId = null;
-        let allPrograms = [];
-        
-        // Конфигурация опций: id чекбоксов, id select, id отображения
-        const optionConfigs = [
-            { checkboxesId: 'temp_checkboxes', selectId: 'temp_default', displayId: 'temp_selected' },
-            { checkboxesId: 'spin_checkboxes', selectId: 'spin_default', displayId: 'spin_selected' },
-            { checkboxesId: 'soil_checkboxes', selectId: 'soil_default', displayId: 'soil_selected' },
-            { checkboxesId: 'steam_checkboxes', selectId: 'steam_default', displayId: 'steam_selected' },
-            { checkboxesId: 'prewash_checkboxes', selectId: 'prewash_default', displayId: 'prewash_selected' },
-            { checkboxesId: 'hygiene_checkboxes', selectId: 'hygiene_default', displayId: 'hygiene_selected' },
-            { checkboxesId: 'anticrease_checkboxes', selectId: 'anticrease_default', displayId: 'anticrease_selected' },
-            { checkboxesId: 'nightspin_checkboxes', selectId: 'nightspin_default', displayId: 'nightspin_selected' },
-            { checkboxesId: 'rinses_checkboxes', selectId: 'rinses_default', displayId: 'rinses_selected' },
-            { checkboxesId: 'aquaplus_checkboxes', selectId: 'aquaplus_default', displayId: 'aquaplus_selected' },
-            { checkboxesId: 'zoom_checkboxes', selectId: 'zoom_default', displayId: 'zoom_selected' }
-        ];
-        
-        function showMessage(text, type) {
-            const msgDiv = document.getElementById('message');
-            msgDiv.textContent = text;
-            msgDiv.className = `message ${type}`;
-            msgDiv.style.display = 'block';
-            setTimeout(() => {
-                msgDiv.style.display = 'none';
-            }, 5000);
-        }
-        
-        function updateDefaultSelectOptions(checkboxesId, selectId) {
-            const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
-            const selectedValues = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-            const select = document.getElementById(selectId);
-            
-            if (!select) return;
-            
-            // Сохраняем текущее значение
-            const currentValue = select.value;
-            
-            // Очищаем select
-            select.innerHTML = '';
-            
-            // Если ничего не выбрано, добавляем заглушку
-            if (selectedValues.length === 0) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = '— сначала выберите значения —';
-                select.appendChild(option);
-                select.disabled = true;
-                return;
+
+    <div class="batch-section">
+        <h2>📦 Массовое добавление программ</h2>
+        <div class="info">
+            Вставьте JSON с программами в формате:<br>
+            <code>{"programs": [{"name": "Джинсы", "Pr": 17, "PrCode": 15, "PrStr": "Jeans", "options": {...}}]}</code>
+        </div>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button type="button" class="btn-secondary" onclick="insertExampleJson()">📋 Вставить пример JSON</button>
+        </div>
+        <div class="form-group">
+            <textarea id="batchJson" rows="12"></textarea>
+        </div>
+        <button type="button" class="btn-primary" onclick="batchAddPrograms()" style="margin-top: 0;">📦 Добавить программы из JSON</button>
+    </div>
+
+    <div class="import-section">
+        <h2>📄 Импорт программы из JSON файла</h2>
+        <div class="info">
+            Выберите JSON файл с программой (экспортированный из списка)
+        </div>
+        <input type="file" id="programFileInput" accept=".json" style="margin-bottom: 10px;">
+        <button type="button" class="btn-primary" onclick="importProgramFromFile()" style="margin-top: 0;">📥 Импортировать из файла</button>
+    </div>
+</div>
+
+<script>
+    const RUS_TO_HEX = {
+        'А': '%B0', 'Б': '%B1', 'В': '%B2', 'Г': '%B3', 'Д': '%B4',
+        'Е': '%B5', 'Ё': '%B6', 'Ж': '%B7', 'З': '%B8', 'И': '%B9',
+        'К': '%89', 'Н': '%86', 'П': '%C0', 'Р': '%C1', 'С': '%C2',
+        'Т': '%C3', 'У': '%C4', 'Ф': '%C5', 'Х': '%C6', 'Ц': '%C7',
+        'Ч': '%C8', 'Ш': '%C9', 'Я': '%8D'
+    };
+
+    const MISSING_TO_SPACE = ['Л', 'Й', 'Щ', 'Ъ', 'Ы', 'Ь', 'Э', 'Ю'];
+
+    function convertRussianToHex(text) {
+        if (!text) return text;
+        let step1 = text.replace(/ /g, '%20');
+        const upperText = step1.toUpperCase();
+        let result = '';
+        for (let i = 0; i < upperText.length; i++) {
+            const ch = upperText[i];
+            if (ch === '%' && upperText.substring(i, i+3) === '%20') {
+                result += '%20';
+                i += 2;
+                continue;
             }
-            
-            select.disabled = false;
-            
-            // Добавляем только выбранные значения
-            selectedValues.forEach(value => {
-                const option = document.createElement('option');
-                option.value = value;
-                option.textContent = value;
-                select.appendChild(option);
-            });
-            
-            // Если текущее значение все еще доступно - оставляем, иначе берем первое
-            if (selectedValues.includes(currentValue)) {
-                select.value = currentValue;
-            } else if (selectedValues.length > 0) {
-                select.value = selectedValues[0];
+            if (RUS_TO_HEX[ch]) {
+                result += RUS_TO_HEX[ch];
+            } else if (ch === 'О') {
+                result += 'O';
+            } else if (ch === 'М') {
+                result += 'M';
+            } else if (MISSING_TO_SPACE.includes(ch)) {
+                result += ' ';
+            } else {
+                result += ch;
             }
         }
-        
-        function updateSelectedDisplay(checkboxesId, displayId, selectId) {
-            const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
-            const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-            const displaySpan = document.querySelector(`#${displayId} span`);
-            if (displaySpan) {
-                displaySpan.textContent = selected.length ? selected.join(', ') : 'нет';
-            }
-            // Обновляем выпадающий список значений по умолчанию
-            if (selectId) {
-                updateDefaultSelectOptions(checkboxesId, selectId);
-            }
+        return result;
+    }
+
+    function convertPrStr() {
+        const input = document.getElementById('pr_str');
+        const original = input.value;
+        const converted = convertRussianToHex(original);
+        if (original !== converted) {
+            input.value = converted;
+            const info = document.getElementById('convertInfo');
+            info.innerHTML = `🔁 Преобразовано: "${original}" → "${converted}"`;
+            info.style.color = '#28a745';
+            setTimeout(() => { info.innerHTML = ''; }, 3000);
+            showMessage(`Преобразовано: ${original} → ${converted}`, 'success');
+        } else {
+            const info = document.getElementById('convertInfo');
+            info.innerHTML = `✓ Строка не требует преобразования`;
+            info.style.color = '#28a745';
+            setTimeout(() => { info.innerHTML = ''; }, 2000);
         }
-        
-        function initOptionListeners() {
-            // Для каждой опции добавляем слушатели на чекбоксы
-            optionConfigs.forEach(config => {
-                const checkboxes = document.querySelectorAll(`#${config.checkboxesId} input[type="checkbox"]`);
-                checkboxes.forEach(cb => {
-                    cb.removeEventListener('change', () => {});
-                    cb.addEventListener('change', () => {
-                        updateSelectedDisplay(config.checkboxesId, config.displayId, config.selectId);
-                    });
-                });
-                // Инициализируем отображение
-                updateSelectedDisplay(config.checkboxesId, config.displayId, config.selectId);
-            });
+    }
+
+    function setExample(text) {
+        document.getElementById('pr_str').value = text;
+        convertPrStr();
+    }
+
+    const API_BASE = window.location.origin;
+    let mutualExclusions = [];
+    let editMode = false;
+    let editProgramId = null;
+    let allPrograms = [];
+
+    const optionConfigs = [
+        { checkboxesId: 'temp_checkboxes', selectId: 'temp_default', displayId: 'temp_selected' },
+        { checkboxesId: 'spin_checkboxes', selectId: 'spin_default', displayId: 'spin_selected' },
+        { checkboxesId: 'soil_checkboxes', selectId: 'soil_default', displayId: 'soil_selected' },
+        { checkboxesId: 'steam_checkboxes', selectId: 'steam_default', displayId: 'steam_selected' },
+        { checkboxesId: 'prewash_checkboxes', selectId: 'prewash_default', displayId: 'prewash_selected' },
+        { checkboxesId: 'hygiene_checkboxes', selectId: 'hygiene_default', displayId: 'hygiene_selected' },
+        { checkboxesId: 'anticrease_checkboxes', selectId: 'anticrease_default', displayId: 'anticrease_selected' },
+        { checkboxesId: 'nightspin_checkboxes', selectId: 'nightspin_default', displayId: 'nightspin_selected' },
+        { checkboxesId: 'rinses_checkboxes', selectId: 'rinses_default', displayId: 'rinses_selected' },
+        { checkboxesId: 'aquaplus_checkboxes', selectId: 'aquaplus_default', displayId: 'aquaplus_selected' },
+        { checkboxesId: 'zoom_checkboxes', selectId: 'zoom_default', displayId: 'zoom_selected' }
+    ];
+
+    function showMessage(text, type) {
+        const msgDiv = document.getElementById('message');
+        msgDiv.textContent = text;
+        msgDiv.className = `message ${type}`;
+        msgDiv.style.display = 'block';
+        setTimeout(() => { msgDiv.style.display = 'none'; }, 5000);
+    }
+
+    function updateDefaultSelectOptions(checkboxesId, selectId) {
+        const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
+        const selectedValues = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        const currentValue = select.value;
+        select.innerHTML = '';
+        if (selectedValues.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '— сначала выберите значения —';
+            select.appendChild(option);
+            select.disabled = true;
+            return;
         }
-        
-        function setOptionValues(checkboxesId, selectId, values, defaultValue) {
-            const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
+        select.disabled = false;
+        selectedValues.forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+        if (selectedValues.includes(currentValue)) {
+            select.value = currentValue;
+        } else if (selectedValues.length > 0) {
+            select.value = selectedValues[0];
+        }
+    }
+
+    function updateSelectedDisplay(checkboxesId, displayId, selectId) {
+        const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
+        const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+        const displaySpan = document.querySelector(`#${displayId} span`);
+        if (displaySpan) {
+            displaySpan.textContent = selected.length ? selected.join(', ') : 'нет';
+        }
+        if (selectId) {
+            updateDefaultSelectOptions(checkboxesId, selectId);
+        }
+    }
+
+    function initOptionListeners() {
+        optionConfigs.forEach(config => {
+            const checkboxes = document.querySelectorAll(`#${config.checkboxesId} input[type="checkbox"]`);
             checkboxes.forEach(cb => {
-                cb.checked = values.includes(cb.value);
-            });
-            updateSelectedDisplay(checkboxesId, checkboxesId.replace('_checkboxes', '_selected'), selectId);
-            
-            // Устанавливаем значение по умолчанию после обновления списка
-            setTimeout(() => {
-                const select = document.getElementById(selectId);
-                if (select && defaultValue && select.querySelector(`option[value="${defaultValue}"]`)) {
-                    select.value = defaultValue;
-                }
-            }, 50);
-        }
-        
-        function getOptionValues(checkboxesId, selectId) {
-            const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
-            const values = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-            const select = document.getElementById(selectId);
-            const defaultValue = select && select.value ? select.value : (values[0] || '');
-            return { values, default: defaultValue };
-        }
-        
-        async function loadPrograms() {
-            try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_programs`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    allPrograms = result.programs;
-                    renderProgramsList();
-                } else {
-                    showMessage(result.error, 'error');
-                    document.getElementById('programsContainer').innerHTML = '<div style="color: red; text-align: center;">Ошибка: ' + result.error + '</div>';
-                }
-            } catch (error) {
-                showMessage('Ошибка загрузки программ: ' + error.message, 'error');
-                document.getElementById('programsContainer').innerHTML = '<div style="color: red; text-align: center;">Ошибка соединения</div>';
-            }
-        }
-        
-        function renderProgramsList() {
-            const container = document.getElementById('programsContainer');
-            
-            if (allPrograms.length === 0) {
-                container.innerHTML = '<div style="color: #999; text-align: center;">Нет программ</div>';
-                return;
-            }
-            
-            let html = '';
-            allPrograms.forEach(prog => {
-                const isActive = editMode && editProgramId === prog.id;
-                html += `
-                    <div class="program-item ${isActive ? 'active' : ''}" onclick="loadProgramToEdit(${prog.id})">
-                        <div class="program-info">
-                            <div class="program-name">${escapeHtml(prog.name)}</div>
-                            <div class="program-id">ID: ${prog.id} | Pr: ${prog.Pr} | PrCode: ${prog.PrCode}</div>
-                        </div>
-                        <div class="program-actions">
-                            <button class="btn-secondary" onclick="event.stopPropagation(); exportProgramToFile(${prog.id})" style="background: #17a2b8;" title="Сохранить в файл">💾</button>
-                            <button class="btn-danger" onclick="event.stopPropagation(); deleteProgram(${prog.id}, '${escapeHtml(prog.name)}')" title="Удалить">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        async function exportProgramToFile(programId) {
-            try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    const exportData = {
-                        "name": result.program.name,
-                        "Pr": result.program.Pr,
-                        "PrCode": result.program.PrCode,
-                        "PrStr": result.program.PrStr,
-                        "options": result.program.options,
-                        "mutual_exclusion": result.program.mutual_exclusion
-                    };
-                    
-                    const jsonStr = JSON.stringify(exportData, null, 2);
-                    const blob = new Blob([jsonStr], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `bianca_program_${result.program.Pr}_${result.program.name.replace(/[^a-zа-яё0-9]/gi, '_')}.json`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    showMessage(`Программа "${result.program.name}" сохранена в файл`, 'success');
-                } else {
-                    showMessage(result.error, 'error');
-                }
-            } catch (error) {
-                showMessage('Ошибка: ' + error.message, 'error');
-            }
-        }
-        
-        async function loadProgramToEdit(programId) {
-            try {
-                const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    const prog = result.program;
-                    editMode = true;
-                    editProgramId = prog.id;
-                    
-                    document.getElementById('formTitle').innerHTML = '✏️ Редактирование программы <span class="edit-mode-badge">Режим редактирования</span>';
-                    document.getElementById('submitBtn').innerHTML = '💾 Сохранить изменения';
-                    document.getElementById('cancelEditBtn').style.display = 'inline-block';
-                    
-                    document.getElementById('program_name').value = prog.name;
-                    document.getElementById('pr_value').value = prog.Pr;
-                    document.getElementById('pr_code').value = prog.PrCode;
-                    document.getElementById('pr_str').value = prog.PrStr;
-                    
-                    if (prog.options) {
-                        setOptionValues('temp_checkboxes', 'temp_default', prog.options.temperature?.values || [], prog.options.temperature?.default || '');
-                        setOptionValues('spin_checkboxes', 'spin_default', prog.options.spin?.values || [], prog.options.spin?.default || '');
-                        setOptionValues('soil_checkboxes', 'soil_default', prog.options.soil?.values || [], prog.options.soil?.default || '');
-                        setOptionValues('steam_checkboxes', 'steam_default', prog.options.steam?.values || [], prog.options.steam?.default || '');
-                        setOptionValues('prewash_checkboxes', 'prewash_default', prog.options.pre_wash?.values || [], prog.options.pre_wash?.default || '');
-                        setOptionValues('hygiene_checkboxes', 'hygiene_default', prog.options.hygiene?.values || [], prog.options.hygiene?.default || '');
-                        setOptionValues('anticrease_checkboxes', 'anticrease_default', prog.options.anti_crease?.values || [], prog.options.anti_crease?.default || '');
-                        setOptionValues('nightspin_checkboxes', 'nightspin_default', prog.options.night_spin?.values || [], prog.options.night_spin?.default || '');
-                        setOptionValues('rinses_checkboxes', 'rinses_default', prog.options.extra_rinse?.values || [], prog.options.extra_rinse?.default || '');
-                        setOptionValues('aquaplus_checkboxes', 'aquaplus_default', prog.options.aqua_plus?.values || [], prog.options.aqua_plus?.default || '');
-                        setOptionValues('zoom_checkboxes', 'zoom_default', prog.options.zoom?.values || [], prog.options.zoom?.default || '');
-                    }
-                    
-                    mutualExclusions = prog.mutual_exclusion || [];
-                    renderMutualList();
-                    
-                    document.getElementById('programsContainer').scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    showMessage(result.error, 'error');
-                }
-            } catch (error) {
-                showMessage('Ошибка загрузки программы: ' + error.message, 'error');
-            }
-        }
-        
-        async function deleteProgram(programId, programName) {
-            if (confirm(`Удалить программу "${programName}"?`)) {
-                try {
-                    const response = await fetch(`${API_BASE}/api/bianca/delete_program`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ program_id: programId })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        showMessage(result.message, 'success');
-                        await loadPrograms();
-                        if (editMode && editProgramId === programId) {
-                            cancelEdit();
-                        }
-                    } else {
-                        showMessage(result.error, 'error');
-                    }
-                } catch (error) {
-                    showMessage('Ошибка удаления: ' + error.message, 'error');
-                }
-            }
-        }
-        
-        function cancelEdit() {
-            editMode = false;
-            editProgramId = null;
-            document.getElementById('formTitle').innerHTML = '➕ Добавление программы';
-            document.getElementById('submitBtn').innerHTML = '✅ Добавить программу';
-            document.getElementById('cancelEditBtn').style.display = 'none';
-            document.getElementById('addProgramForm').reset();
-            
-            // Сбрасываем чекбоксы: оставляем только первый вариант по умолчанию
-            optionConfigs.forEach(config => {
-                const checkboxes = document.querySelectorAll(`#${config.checkboxesId} input[type="checkbox"]`);
-                if (checkboxes.length > 0) {
-                    checkboxes.forEach((cb, idx) => {
-                        cb.checked = (idx === 0);
-                    });
+                cb.removeEventListener('change', () => {});
+                cb.addEventListener('change', () => {
                     updateSelectedDisplay(config.checkboxesId, config.displayId, config.selectId);
-                }
+                });
             });
-            
-            mutualExclusions = [];
-            renderMutualList();
-        }
-        
-        function addMutualExclusion() {
-            const opt1 = document.getElementById('mutual_option1').value;
-            const opt2 = document.getElementById('mutual_option2').value;
-            
-            if (!opt1 || !opt2) {
-                showMessage('Выберите обе опции', 'warning');
-                return;
+            updateSelectedDisplay(config.checkboxesId, config.displayId, config.selectId);
+        });
+    }
+
+    function setOptionValues(checkboxesId, selectId, values, defaultValue) {
+        const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
+        checkboxes.forEach(cb => {
+            cb.checked = values.includes(cb.value);
+        });
+        updateSelectedDisplay(checkboxesId, checkboxesId.replace('_checkboxes', '_selected'), selectId);
+        setTimeout(() => {
+            const select = document.getElementById(selectId);
+            if (select && defaultValue && select.querySelector(`option[value="${defaultValue}"]`)) {
+                select.value = defaultValue;
             }
-            
-            if (opt1 === opt2) {
-                showMessage('Нельзя добавить взаимоисключение опции с самой собой', 'error');
-                return;
-            }
-            
-            const exists = mutualExclusions.some(m => 
-                (m[0] === opt1 && m[1] === opt2) || 
-                (m[0] === opt2 && m[1] === opt1)
-            );
-            
-            if (exists) {
-                showMessage('Такое взаимоисключение уже добавлено', 'warning');
-                return;
-            }
-            
-            mutualExclusions.push([opt1, opt2]);
-            renderMutualList();
-            
-            document.getElementById('mutual_option1').value = '';
-            document.getElementById('mutual_option2').value = '';
-        }
-        
-        function removeMutualExclusion(index) {
-            mutualExclusions.splice(index, 1);
-            renderMutualList();
-        }
-        
-        function renderMutualList() {
-            const container = document.getElementById('mutualList');
-            if (mutualExclusions.length === 0) {
-                container.innerHTML = '<div style="color: #999; text-align: center;">Нет добавленных взаимоисключений</div>';
-                return;
-            }
-            
-            const optionNames = {
-                'anti_crease': 'Антисминание',
-                'night_spin': 'Ночная стирка',
-                'pre_wash': 'Предстирка',
-                'hygiene': 'Гигиена',
-                'aqua_plus': 'Акваплюс',
-                'zoom': 'Zoom',
-                'steam': 'Пар',
-                'extra_rinse': 'Полоскания'
-            };
-            
-            let html = '';
-            mutualExclusions.forEach((mutual, index) => {
-                html += `
-                    <div class="mutual-item">
-                        <span>${optionNames[mutual[0]] || mutual[0]} ↔ ${optionNames[mutual[1]] || mutual[1]}</span>
-                        <button type="button" class="remove-mutual" onclick="removeMutualExclusion(${index})">✖ Удалить</button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-        
-        function insertExampleJson() {
-            const exampleJson = {
-                "programs": [
-                    {
-                        "name": "Джинсы",
-                        "Pr": 17,
-                        "PrCode": 15,
-                        "PrStr": "Jeans",
-                        "options": {
-                            "temperature": {"values": ["0°C", "20°C", "30°C", "40°C"], "default": "40°C"},
-                            "spin": {"values": ["0 об/мин", "400 об/мин", "600 об/мин", "800 об/мин", "1000 об/мин"], "default": "1000 об/мин"},
-                            "soil": {"values": ["Нет"], "default": "Нет"},
-                            "steam": {"values": ["Без пара"], "default": "Без пара"},
-                            "pre_wash": {"values": ["Нет"], "default": "Нет"},
-                            "hygiene": {"values": ["Нет"], "default": "Нет"},
-                            "anti_crease": {"values": ["Нет"], "default": "Нет"},
-                            "night_spin": {"values": ["Нет"], "default": "Нет"},
-                            "extra_rinse": {"values": ["Нет"], "default": "Нет"},
-                            "aqua_plus": {"values": ["Нет"], "default": "Нет"},
-                            "zoom": {"values": ["Нет"], "default": "Нет"}
-                        },
-                        "mutual_exclusion": []
-                    }
-                ]
-            };
-            document.getElementById('batchJson').value = JSON.stringify(exampleJson, null, 2);
-        }
-        
-        async function batchAddPrograms() {
-            const jsonText = document.getElementById('batchJson').value;
-            if (!jsonText.trim()) {
-                showMessage('Введите JSON с программами', 'warning');
-                return;
-            }
-            
-            let programs;
-            try {
-                programs = JSON.parse(jsonText);
-            } catch (e) {
-                showMessage('Ошибка парсинга JSON: ' + e.message, 'error');
-                return;
-            }
-            
-            const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(programs)
-            });
-            
+        }, 50);
+    }
+
+    function getOptionValues(checkboxesId, selectId) {
+        const checkboxes = document.querySelectorAll(`#${checkboxesId} input[type="checkbox"]`);
+        const values = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+        const select = document.getElementById(selectId);
+        const defaultValue = select && select.value ? select.value : (values[0] || '');
+        return { values, default: defaultValue };
+    }
+
+    async function loadPrograms() {
+        try {
+            const response = await fetch(`${API_BASE}/api/bianca/get_programs`);
             const result = await response.json();
-            
             if (result.success) {
-                let message = result.message;
-                if (result.added && result.added.length) {
-                    message += '\n\n✅ Добавлены:\n' + result.added.join('\n');
-                }
-                if (result.skipped && result.skipped.length) {
-                    message += '\n\n⚠️ Пропущены (уже существуют):\n' + result.skipped.join('\n');
-                }
-                if (result.errors && result.errors.length) {
-                    message += '\n\n❌ Ошибки:\n' + result.errors.join('\n');
-                }
-                showMessage(message, 'success');
-                await loadPrograms();
-                document.getElementById('batchJson').value = '';
+                allPrograms = result.programs;
+                renderProgramsList();
+            } else {
+                showMessage(result.error, 'error');
+                document.getElementById('programsContainer').innerHTML = '<div style="color: red; text-align: center;">Ошибка: ' + result.error + '</div>';
+            }
+        } catch (error) {
+            showMessage('Ошибка загрузки программ: ' + error.message, 'error');
+            document.getElementById('programsContainer').innerHTML = '<div style="color: red; text-align: center;">Ошибка соединения</div>';
+        }
+    }
+
+    function renderProgramsList() {
+        const container = document.getElementById('programsContainer');
+        if (allPrograms.length === 0) {
+            container.innerHTML = '<div style="color: #999; text-align: center;">Нет программ</div>';
+            return;
+        }
+        let html = '';
+        allPrograms.forEach(prog => {
+            const isActive = editMode && editProgramId === prog.id;
+            html += `
+                <div class="program-item ${isActive ? 'active' : ''}" onclick="loadProgramToEdit(${prog.id})">
+                    <div class="program-info">
+                        <div class="program-name">${escapeHtml(prog.name)}</div>
+                        <div class="program-id">ID: ${prog.id} | Pr: ${prog.Pr} | PrCode: ${prog.PrCode}</div>
+                    </div>
+                    <div class="program-actions">
+                        <button class="btn-secondary" onclick="event.stopPropagation(); exportProgramToFile(${prog.id})" style="background: #17a2b8;" title="Сохранить в файл">💾</button>
+                        <button class="btn-danger" onclick="event.stopPropagation(); deleteProgram(${prog.id}, '${escapeHtml(prog.name)}')" title="Удалить">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function exportProgramToFile(programId) {
+        try {
+            const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}`);
+            const result = await response.json();
+            if (result.success) {
+                const exportData = {
+                    "name": result.program.name,
+                    "Pr": result.program.Pr,
+                    "PrCode": result.program.PrCode,
+                    "PrStr": result.program.PrStr,
+                    "PrStrRaw": result.program.PrStrRaw || result.program.PrStr,
+                    "options": result.program.options,
+                    "mutual_exclusion": result.program.mutual_exclusion
+                };
+                const jsonStr = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bianca_program_${result.program.Pr}_${result.program.name.replace(/[^a-zа-яё0-9]/gi, '_')}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage(`Программа "${result.program.name}" сохранена в файл`, 'success');
             } else {
                 showMessage(result.error, 'error');
             }
+        } catch (error) {
+            showMessage('Ошибка: ' + error.message, 'error');
         }
-        
-        async function importProgramFromFile() {
-            const fileInput = document.getElementById('programFileInput');
-            const file = fileInput.files[0];
-            
-            if (!file) {
-                showMessage('Выберите JSON файл', 'warning');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const program = JSON.parse(e.target.result);
-                    
-                    if (!program.name || program.Pr === undefined) {
-                        showMessage('❌ В файле отсутствует name или Pr', 'error');
-                        return;
-                    }
-                    
-                    const programsData = {
-                        "programs": [program]
-                    };
-                    
-                    const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(programsData)
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        let message = result.message;
-                        if (result.added && result.added.length) {
-                            message += '\n\n✅ Добавлена: ' + result.added.join('\n');
-                        }
-                        if (result.skipped && result.skipped.length) {
-                            message += '\n\n⚠️ Пропущена (уже существует): ' + result.skipped.join('\n');
-                        }
-                        showMessage(message, 'success');
-                        await loadPrograms();
-                        fileInput.value = '';
-                    } else {
-                        showMessage(result.error, 'error');
-                    }
-                } catch (error) {
-                    showMessage('Ошибка парсинга JSON: ' + error.message, 'error');
+    }
+
+    async function loadProgramToEdit(programId) {
+        try {
+            const response = await fetch(`${API_BASE}/api/bianca/get_program/${programId}`);
+            const result = await response.json();
+            if (result.success) {
+                const prog = result.program;
+                editMode = true;
+                editProgramId = prog.id;
+                document.getElementById('formTitle').innerHTML = '✏️ Редактирование программы <span class="edit-mode-badge">Режим редактирования</span>';
+                document.getElementById('submitBtn').innerHTML = '💾 Сохранить изменения';
+                document.getElementById('cancelEditBtn').style.display = 'inline-block';
+                document.getElementById('program_name').value = prog.name;
+                document.getElementById('pr_value').value = prog.Pr;
+                document.getElementById('pr_code').value = prog.PrCode;
+                // Показываем PrStrRaw если есть, иначе PrStr
+                const prStrValue = prog.PrStrRaw || prog.PrStr;
+                document.getElementById('pr_str').value = prStrValue;
+                if (prog.options) {
+                    setOptionValues('temp_checkboxes', 'temp_default', prog.options.temperature?.values || [], prog.options.temperature?.default || '');
+                    setOptionValues('spin_checkboxes', 'spin_default', prog.options.spin?.values || [], prog.options.spin?.default || '');
+                    setOptionValues('soil_checkboxes', 'soil_default', prog.options.soil?.values || [], prog.options.soil?.default || '');
+                    setOptionValues('steam_checkboxes', 'steam_default', prog.options.steam?.values || [], prog.options.steam?.default || '');
+                    setOptionValues('prewash_checkboxes', 'prewash_default', prog.options.pre_wash?.values || [], prog.options.pre_wash?.default || '');
+                    setOptionValues('hygiene_checkboxes', 'hygiene_default', prog.options.hygiene?.values || [], prog.options.hygiene?.default || '');
+                    setOptionValues('anticrease_checkboxes', 'anticrease_default', prog.options.anti_crease?.values || [], prog.options.anti_crease?.default || '');
+                    setOptionValues('nightspin_checkboxes', 'nightspin_default', prog.options.night_spin?.values || [], prog.options.night_spin?.default || '');
+                    setOptionValues('rinses_checkboxes', 'rinses_default', prog.options.extra_rinse?.values || [], prog.options.extra_rinse?.default || '');
+                    setOptionValues('aquaplus_checkboxes', 'aquaplus_default', prog.options.aqua_plus?.values || [], prog.options.aqua_plus?.default || '');
+                    setOptionValues('zoom_checkboxes', 'zoom_default', prog.options.zoom?.values || [], prog.options.zoom?.default || '');
                 }
-            };
-            reader.readAsText(file);
+                mutualExclusions = prog.mutual_exclusion || [];
+                renderMutualList();
+                document.getElementById('programsContainer').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                showMessage(result.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Ошибка загрузки программы: ' + error.message, 'error');
         }
-        
-        document.getElementById('addProgramForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const name = document.getElementById('program_name').value;
-            const pr = parseInt(document.getElementById('pr_value').value);
-            const prCode = parseInt(document.getElementById('pr_code').value);
-            const prStr = document.getElementById('pr_str').value;
-            
-            const options = {};
-            
-            const tempOpt = getOptionValues('temp_checkboxes', 'temp_default');
-            options.temperature = { values: tempOpt.values, default: tempOpt.default };
-            
-            const spinOpt = getOptionValues('spin_checkboxes', 'spin_default');
-            options.spin = { values: spinOpt.values, default: spinOpt.default };
-            
-            const soilOpt = getOptionValues('soil_checkboxes', 'soil_default');
-            options.soil = { values: soilOpt.values, default: soilOpt.default };
-            
-            const steamOpt = getOptionValues('steam_checkboxes', 'steam_default');
-            options.steam = { values: steamOpt.values, default: steamOpt.default };
-            
-            const prewashOpt = getOptionValues('prewash_checkboxes', 'prewash_default');
-            options.pre_wash = { values: prewashOpt.values, default: prewashOpt.default };
-            
-            const hygieneOpt = getOptionValues('hygiene_checkboxes', 'hygiene_default');
-            options.hygiene = { values: hygieneOpt.values, default: hygieneOpt.default };
-            if (hygieneOpt.values.includes('Есть')) {
-                options.hygiene.depends_on = { "option": "temperature", "condition": ">=60" };
-            }
-            
-            const anticreaseOpt = getOptionValues('anticrease_checkboxes', 'anticrease_default');
-            options.anti_crease = { values: anticreaseOpt.values, default: anticreaseOpt.default };
-            
-            const nightspinOpt = getOptionValues('nightspin_checkboxes', 'nightspin_default');
-            options.night_spin = { values: nightspinOpt.values, default: nightspinOpt.default };
-            
-            const rinsesOpt = getOptionValues('rinses_checkboxes', 'rinses_default');
-            options.extra_rinse = { values: rinsesOpt.values, default: rinsesOpt.default };
-            
-            const aquaplusOpt = getOptionValues('aquaplus_checkboxes', 'aquaplus_default');
-            options.aqua_plus = { values: aquaplusOpt.values, default: aquaplusOpt.default };
-            
-            const zoomOpt = getOptionValues('zoom_checkboxes', 'zoom_default');
-            options.zoom = { values: zoomOpt.values, default: zoomOpt.default };
-            
-            const data = {
-                name: name,
-                Pr: pr,
-                PrCode: prCode,
-                PrStr: prStr,
-                options: options,
-                mutual_exclusion: mutualExclusions
-            };
-            
-            if (editMode) {
-                data.program_id = editProgramId;
-            }
-            
-            const endpoint = editMode ? '/api/bianca/update_program' : '/api/bianca/add_program_full';
-            
+    }
+
+    async function deleteProgram(programId, programName) {
+        if (confirm(`Удалить программу "${programName}"?`)) {
             try {
-                const response = await fetch(`${API_BASE}${endpoint}`, {
+                const response = await fetch(`${API_BASE}/api/bianca/delete_program`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ program_id: programId })
                 });
-                
                 const result = await response.json();
-                
                 if (result.success) {
                     showMessage(result.message, 'success');
                     await loadPrograms();
-                    cancelEdit();
+                    if (editMode && editProgramId === programId) { cancelEdit(); }
                 } else {
                     showMessage(result.error, 'error');
                 }
             } catch (error) {
-                showMessage('Ошибка соединения: ' + error.message, 'error');
+                showMessage('Ошибка удаления: ' + error.message, 'error');
+            }
+        }
+    }
+
+    function cancelEdit() {
+        editMode = false;
+        editProgramId = null;
+        document.getElementById('formTitle').innerHTML = '➕ Добавление программы';
+        document.getElementById('submitBtn').innerHTML = '✅ Добавить программу';
+        document.getElementById('cancelEditBtn').style.display = 'none';
+        document.getElementById('addProgramForm').reset();
+        optionConfigs.forEach(config => {
+            const checkboxes = document.querySelectorAll(`#${config.checkboxesId} input[type="checkbox"]`);
+            if (checkboxes.length > 0) {
+                checkboxes.forEach((cb, idx) => { cb.checked = (idx === 0); });
+                updateSelectedDisplay(config.checkboxesId, config.displayId, config.selectId);
             }
         });
-        
-        // Инициализация
-        initOptionListeners();
+        mutualExclusions = [];
         renderMutualList();
-        loadPrograms();
-    </script>
+    }
+
+    function addMutualExclusion() {
+        const opt1 = document.getElementById('mutual_option1').value;
+        const opt2 = document.getElementById('mutual_option2').value;
+        if (!opt1 || !opt2) { showMessage('Выберите обе опции', 'warning'); return; }
+        if (opt1 === opt2) { showMessage('Нельзя добавить взаимоисключение опции с самой собой', 'error'); return; }
+        const exists = mutualExclusions.some(m => (m[0] === opt1 && m[1] === opt2) || (m[0] === opt2 && m[1] === opt1));
+        if (exists) { showMessage('Такое взаимоисключение уже добавлено', 'warning'); return; }
+        mutualExclusions.push([opt1, opt2]);
+        renderMutualList();
+        document.getElementById('mutual_option1').value = '';
+        document.getElementById('mutual_option2').value = '';
+    }
+
+    function removeMutualExclusion(index) {
+        mutualExclusions.splice(index, 1);
+        renderMutualList();
+    }
+
+    function renderMutualList() {
+        const container = document.getElementById('mutualList');
+        if (mutualExclusions.length === 0) {
+            container.innerHTML = '<div style="color: #999; text-align: center;">Нет добавленных взаимоисключений</div>';
+            return;
+        }
+        const optionNames = {
+            'anti_crease': 'Антисминание', 'night_spin': 'Ночная стирка', 'pre_wash': 'Предстирка',
+            'hygiene': 'Гигиена', 'aqua_plus': 'Акваплюс', 'zoom': 'Zoom', 'steam': 'Пар', 'extra_rinse': 'Полоскания'
+        };
+        let html = '';
+        mutualExclusions.forEach((mutual, index) => {
+            html += `<div class="mutual-item"><span>${optionNames[mutual[0]] || mutual[0]} ↔ ${optionNames[mutual[1]] || mutual[1]}</span>
+                     <button type="button" class="remove-mutual" onclick="removeMutualExclusion(${index})">✖ Удалить</button></div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function insertExampleJson() {
+        const exampleJson = {
+            "programs": [{
+                "name": "Джинсы", "Pr": 17, "PrCode": 15, "PrStr": "Jeans", "PrStrRaw": "Джинсы",
+                "options": {
+                    "temperature": {"values": ["0°C", "20°C", "30°C", "40°C"], "default": "40°C"},
+                    "spin": {"values": ["0 об/мин", "400 об/мин", "600 об/мин", "800 об/мин", "1000 об/мин"], "default": "1000 об/мин"},
+                    "soil": {"values": ["Нет"], "default": "Нет"}, "steam": {"values": ["Без пара"], "default": "Без пара"},
+                    "pre_wash": {"values": ["Нет"], "default": "Нет"}, "hygiene": {"values": ["Нет"], "default": "Нет"},
+                    "anti_crease": {"values": ["Нет"], "default": "Нет"}, "night_spin": {"values": ["Нет"], "default": "Нет"},
+                    "extra_rinse": {"values": ["Нет"], "default": "Нет"}, "aqua_plus": {"values": ["Нет"], "default": "Нет"},
+                    "zoom": {"values": ["Нет"], "default": "Нет"}
+                }, "mutual_exclusion": []
+            }]
+        };
+        document.getElementById('batchJson').value = JSON.stringify(exampleJson, null, 2);
+    }
+
+    async function batchAddPrograms() {
+        const jsonText = document.getElementById('batchJson').value;
+        if (!jsonText.trim()) { showMessage('Введите JSON с программами', 'warning'); return; }
+        let programs;
+        try { programs = JSON.parse(jsonText); } catch (e) { showMessage('Ошибка парсинга JSON: ' + e.message, 'error'); return; }
+        const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(programs)
+        });
+        const result = await response.json();
+        if (result.success) {
+            let message = result.message;
+            if (result.added && result.added.length) message += '\n\n✅ Добавлены:\n' + result.added.join('\n');
+            if (result.skipped && result.skipped.length) message += '\n\n⚠️ Пропущены:\n' + result.skipped.join('\n');
+            if (result.errors && result.errors.length) message += '\n\n❌ Ошибки:\n' + result.errors.join('\n');
+            showMessage(message, 'success');
+            await loadPrograms();
+            document.getElementById('batchJson').value = '';
+        } else { showMessage(result.error, 'error'); }
+    }
+
+    async function importProgramFromFile() {
+        const fileInput = document.getElementById('programFileInput');
+        const file = fileInput.files[0];
+        if (!file) { showMessage('Выберите JSON файл', 'warning'); return; }
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const program = JSON.parse(e.target.result);
+                if (!program.name || program.Pr === undefined) { showMessage('❌ В файле отсутствует name или Pr', 'error'); return; }
+                if (!program.PrStrRaw) {
+                    program.PrStrRaw = program.PrStr;
+                }
+                const programsData = { "programs": [program] };
+                const response = await fetch(`${API_BASE}/api/bianca/add_multiple_programs`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(programsData)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    let message = result.message;
+                    if (result.added && result.added.length) message += '\n\n✅ Добавлена: ' + result.added.join('\n');
+                    if (result.skipped && result.skipped.length) message += '\n\n⚠️ Пропущена: ' + result.skipped.join('\n');
+                    showMessage(message, 'success');
+                    await loadPrograms();
+                    fileInput.value = '';
+                } else { showMessage(result.error, 'error'); }
+            } catch (error) { showMessage('Ошибка парсинга JSON: ' + error.message, 'error'); }
+        };
+        reader.readAsText(file);
+    }
+
+    document.getElementById('addProgramForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('program_name').value;
+        const pr = parseInt(document.getElementById('pr_value').value);
+        const prCode = parseInt(document.getElementById('pr_code').value);
+        const prStrRaw = document.getElementById('pr_str').value;
+        let prStr = convertRussianToHex(prStrRaw);
+        document.getElementById('pr_str').value = prStr;
+        const options = {};
+        const tempOpt = getOptionValues('temp_checkboxes', 'temp_default');
+        options.temperature = { values: tempOpt.values, default: tempOpt.default };
+        const spinOpt = getOptionValues('spin_checkboxes', 'spin_default');
+        options.spin = { values: spinOpt.values, default: spinOpt.default };
+        const soilOpt = getOptionValues('soil_checkboxes', 'soil_default');
+        options.soil = { values: soilOpt.values, default: soilOpt.default };
+        const steamOpt = getOptionValues('steam_checkboxes', 'steam_default');
+        options.steam = { values: steamOpt.values, default: steamOpt.default };
+        const prewashOpt = getOptionValues('prewash_checkboxes', 'prewash_default');
+        options.pre_wash = { values: prewashOpt.values, default: prewashOpt.default };
+        const hygieneOpt = getOptionValues('hygiene_checkboxes', 'hygiene_default');
+        options.hygiene = { values: hygieneOpt.values, default: hygieneOpt.default };
+        if (hygieneOpt.values.includes('Есть')) { options.hygiene.depends_on = { "option": "temperature", "condition": ">=60" }; }
+        const anticreaseOpt = getOptionValues('anticrease_checkboxes', 'anticrease_default');
+        options.anti_crease = { values: anticreaseOpt.values, default: anticreaseOpt.default };
+        const nightspinOpt = getOptionValues('nightspin_checkboxes', 'nightspin_default');
+        options.night_spin = { values: nightspinOpt.values, default: nightspinOpt.default };
+        const rinsesOpt = getOptionValues('rinses_checkboxes', 'rinses_default');
+        options.extra_rinse = { values: rinsesOpt.values, default: rinsesOpt.default };
+        const aquaplusOpt = getOptionValues('aquaplus_checkboxes', 'aquaplus_default');
+        options.aqua_plus = { values: aquaplusOpt.values, default: aquaplusOpt.default };
+        const zoomOpt = getOptionValues('zoom_checkboxes', 'zoom_default');
+        options.zoom = { values: zoomOpt.values, default: zoomOpt.default };
+        const data = { 
+            name, 
+            Pr: pr, 
+            PrCode: prCode, 
+            PrStr: prStr, 
+            PrStrRaw: prStrRaw, 
+            options, 
+            mutual_exclusion: mutualExclusions 
+        };
+        if (editMode) { data.program_id = editProgramId; }
+        const endpoint = editMode ? '/api/bianca/update_program' : '/api/bianca/add_program_full';
+        try {
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (result.success) {
+                showMessage(result.message, 'success');
+                await loadPrograms();
+                cancelEdit();
+            } else { showMessage(result.error, 'error'); }
+        } catch (error) { showMessage('Ошибка соединения: ' + error.message, 'error'); }
+    });
+
+    initOptionListeners();
+    renderMutualList();
+    loadPrograms();
+    document.getElementById('pr_str').addEventListener('blur', convertPrStr);
+</script>
 </body>
 </html>
