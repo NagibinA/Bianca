@@ -1,11 +1,14 @@
 """API views for Bianca integration."""
 
 import json
+import logging
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
 
 from .const import DOMAIN
-from . import get_program_manager
+from .program_manager import get_program_manager_from_hass as get_program_manager
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BiancaAddProgramFullView(HomeAssistantView):
