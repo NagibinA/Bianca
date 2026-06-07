@@ -1,4 +1,5 @@
-// BIANCA SIMPLE DASHBOARD STRATEGY - Version 2.4.2
+// BIANCA SIMPLE DASHBOARD STRATEGY - Version 2.4.3
+// FIX: Добавлена блокировка селектов при недоступности машины (2026-06-07)
 console.log("Loading bianca-simple.js");
 
 // ========== МГНОВЕННАЯ БЛОКИРОВКА КНОПОК ==========
@@ -192,7 +193,23 @@ class BiancaSimpleDashboardStrategy extends HTMLElement {
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: ["select.bianca_program"],
+                                    entities: [
+                                        {
+                                            entity: "select.bianca_program",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     grid_options: {
                                         rows: "auto",
                                         columns: 12
@@ -222,13 +239,37 @@ class BiancaSimpleDashboardStrategy extends HTMLElement {
                                             type: "entity",
                                             entity: "select.bianca_temperature",
                                             name: " ",
-                                            state_color: true
+                                            state_color: true,
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
                                         },
                                         {
                                             type: "entity",
                                             entity: "select.bianca_spin",
                                             name: " ",
-                                            state_color: true
+                                            state_color: true,
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
                                         }
                                     ]
                                 },
@@ -251,25 +292,89 @@ class BiancaSimpleDashboardStrategy extends HTMLElement {
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_temperature" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_temperature",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 },
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_spin" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_spin",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 },
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_steam" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_steam",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 },
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_zoom" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_zoom",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 }
                             ]
@@ -280,25 +385,89 @@ class BiancaSimpleDashboardStrategy extends HTMLElement {
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: ["select.bianca_delay_start"],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_delay_start",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 },
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_hygiene" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_hygiene",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 },
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_soil" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_soil",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 },
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_anti_crease" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_anti_crease",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 }
                             ]
@@ -309,25 +478,89 @@ class BiancaSimpleDashboardStrategy extends HTMLElement {
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_pre_wash" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_pre_wash",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 },
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_aqua_plus" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_aqua_plus",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 },
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_night_spin" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_night_spin",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 },
                                 {
                                     type: "entities",
                                     show_header_toggle: false,
-                                    entities: [{ entity: "select.bianca_extra_rinse" }],
+                                    entities: [
+                                        { 
+                                            entity: "select.bianca_extra_rinse",
+                                            card_mod: {
+                                                style: `
+                                                    :host {
+                                                        {% if not (is_state('binary_sensor.bianca_available', 'on') 
+                                                            and is_state('sensor.bianca_machine_state', 'Бездействие')
+                                                            and is_state('sensor.bianca_remote_control', 'Вкл')) %}
+                                                        opacity: 0.6;
+                                                        pointer-events: none;
+                                                        {% endif %}
+                                                    }
+                                                `
+                                            }
+                                        }
+                                    ],
                                     state_color: false
                                 }
                             ]
