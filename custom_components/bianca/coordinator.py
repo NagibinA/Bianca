@@ -28,6 +28,7 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         self._last_valid_data = None
         self._entry_id = entry_id
         self._api_response_status = "NO RESPONSE"
+        self._completion_notified = False
 
     @property
     def device_available(self) -> bool:
@@ -57,8 +58,12 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                                 raise UpdateFailed(f"API error: {self._api_response_status}")
                             if "statusLavatrice" in data:
                                 self._api_response_status = "OK"
-                                self._last_valid_data = data.get("statusLavatrice", {})
-                                return self._last_valid_data
+                                new_data = data.get("statusLavatrice", {})
+                                
+                                self._check_completion(new_data)
+                                
+                                self._last_valid_data = new_data
+                                return new_data
                             else:
                                 self._api_response_status = "UNKNOWN FORMAT"
                                 if self._last_valid_data is not None:
@@ -78,3 +83,47 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
             if self.device_available and self._last_valid_data is not None:
                 return self._last_valid_data
             raise UpdateFailed(f"Error fetching data: {e}")
+
+    def _check_completion(self, new_data: dict):
+        """Проверяет, завершилась ли стирка."""
+        if self._last_valid_data is None:
+            self._completion_notified = False
+            return
+        
+        old_mach_md = self._last_valid_data.get("MachMd")
+        new_mach_md = new_data.get("MachMd")
+        
+        if old_mach_md in ["2", "3"] and new_mach_md in ["7", "8"]:
+            if not self._completion_notified:
+                self._completion_notified = True
+                self._send_completion_notification()
+        else:
+            if new_mach_md not in ["7", "8"]:
+                self._completion_notified = False
+
+    def _send_completion_notification(self):
+        """Отправляет уведомление пользователю, который запустил стирку."""
+        user_id = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {}).get("started_by_user")
+        
+        if not user_id:
+            _LOGGER.info("No user_id found for this washing cycle. Skipping notification.")
+            return
+
+        self.hass.async_create_task(
+            self.hass.services.async_call(
+                "notify",
+                "notify",
+                {
+                    "title": "🧺 Bianca",
+                    "message": "Стирка завершена!",
+                    "target": f"user/{user_id}"
+                },
+                blocking=False
+            )
+        )
+        
+        # Сбрасываем, чтобы не отправить повторно
+        if self._entry_id in self.hass.data.get(DOMAIN, {}):
+            self.hass.data[DOMAIN][self._entry_id]["started_by_user"] = None
+        
+        _LOGGER.info(f"Completion notification sent to user {user_id}")
