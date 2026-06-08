@@ -1,4 +1,4 @@
-"""Sensor platform for Bianca integration - Version 2.6.2."""
+"""Sensor platform for Bianca integration - Version 2.6.3."""
 
 from __future__ import annotations
 from datetime import timedelta
@@ -55,19 +55,19 @@ async def async_setup_entry(
         BiancaRinseSensor(coordinator, entry, hass),
         BiancaAquaPlusSensor(coordinator, entry, hass),
         BiancaZoomSensor(coordinator, entry, hass),
-        
-        # Основные (будут на панели "Обзор")
         BiancaRemoteControlSensor(coordinator, entry, hass),
         BiancaErrorSensor(coordinator, entry, hass),
+        BiancaSoilLevelSensor(coordinator, entry, hass),
+        BiancaSteamSensor(coordinator, entry, hass),
+        BiancaDelayStartSensor(coordinator, entry, hass),
+        BiancaRemainingTimeSensor(coordinator, entry, hass),
+        
+        # Основные (будут на панели "Обзор")
         BiancaMachineStateSensor(coordinator, entry, hass),
         BiancaProgramSensor(coordinator, entry, hass),
         BiancaProgramPhaseSensor(coordinator, entry, hass),
-        BiancaSoilLevelSensor(coordinator, entry, hass),
         BiancaTemperatureSensor(coordinator, entry, hass),
         BiancaSpinSpeedSensor(coordinator, entry, hass),
-        BiancaRemainingTimeSensor(coordinator, entry, hass),
-        BiancaDelayStartSensor(coordinator, entry, hass),
-        BiancaSteamSensor(coordinator, entry, hass),
     ]
     
     async_add_entities(entities)
@@ -183,6 +183,7 @@ class BiancaApiWriteStatusSensor(CoordinatorEntity, SensorEntity):
 class BiancaRemoteControlSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "WiFiStatus", "remote_control", "Удаленное управление", "mdi:wifi")
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -197,6 +198,7 @@ class BiancaRemoteControlSensor(BiancaBaseSensor):
 class BiancaErrorSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Err", "error", "Ошибка", "mdi:alert-circle")
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -260,6 +262,7 @@ class BiancaProgramPhaseSensor(BiancaBaseSensor):
 class BiancaSoilLevelSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "SLevel", "soil_level", "Уровень загрязнения", "mdi:water-percent")
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -332,6 +335,7 @@ class BiancaRemainingTimeSensor(BiancaBaseSensor):
             coordinator, entry, hass, "RemTime", "remaining_time", "Оставшееся время", "mdi:timer-outline",
             unit=None
         )
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -360,6 +364,7 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
             coordinator, entry, hass, "DelVal", "delay_start", "Отложенный старт", "mdi:timer-outline",
             unit=None
         )
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -398,6 +403,7 @@ class BiancaLanguageSensor(BiancaBaseSensor):
 class BiancaSteamSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Steam", "steam", "Пар", "bianca:steam")
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
