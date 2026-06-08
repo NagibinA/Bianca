@@ -116,7 +116,7 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
     def _send_completion_notification(self):
         """Отправляет уведомления о завершении стирки."""
         
-        # 1. Persistent notification (всегда)
+        # 1. Persistent notification
         self.hass.async_create_task(
             self.hass.services.async_call(
                 "persistent_notification",
@@ -129,7 +129,7 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
             )
         )
         
-        # 2. На все мобильные устройства (notify.notify без target)
+        # 2. На все мобильные устройства
         self.hass.async_create_task(
             self.hass.services.async_call(
                 "notify",
@@ -141,14 +141,5 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                 blocking=False
             )
         )
-        
-        # 3. Сохраняем user_id для будущих версий
-        user_id = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {}).get("started_by_user")
-        if user_id:
-            _LOGGER.info(f"Washing cycle completed. Started by user_id: {user_id}")
-        
-        # Сбрасываем, чтобы не отправить повторно
-        if self._entry_id in self.hass.data.get(DOMAIN, {}):
-            self.hass.data[DOMAIN][self._entry_id]["started_by_user"] = None
         
         _LOGGER.info("Washing completion notification sent")
