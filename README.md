@@ -2,6 +2,7 @@
 
 Интеграция для управления стиральной машиной Candy Bianca через Home Assistant.
 
+
 |Dashboard  Bianca | Dashboard  Bianca Simple |
 |--------|----------|
 | ![Candy Bianca](/bianca.png) | ![Candy Bianca](/bianca-simple.png) |
@@ -24,6 +25,8 @@
 - IP-адрес машины в локальной сети
 
 ## 🚀 Установка
+
+[![HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=NagibinA&repository=Bianca&category=integration)
 
 ### Через HACS (рекомендуется)
 
