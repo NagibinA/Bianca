@@ -1,4 +1,4 @@
-"""Binary sensor for Bianca device availability via ping - Version 2.4.3."""
+"""Binary sensor for Bianca device availability via ping - Version 2.6.3."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import DOMAIN
 
@@ -55,6 +56,7 @@ class BiancaAvailableBinarySensor(BinarySensorEntity):
         self._attr_unique_id = f"{entry.entry_id}_available"
         self._attr_icon = "mdi:network"
         self._attr_should_poll = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._state = False
         self._unsub_update = None
 
