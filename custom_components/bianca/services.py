@@ -1,5 +1,6 @@
 """Services for Bianca integration."""
 
+import json
 import logging
 import async_timeout
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -13,6 +14,26 @@ _LOGGER = logging.getLogger(__name__)
 async def async_register_services(hass: HomeAssistant, program_manager):
     """Register services for Bianca."""
     
+    async def send_command(hass, entry_id, ip_address, url):
+        """Отправляет команду и записывает ответ в сенсор."""
+        coordinator = hass.data[DOMAIN][entry_id]["coordinator"]
+        session = async_get_clientsession(hass)
+        
+        try:
+            async with async_timeout.timeout(10):
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        text = await response.text()
+                        try:
+                            data = json.loads(text)
+                            coordinator.set_write_status(data.get("response", "NO_RESPONSE_FIELD"))
+                        except json.JSONDecodeError:
+                            coordinator.set_write_status("PARSE ERROR")
+                    else:
+                        coordinator.set_write_status(f"HTTP {response.status}")
+        except Exception:
+            coordinator.set_write_status("CONNECTION ERROR")
+    
     async def handle_start_washing(call):
         """Handle start washing service."""
         
@@ -22,9 +43,13 @@ async def async_register_services(hass: HomeAssistant, program_manager):
             entry_id = entry.entry_id
             break
         
+        if not entry_id:
+            _LOGGER.error("No Bianca integration found")
+            return
+        
         # Сохраняем user_id из контекста
         user_id = call.context.user_id
-        if user_id and entry_id and DOMAIN in hass.data and entry_id in hass.data[DOMAIN]:
+        if user_id and DOMAIN in hass.data and entry_id in hass.data[DOMAIN]:
             hass.data[DOMAIN][entry_id]["started_by_user"] = user_id
             _LOGGER.debug(f"Washing started by user_id: {user_id}")
         
@@ -42,6 +67,8 @@ async def async_register_services(hass: HomeAssistant, program_manager):
         
         if program_id is None:
             _LOGGER.error(f"Unknown program: {program_name}")
+            coordinator = hass.data[DOMAIN][entry_id]["coordinator"]
+            coordinator.set_write_status(f"UNKNOWN PROGRAM: {program_name}")
             return
         
         values = {}
@@ -118,12 +145,7 @@ async def async_register_services(hass: HomeAssistant, program_manager):
             f"&Dry=0&RecipeId=0&StartCheckUp=0&DispTestOn=0"
         )
         
-        session = async_get_clientsession(hass)
-        try:
-            async with async_timeout.timeout(10):
-                await session.get(url)
-        except Exception as e:
-            _LOGGER.error(f"Error starting washing: {e}")
+        await send_command(hass, entry_id, ip_address, url)
         
         if delay_str != "Нет":
             await hass.services.async_call(
@@ -133,6 +155,15 @@ async def async_register_services(hass: HomeAssistant, program_manager):
     
     async def handle_stop_washing(call):
         """Handle stop washing service."""
+        entry_id = None
+        for entry in hass.config_entries.async_entries(DOMAIN):
+            entry_id = entry.entry_id
+            break
+        
+        if not entry_id:
+            _LOGGER.error("No Bianca integration found")
+            return
+        
         ip_address = None
         for entry in hass.config_entries.async_entries(DOMAIN):
             ip_address = entry.data.get("ip_address")
@@ -143,12 +174,8 @@ async def async_register_services(hass: HomeAssistant, program_manager):
             return
         
         url = f"http://{ip_address}/http-write.json?encrypted=0&Write=1&StSt=0"
-        session = async_get_clientsession(hass)
-        try:
-            async with async_timeout.timeout(10):
-                await session.get(url)
-        except Exception as e:
-            _LOGGER.error(f"Error stopping washing: {e}")
+        
+        await send_command(hass, entry_id, ip_address, url)
     
     hass.services.async_register("bianca", "start_washing", handle_start_washing)
     hass.services.async_register("bianca", "stop_washing", handle_stop_washing)
