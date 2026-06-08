@@ -1,10 +1,13 @@
 """Services for Bianca integration."""
 
 import json
+import asyncio
 import logging
+from datetime import timedelta
 import async_timeout
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, OPTION_VALUE_TO_CODE
 
@@ -13,6 +16,53 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_register_services(hass: HomeAssistant, program_manager):
     """Register services for Bianca."""
+    
+    async def send_start_notification_with_delay(hass, entry_id, program_name, temperature, spin, delay_start):
+        """Отправляет уведомление о запуске стирки через 35 секунд."""
+        await asyncio.sleep(35)
+        
+        coordinator = hass.data[DOMAIN][entry_id]["coordinator"]
+        
+        # Получаем RemTime из coordinator
+        rem_time = coordinator.data.get("RemTime") if coordinator.data else None
+        
+        if rem_time:
+            try:
+                seconds = int(rem_time)
+                finish_time = dt_util.now() + timedelta(seconds=seconds)
+                finish_time_str = finish_time.strftime("%H:%M")
+            except (ValueError, TypeError):
+                finish_time_str = "неизвестно"
+        else:
+            finish_time_str = "неизвестно"
+        
+        message = f"🧺 Стирка запущена!\n"
+        message += f"Программа: {program_name}\n"
+        message += f"Температура: {temperature}\n"
+        message += f"Отжим: {spin}\n"
+        if delay_start != "Нет":
+            message += f"Отложенный старт: {delay_start}\n"
+        message += f"Окончание: {finish_time_str}"
+        
+        await hass.services.async_call(
+            "persistent_notification",
+            "create",
+            {
+                "title": "🧺 Bianca",
+                "message": message,
+                "notification_id": "bianca_washing_started"
+            }
+        )
+        
+        await hass.services.async_call(
+            "notify",
+            "notify",
+            {
+                "title": "🧺 Bianca",
+                "message": message
+            },
+            blocking=False
+        )
     
     async def send_command(hass, entry_id, ip_address, url):
         """Отправляет команду и записывает ответ в сенсор."""
@@ -26,13 +76,18 @@ async def async_register_services(hass: HomeAssistant, program_manager):
                         text = await response.text()
                         try:
                             data = json.loads(text)
-                            coordinator.set_write_status(data.get("response", "NO_RESPONSE_FIELD"))
+                            status = data.get("response", "NO_RESPONSE_FIELD")
+                            coordinator.set_write_status(status)
+                            return status
                         except json.JSONDecodeError:
                             coordinator.set_write_status("PARSE ERROR")
+                            return "PARSE ERROR"
                     else:
                         coordinator.set_write_status(f"HTTP {response.status}")
+                        return f"HTTP {response.status}"
         except Exception:
             coordinator.set_write_status("CONNECTION ERROR")
+            return "CONNECTION ERROR"
     
     async def handle_start_washing(call):
         """Handle start washing service."""
@@ -46,12 +101,6 @@ async def async_register_services(hass: HomeAssistant, program_manager):
         if not entry_id:
             _LOGGER.error("No Bianca integration found")
             return
-        
-        # Сохраняем user_id из контекста
-        user_id = call.context.user_id
-        if user_id and DOMAIN in hass.data and entry_id in hass.data[DOMAIN]:
-            hass.data[DOMAIN][entry_id]["started_by_user"] = user_id
-            _LOGGER.debug(f"Washing started by user_id: {user_id}")
         
         program_select = hass.states.get("select.bianca_program")
         program_name = program_select.state if program_select else None
@@ -145,7 +194,18 @@ async def async_register_services(hass: HomeAssistant, program_manager):
             f"&Dry=0&RecipeId=0&StartCheckUp=0&DispTestOn=0"
         )
         
-        await send_command(hass, entry_id, ip_address, url)
+        status = await send_command(hass, entry_id, ip_address, url)
+        
+        # Если команда успешна, отправляем уведомление о запуске с задержкой
+        if status == "SUCCESS":
+            temperature = values["temperature"]
+            spin = values["spin"]
+            
+            hass.async_create_task(
+                send_start_notification_with_delay(
+                    hass, entry_id, program_name, temperature, spin, delay_str
+                )
+            )
         
         if delay_str != "Нет":
             await hass.services.async_call(
