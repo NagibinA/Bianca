@@ -16,6 +16,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.util import dt as dt_util
 
 from .const import (
@@ -42,8 +43,20 @@ async def async_setup_entry(
         hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
     
     entities = [
+        # DIAGNOSTIC (будут в настройках -> диагностика)
         BiancaApiReadStatusSensor(coordinator, entry, hass),
         BiancaApiWriteStatusSensor(coordinator, entry, hass),
+        BiancaFinishTimeSensor(coordinator, entry, hass),
+        BiancaLanguageSensor(coordinator, entry, hass),
+        BiancaPreWashSensor(coordinator, entry, hass),
+        BiancaHygienicSensor(coordinator, entry, hass),
+        BiancaAntiCreaseSensor(coordinator, entry, hass),
+        BiancaNightSpinSensor(coordinator, entry, hass),
+        BiancaRinseSensor(coordinator, entry, hass),
+        BiancaAquaPlusSensor(coordinator, entry, hass),
+        BiancaZoomSensor(coordinator, entry, hass),
+        
+        # Основные (будут на панели "Обзор")
         BiancaRemoteControlSensor(coordinator, entry, hass),
         BiancaErrorSensor(coordinator, entry, hass),
         BiancaMachineStateSensor(coordinator, entry, hass),
@@ -54,16 +67,7 @@ async def async_setup_entry(
         BiancaSpinSpeedSensor(coordinator, entry, hass),
         BiancaRemainingTimeSensor(coordinator, entry, hass),
         BiancaDelayStartSensor(coordinator, entry, hass),
-        BiancaLanguageSensor(coordinator, entry, hass),
         BiancaSteamSensor(coordinator, entry, hass),
-        BiancaPreWashSensor(coordinator, entry, hass),
-        BiancaHygienicSensor(coordinator, entry, hass),
-        BiancaAntiCreaseSensor(coordinator, entry, hass),
-        BiancaNightSpinSensor(coordinator, entry, hass),
-        BiancaRinseSensor(coordinator, entry, hass),
-        BiancaAquaPlusSensor(coordinator, entry, hass),
-        BiancaZoomSensor(coordinator, entry, hass),
-        BiancaFinishTimeSensor(coordinator, entry, hass),
     ]
     
     async_add_entities(entities)
@@ -131,7 +135,7 @@ class BiancaApiReadStatusSensor(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{entry.entry_id}_sensor_api_read_status"
         self._attr_name = "Bianca Статус чтения API"
         self._attr_icon = "mdi:api"
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def device_info(self):
@@ -159,7 +163,7 @@ class BiancaApiWriteStatusSensor(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{entry.entry_id}_sensor_api_write_status"
         self._attr_name = "Bianca Статус записи API"
         self._attr_icon = "mdi:api"
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def device_info(self):
@@ -381,7 +385,7 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
 class BiancaLanguageSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Lang", "language", "Язык дисплея", "mdi:translate")
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -394,7 +398,6 @@ class BiancaLanguageSensor(BiancaBaseSensor):
 class BiancaSteamSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Steam", "steam", "Пар", "bianca:steam")
-        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -405,7 +408,7 @@ class BiancaSteamSensor(BiancaBaseSensor):
 class BiancaPreWashSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt1", "pre_wash", "Предварительная стирка", "bianca:pre-wash")
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -416,7 +419,7 @@ class BiancaPreWashSensor(BiancaBaseSensor):
 class BiancaHygienicSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt2", "hygienic_wash", "Гигиеническая стирка", "bianca:hygiene-wash")
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -427,7 +430,7 @@ class BiancaHygienicSensor(BiancaBaseSensor):
 class BiancaAntiCreaseSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt3", "anti_crease", "Анти сминание", "bianca:anti-crease")
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -438,7 +441,7 @@ class BiancaAntiCreaseSensor(BiancaBaseSensor):
 class BiancaNightSpinSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt4", "night_spin", "Ночной отжим", "bianca:night-spin")
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -449,7 +452,7 @@ class BiancaNightSpinSensor(BiancaBaseSensor):
 class BiancaRinseSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, None, "rinse", "Полоскание", "mdi:water-off")
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -479,7 +482,7 @@ class BiancaRinseSensor(BiancaBaseSensor):
 class BiancaAquaPlusSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt8", "aqua_plus", "Акваплюс", "bianca:extra-water")
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -490,7 +493,7 @@ class BiancaAquaPlusSensor(BiancaBaseSensor):
 class BiancaZoomSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt9", "zoom", "Режим ZOOM", "bianca:zoom")
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
@@ -507,7 +510,7 @@ class BiancaFinishTimeSensor(BiancaBaseSensor):
             "Время окончания", "mdi:timer-sand",
             device_class=SensorDeviceClass.TIMESTAMP
         )
-        self._attr_entity_registry_enabled_default = False
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):
