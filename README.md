@@ -26,18 +26,15 @@
 
 ## 🚀 Установка
 
-[![HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=NagibinA&repository=Bianca&category=integration)
-
 ### Через HACS (рекомендуется)
 
-1. Добавьте репозиторий в HACS как пользовательский репозиторий
-2. Нажмите "Download"
-3. Перезапустите Home Assistant
+[![Открыть репозиторий в HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=NagibinA&repository=Bianca&category=integration)
+
+Если кнопка не сработала: **HACS** → **Интеграции** → вверху списка откройте меню (**⋯**) → **Пользовательские репозитории** → URL `https://github.com/NagibinA/Bianca`, категория **Интеграция**. Установите **Bianca** и **перезапустите** Home Assistant.
 
 ### Вручную
 
-1. Скопируйте папку `custom_components/bianca` в папку `custom_components` вашего Home Assistant
-2. Перезапустите Home Assistant
+Скопируйте папку `custom_components/bianca` из репозитория в `custom_components/` вашей конфигурации Home Assistant и перезапустите Home Assistant.
 
 ## ⚙️ Настройка
 
