@@ -27,7 +27,8 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         self._url = API_ENDPOINT.format(ip_address)
         self._last_valid_data = None
         self._entry_id = entry_id
-        self._api_response_status = "NO RESPONSE"
+        self._api_read_status = "NO RESPONSE"
+        self._api_write_status = "NOT SENT"
         self._completion_notified = False
 
     @property
@@ -35,8 +36,18 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
         return self.hass.data.get(DOMAIN, {}).get(self._entry_id, {}).get("available", False)
     
     @property
-    def api_response_status(self) -> str:
-        return self._api_response_status
+    def api_read_status(self) -> str:
+        return self._api_read_status
+
+    @property
+    def api_write_status(self) -> str:
+        return self._api_write_status
+
+    def set_write_status(self, status: str):
+        """Обновляет статус последней команды записи."""
+        self._api_write_status = status
+        self.async_update_listeners()
+        _LOGGER.debug(f"API write status updated: {status}")
 
     async def _async_update_data(self) -> dict:
         if not self.device_available:
@@ -52,12 +63,12 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                         try:
                             data = json.loads(text)
                             if "response" in data:
-                                self._api_response_status = data["response"]
+                                self._api_read_status = data["response"]
                                 if self._last_valid_data is not None:
                                     return self._last_valid_data
-                                raise UpdateFailed(f"API error: {self._api_response_status}")
+                                raise UpdateFailed(f"API error: {self._api_read_status}")
                             if "statusLavatrice" in data:
-                                self._api_response_status = "OK"
+                                self._api_read_status = "OK"
                                 new_data = data.get("statusLavatrice", {})
                                 
                                 self._check_completion(new_data)
@@ -65,21 +76,22 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                                 self._last_valid_data = new_data
                                 return new_data
                             else:
-                                self._api_response_status = "UNKNOWN FORMAT"
+                                self._api_read_status = "UNKNOWN FORMAT"
                                 if self._last_valid_data is not None:
                                     return self._last_valid_data
                                 raise UpdateFailed("Unknown response format from device")
                         except json.JSONDecodeError:
-                            self._api_response_status = "PARSE ERROR"
+                            self._api_read_status = "PARSE ERROR"
                             if self._last_valid_data is not None:
                                 return self._last_valid_data
                             raise UpdateFailed("JSON decode error")
                     else:
-                        self._api_response_status = f"HTTP {response.status}"
+                        self._api_read_status = f"HTTP {response.status}"
                         if self._last_valid_data is not None:
                             return self._last_valid_data
                         raise UpdateFailed(f"HTTP error {response.status}")
         except Exception as e:
+            self._api_read_status = "CONNECTION ERROR"
             if self.device_available and self._last_valid_data is not None:
                 return self._last_valid_data
             raise UpdateFailed(f"Error fetching data: {e}")
@@ -102,28 +114,41 @@ class BiancaDataUpdateCoordinator(DataUpdateCoordinator):
                 self._completion_notified = False
 
     def _send_completion_notification(self):
-        """Отправляет уведомление пользователю, который запустил стирку."""
-        user_id = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {}).get("started_by_user")
+        """Отправляет уведомления о завершении стирки."""
         
-        if not user_id:
-            _LOGGER.info("No user_id found for this washing cycle. Skipping notification.")
-            return
-
+        # 1. Persistent notification (всегда)
+        self.hass.async_create_task(
+            self.hass.services.async_call(
+                "persistent_notification",
+                "create",
+                {
+                    "title": "🧺 Bianca",
+                    "message": "Стирка завершена!",
+                    "notification_id": "bianca_washing_complete"
+                }
+            )
+        )
+        
+        # 2. На все мобильные устройства (notify.notify без target)
         self.hass.async_create_task(
             self.hass.services.async_call(
                 "notify",
                 "notify",
                 {
                     "title": "🧺 Bianca",
-                    "message": "Стирка завершена!",
-                    "target": f"user/{user_id}"
+                    "message": "Стирка завершена!"
                 },
                 blocking=False
             )
         )
         
+        # 3. Сохраняем user_id для будущих версий
+        user_id = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {}).get("started_by_user")
+        if user_id:
+            _LOGGER.info(f"Washing cycle completed. Started by user_id: {user_id}")
+        
         # Сбрасываем, чтобы не отправить повторно
         if self._entry_id in self.hass.data.get(DOMAIN, {}):
             self.hass.data[DOMAIN][self._entry_id]["started_by_user"] = None
         
-        _LOGGER.info(f"Completion notification sent to user {user_id}")
+        _LOGGER.info("Washing completion notification sent")
