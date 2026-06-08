@@ -1,4 +1,4 @@
-"""Sensor platform for Bianca integration - Version 2.5.0."""
+"""Sensor platform for Bianca integration - Version 2.6.2."""
 
 from __future__ import annotations
 from datetime import timedelta
@@ -42,7 +42,8 @@ async def async_setup_entry(
         hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
     
     entities = [
-        BiancaApiResponseSensor(coordinator, entry, hass),
+        BiancaApiReadStatusSensor(coordinator, entry, hass),
+        BiancaApiWriteStatusSensor(coordinator, entry, hass),
         BiancaRemoteControlSensor(coordinator, entry, hass),
         BiancaErrorSensor(coordinator, entry, hass),
         BiancaMachineStateSensor(coordinator, entry, hass),
@@ -119,22 +120,18 @@ class BiancaBaseSensor(CoordinatorEntity, SensorEntity):
         return self.coordinator.data.get(self._key)
 
 
-class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
-    """Sensor for API response status."""
+class BiancaApiReadStatusSensor(CoordinatorEntity, SensorEntity):
+    """Sensor for API read status."""
 
-    def __init__(
-        self, 
-        coordinator: BiancaDataUpdateCoordinator, 
-        entry: ConfigEntry,
-        hass: HomeAssistant,
-    ) -> None:
+    def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator)
         self._entry = entry
         self._hass = hass
-        self.entity_id = "sensor.bianca_api_response"
-        self._attr_unique_id = f"{entry.entry_id}_sensor_api_response"
-        self._attr_name = "Bianca Статус API"
+        self.entity_id = "sensor.bianca_api_read_status"
+        self._attr_unique_id = f"{entry.entry_id}_sensor_api_read_status"
+        self._attr_name = "Bianca Статус чтения API"
         self._attr_icon = "mdi:api"
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def device_info(self):
@@ -148,7 +145,35 @@ class BiancaApiResponseSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self) -> str:
-        return self.coordinator.api_response_status
+        return self.coordinator.api_read_status
+
+
+class BiancaApiWriteStatusSensor(CoordinatorEntity, SensorEntity):
+    """Sensor for API write status."""
+
+    def __init__(self, coordinator, entry, hass):
+        super().__init__(coordinator)
+        self._entry = entry
+        self._hass = hass
+        self.entity_id = "sensor.bianca_api_write_status"
+        self._attr_unique_id = f"{entry.entry_id}_sensor_api_write_status"
+        self._attr_name = "Bianca Статус записи API"
+        self._attr_icon = "mdi:api"
+        self._attr_entity_registry_enabled_default = False
+
+    @property
+    def device_info(self):
+        return {"identifiers": {(DOMAIN, self._entry.data[CONF_IP_ADDRESS])}}
+
+    @property
+    def available(self) -> bool:
+        if not self.coordinator.device_available:
+            return False
+        return True
+
+    @property
+    def native_value(self) -> str:
+        return self.coordinator.api_write_status
 
 
 class BiancaRemoteControlSensor(BiancaBaseSensor):
@@ -184,10 +209,17 @@ class BiancaMachineStateSensor(BiancaBaseSensor):
         super().__init__(coordinator, entry, hass, "MachMd", "machine_state", "Состояние машины", "mdi:washing-machine")
 
     @property
+    def available(self) -> bool:
+        return True
+
+    @property
     def native_value(self):
+        if not self.coordinator.device_available:
+            return "Выключена"
+        
         value = super().native_value
         if value is None:
-            return None
+            return "Выключена"
         return MACHMD_MAP.get(value, value)
 
 
@@ -349,6 +381,7 @@ class BiancaDelayStartSensor(BiancaBaseSensor):
 class BiancaLanguageSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Lang", "language", "Язык дисплея", "mdi:translate")
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -361,6 +394,7 @@ class BiancaLanguageSensor(BiancaBaseSensor):
 class BiancaSteamSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Steam", "steam", "Пар", "bianca:steam")
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -371,6 +405,7 @@ class BiancaSteamSensor(BiancaBaseSensor):
 class BiancaPreWashSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt1", "pre_wash", "Предварительная стирка", "bianca:pre-wash")
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -381,6 +416,7 @@ class BiancaPreWashSensor(BiancaBaseSensor):
 class BiancaHygienicSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt2", "hygienic_wash", "Гигиеническая стирка", "bianca:hygiene-wash")
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -391,6 +427,7 @@ class BiancaHygienicSensor(BiancaBaseSensor):
 class BiancaAntiCreaseSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt3", "anti_crease", "Анти сминание", "bianca:anti-crease")
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -401,6 +438,7 @@ class BiancaAntiCreaseSensor(BiancaBaseSensor):
 class BiancaNightSpinSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt4", "night_spin", "Ночной отжим", "bianca:night-spin")
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -411,6 +449,7 @@ class BiancaNightSpinSensor(BiancaBaseSensor):
 class BiancaRinseSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, None, "rinse", "Полоскание", "mdi:water-off")
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -440,6 +479,7 @@ class BiancaRinseSensor(BiancaBaseSensor):
 class BiancaAquaPlusSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt8", "aqua_plus", "Акваплюс", "bianca:extra-water")
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -450,6 +490,7 @@ class BiancaAquaPlusSensor(BiancaBaseSensor):
 class BiancaZoomSensor(BiancaBaseSensor):
     def __init__(self, coordinator, entry, hass):
         super().__init__(coordinator, entry, hass, "Opt9", "zoom", "Режим ZOOM", "bianca:zoom")
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -466,6 +507,7 @@ class BiancaFinishTimeSensor(BiancaBaseSensor):
             "Время окончания", "mdi:timer-sand",
             device_class=SensorDeviceClass.TIMESTAMP
         )
+        self._attr_entity_registry_enabled_default = False
 
     @property
     def native_value(self):
@@ -473,18 +515,38 @@ class BiancaFinishTimeSensor(BiancaBaseSensor):
             return None
         
         machine_state = self.coordinator.data.get("MachMd")
-        if machine_state not in ["2", "3"]:
-            return None
         
-        rem_time = self.coordinator.data.get("RemTime")
-        if rem_time is None:
-            return None
-        
-        try:
-            seconds = int(rem_time)
-            if seconds <= 0:
+        # Режим отложенного старта
+        if machine_state == "5":
+            del_val = self.coordinator.data.get("DelVal")
+            rem_time = self.coordinator.data.get("RemTime")
+            
+            if del_val is None or rem_time is None:
                 return None
-            finish_time = dt_util.now() + timedelta(seconds=seconds)
-            return finish_time.isoformat()
-        except (ValueError, TypeError):
-            return None
+            
+            try:
+                delay_minutes = int(del_val)
+                wash_seconds = int(rem_time)
+                total_seconds = (delay_minutes * 60) + wash_seconds
+                if total_seconds <= 0:
+                    return None
+                finish_time = dt_util.now() + timedelta(seconds=total_seconds)
+                return finish_time
+            except (ValueError, TypeError):
+                return None
+        
+        # Режим работы или пауза
+        if machine_state in ["2", "3"]:
+            rem_time = self.coordinator.data.get("RemTime")
+            if rem_time is None:
+                return None
+            try:
+                seconds = int(rem_time)
+                if seconds <= 0:
+                    return None
+                finish_time = dt_util.now() + timedelta(seconds=seconds)
+                return finish_time
+            except (ValueError, TypeError):
+                return None
+        
+        return None
